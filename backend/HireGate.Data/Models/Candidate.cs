@@ -4,11 +4,27 @@ public class Candidate
 {
     [Key]
     public int Id { get; set; }
+
+    [MaxLength(30)]
     public string? FirstName { get; set; } 
+    [MaxLength(30)]
     public string? LastName { get; set; }
+    [EmailAddress]
+
     public string Email { get; set; } = null!;
+    [MaxLength(15)]
     public string? PhoneNumber { get; set; }
+    
+    public int ExamId { get; set; }
+    public string Token { get; set; } = null!;
+
+    public DateTime? StartedAt { get; set; }
+    public DateTime? SubmittedAt { get; set; }
+    public int? FinalScore { get; set; }
+
+    public Exam Exam { get; set; } = null!;
+
+    public ICollection<CandidateAnswer> Answers { get; set; } = new List<CandidateAnswer>();
 
     // Navigation property
-    public ICollection<ExamSession> ExamSessions { get; set; } = new List<ExamSession>();
-}
+    }

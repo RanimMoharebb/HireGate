@@ -8,6 +8,5 @@ public class CandidateAnswer
     public int ChoiceId { get; set; }
     public bool? IsCorrect { get; set; }
 
-    public ExamSession Session { get; set; } = null!;
     public Choice Choice { get; set; } = null!;
 }

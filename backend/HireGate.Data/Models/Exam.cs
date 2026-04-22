@@ -4,12 +4,14 @@ public class Exam
 {
     [Key]
     public int Id { get; set; }
-    public int HrManagerId { get; set; }
+
+    [MaxLength(100)]
     public string? PositionTitle { get; set; }
+
+    [Range(0, 100)]
     public int? DurationMinutes { get; set; }
     public DateTime? WindowStartTime { get; set; }
     public DateTime? WindowEndTime { get; set; }
-    public HrManager HrManager { get; set; } = null!;
+    
     public ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
-    public ICollection<ExamSession> ExamSessions { get; set; } = new List<ExamSession>();
 }
