@@ -1,4 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+namespace backend.HireGate.Data.Models;
+
+    
 public class Admin
 {
     [Key]
