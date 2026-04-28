@@ -39,7 +39,7 @@ namespace HireGate.Service.Implementations
 
             var questions = await _repository.GetQuestionsByTopicIdAsync(topicId);
             return questions.Select(MapToQuestionDto).ToList();
-        }
+        }   
 
         public async Task<QuestionDto> CreateQuestionAsync(CreateQuestionDto createQuestionDto)
         {

@@ -75,7 +75,7 @@ Accept: application/json
 {
   "topicId": {{topicId}},
   "questionText": "What is the time complexity of binary search?",
-  "questionImage": null,
+  "questionImage": "mohamed",
   "choices": [
     {
       "choiceText": "O(log n)",
@@ -217,7 +217,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "choiceText": "   ",
+  "choiceText": "",
   "isCorrect": false
 }
 
