@@ -1,6 +1,6 @@
-using backend.HireGate.Data.Models;
+using HireGate.Data.Models;
 
-namespace backend.HireGate.Repository.Interfaces
+namespace HireGate.Repository.Interfaces
 {
     public interface IExamRepository
     {

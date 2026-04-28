@@ -1,9 +1,9 @@
-using backend.HireGate.Data.Context;
-using backend.HireGate.Data.Models;
-using backend.HireGate.Repository.Interfaces;
+using HireGate.Data.Context;
+using HireGate.Data.Models;
+using HireGate.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace backend.HireGate.Repository.Implementations
+namespace HireGate.Repository.Implementations
 {
 
     public class ExamRepository : IExamRepository

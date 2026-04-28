@@ -1,7 +1,7 @@
-using backend.HireGate.Data.Models;
-using backend.HireGate.Service.DTOs;
+using HireGate.Data.Models;
+using HireGate.Service.DTOs;
 
-namespace backend.HireGate.Service.Interfaces
+namespace HireGate.Service.Interfaces
 {
     public interface IExamService
     {

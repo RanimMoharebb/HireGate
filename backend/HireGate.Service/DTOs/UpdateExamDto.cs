@@ -1,4 +1,4 @@
-namespace backend.HireGate.Service.DTOs;
+namespace HireGate.Service.DTOs;
 public class UpdateExamDto
 {
     public string PositionTitle { get; set; } = null!;

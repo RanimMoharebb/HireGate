@@ -1,7 +1,7 @@
 using FluentValidation;
-using backend.HireGate.Service.DTOs;
+using HireGate.Service.DTOs;
 
-namespace backend.HireGate.Service.Validators
+namespace HireGate.Service.Validators
 {
     public class ChoiceDtoValidator : AbstractValidator<ChoiceDto>
     {

@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using backend.HireGate.Data.Context;
-using backend.HireGate.Repository.Interfaces;
-using backend.HireGate.Repository.Implementations;
-using backend.HireGate.Service.Interfaces;
-using backend.HireGate.Service.Implementations;
-using backend.HireGate.API.Endpoints;
+using HireGate.Data.Context;
+using HireGate.Repository.Interfaces;
+using HireGate.Repository.Implementations;
+using HireGate.Service.Interfaces;
+using HireGate.Service.Implementations;
+using HireGate.API.Endpoints;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using backend.HireGate.Service.Validators;
+using HireGate.Service.Validators;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // --------------------

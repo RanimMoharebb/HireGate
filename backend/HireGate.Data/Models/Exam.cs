@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-namespace backend.HireGate.Data.Models;
+namespace HireGate.Data.Models;
 
 public class Exam
 {

@@ -1,10 +1,10 @@
-using backend.HireGate.Data.Models;
-using backend.HireGate.Repository.Interfaces;
-using backend.HireGate.Service.DTOs;
-using backend.HireGate.Service.Interfaces;
-using backend.HireGate.Service.Mappers;
+using HireGate.Data.Models;
+using HireGate.Repository.Interfaces;
+using HireGate.Service.DTOs;
+using HireGate.Service.Interfaces;
+using HireGate.Service.Mappers;
 
-namespace backend.HireGate.Service.Implementations
+namespace HireGate.Service.Implementations
 {
     public class ExamService : IExamService
     {

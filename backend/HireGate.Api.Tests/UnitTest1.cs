@@ -1,4 +1,4 @@
-﻿namespace HireGate.Api.Tests;
+namespace HireGate.Api.Tests;
 
 public class UnitTest1
 {

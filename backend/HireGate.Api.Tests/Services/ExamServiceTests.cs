@@ -1,7 +1,7 @@
-using backend.HireGate.Data.Models;
-using backend.HireGate.Repository.Interfaces;
-using backend.HireGate.Service.DTOs;
-using backend.HireGate.Service.Implementations;
+using HireGate.Data.Models;
+using HireGate.Repository.Interfaces;
+using HireGate.Service.DTOs;
+using HireGate.Service.Implementations;
 using FluentAssertions;
 using Moq;
 

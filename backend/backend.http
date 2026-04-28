@@ -1,6 +1,100 @@
-@backend_HostAddress = http://localhost:5106
+@backend_HostAddress = http://localhost:5000
 
-GET {{backend_HostAddress}}/weatherforecast/
+### ============================================================================
+### HIREGATE API TESTING - Exam Endpoints
+### ============================================================================
+
+### 1. GET ALL EXAMS
+GET {{backend_HostAddress}}/api/exam/
+Accept: application/json
+
+###
+
+### 2. GET EXAM BY ID
+GET {{backend_HostAddress}}/api/exam/1
+Accept: application/json
+
+###
+
+### 3. CREATE NEW EXAM
+POST {{backend_HostAddress}}/api/exam/
+Content-Type: application/json
+
+{
+  "positionTitle": "Software Engineer",
+  "durationMinutes": 90,
+  "windowStartTime": "2026-04-28T09:00:00Z",
+  "windowEndTime": "2026-04-28T17:00:00Z",
+  "questions": [
+    {
+      "id": 1,
+      "text": "What is dependency injection?",
+      "choices": [
+        { "text": "A design pattern", "isCorrect": true },
+        { "text": "A database", "isCorrect": false },
+        { "text": "A programming language", "isCorrect": false },
+        { "text": "A web framework", "isCorrect": false }
+      ]
+    }
+  ]
+}
+
+###
+
+### 4. UPDATE EXAM
+PUT {{backend_HostAddress}}/api/exam/1
+Content-Type: application/json
+
+{
+  "positionTitle": "Senior Software Engineer",
+  "durationMinutes": 120,
+  "windowStartTime": "2026-04-28T09:00:00Z",
+  "windowEndTime": "2026-04-28T17:00:00Z",
+  "questions": [
+    {
+      "id": 1,
+      "text": "What is SOLID principles?",
+      "choices": [
+        { "text": "Design principles", "isCorrect": true },
+        { "text": "Database principles", "isCorrect": false },
+        { "text": "Security principles", "isCorrect": false },
+        { "text": "Performance principles", "isCorrect": false }
+      ]
+    }
+  ]
+}
+
+###
+
+### 5. DELETE EXAM
+DELETE {{backend_HostAddress}}/api/exam/1
+Accept: application/json
+
+###
+
+### 6. GET EXAM QUESTIONS
+GET {{backend_HostAddress}}/api/exam/1/questions
+Accept: application/json
+
+###
+
+### 7. ADD QUESTION TO EXAM
+POST {{backend_HostAddress}}/api/exam/1/questions/2
+Accept: application/json
+
+###
+
+### 8. REMOVE QUESTION FROM EXAM
+DELETE {{backend_HostAddress}}/api/exam/1/questions/2
+Accept: application/json
+
+###
+
+### ============================================================================
+### HEALTH CHECK
+### ============================================================================
+
+GET {{backend_HostAddress}}/
 Accept: application/json
 
 ###

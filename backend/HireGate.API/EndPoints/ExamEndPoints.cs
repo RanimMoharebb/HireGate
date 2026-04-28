@@ -1,7 +1,7 @@
-using backend.HireGate.Service.Interfaces;
-using backend.HireGate.Service.DTOs;
+using HireGate.Service.Interfaces;
+using HireGate.Service.DTOs;
 using FluentValidation;
-namespace backend.HireGate.API.Endpoints;
+namespace HireGate.API.Endpoints;
 
 
     public static class ExamEndpoints

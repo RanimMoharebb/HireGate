@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using backend.HireGate.Data.Models;
-namespace backend.HireGate.Data.Context
+using HireGate.Data.Models;
+namespace HireGate.Data.Context
 {
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {

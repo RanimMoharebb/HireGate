@@ -1,7 +1,7 @@
-using backend.HireGate.Data.Models;
-using backend.HireGate.Service.DTOs;
+using HireGate.Data.Models;
+using HireGate.Service.DTOs;
 
-namespace backend.HireGate.Service.Mappers
+namespace HireGate.Service.Mappers
 {
     public static class ExamMapper
     {
