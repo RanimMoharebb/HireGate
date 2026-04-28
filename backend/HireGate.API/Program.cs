@@ -25,6 +25,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // --------------------
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<IExamRepository, ExamRepository>();
+builder.Services.AddScoped<ITopicRepository, TopicRepository>();
+builder.Services.AddScoped<ITopicService, TopicService>();
+builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddScoped<IChoiceRepository, ChoiceRepository>();
+builder.Services.AddScoped<IChoiceService, ChoiceService>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateExamDtoValidator>();
 
 var app = builder.Build();
@@ -35,5 +41,8 @@ app.UseHttpsRedirection();
 // Minimal API endpoints
 // --------------------
 app.MapExamEndpoints();
+app.MapTopicEndpoints(app.Services);
+app.MapQuestionEndpoints(app.Services);
+app.MapChoiceEndpoints(app.Services);
 
 app.Run();
