@@ -8,6 +8,8 @@ namespace HireGate.Service.Implementations
     public class QuestionService : IQuestionService
     {
         private readonly IQuestionRepository _repository;
+        private const int MinChoicesPerQuestion = 2;
+        private const int MaxChoicesPerQuestion = 4;
 
         public QuestionService(IQuestionRepository repository)
         {
@@ -51,11 +53,18 @@ namespace HireGate.Service.Implementations
                 throw new ArgumentException("Valid topic ID is required", nameof(createQuestionDto.TopicId));
 
             if (createQuestionDto.Choices == null || !createQuestionDto.Choices.Any())
-                throw new ArgumentException("At least one choice is required", nameof(createQuestionDto.Choices));
+                throw new ArgumentException($"At least {MinChoicesPerQuestion} choices are required", nameof(createQuestionDto.Choices));
 
-            // Verify at least one correct answer
-            if (!createQuestionDto.Choices.Any(c => c.IsCorrect))
-                throw new ArgumentException("At least one choice must be marked as correct");
+            var createCount = createQuestionDto.Choices.Count;
+            if (createCount < MinChoicesPerQuestion || createCount > MaxChoicesPerQuestion)
+                throw new ArgumentException($"Number of choices must be between {MinChoicesPerQuestion} and {MaxChoicesPerQuestion}", nameof(createQuestionDto.Choices));
+
+            if (createQuestionDto.Choices.Any(c => string.IsNullOrWhiteSpace(c.ChoiceText)))
+                throw new ArgumentException("Choice text is required for all choices", nameof(createQuestionDto.Choices));
+
+            var correctCreateCount = createQuestionDto.Choices.Count(c => c.IsCorrect);
+            if (correctCreateCount != 1)
+                throw new ArgumentException("Exactly one choice must be marked as correct", nameof(createQuestionDto.Choices));
 
             if (!string.IsNullOrWhiteSpace(createQuestionDto.QuestionImage) &&
                 !IsValidUrl(createQuestionDto.QuestionImage))
@@ -96,8 +105,19 @@ namespace HireGate.Service.Implementations
             if (string.IsNullOrWhiteSpace(updateQuestionDto.QuestionText))
                 throw new ArgumentException("Question text is required", nameof(updateQuestionDto.QuestionText));
 
-            if (!updateQuestionDto.Choices.Any(c => c.IsCorrect))
-                throw new ArgumentException("At least one choice must be marked as correct");
+            if (updateQuestionDto.Choices == null || !updateQuestionDto.Choices.Any())
+                throw new ArgumentException($"At least {MinChoicesPerQuestion} choices are required", nameof(updateQuestionDto.Choices));
+
+            var updateCount = updateQuestionDto.Choices.Count;
+            if (updateCount < MinChoicesPerQuestion || updateCount > MaxChoicesPerQuestion)
+                throw new ArgumentException($"Number of choices must be between {MinChoicesPerQuestion} and {MaxChoicesPerQuestion}", nameof(updateQuestionDto.Choices));
+
+            if (updateQuestionDto.Choices.Any(c => string.IsNullOrWhiteSpace(c.ChoiceText)))
+                throw new ArgumentException("Choice text is required for all choices", nameof(updateQuestionDto.Choices));
+
+            var correctUpdateCount = updateQuestionDto.Choices.Count(c => c.IsCorrect);
+            if (correctUpdateCount != 1)
+                throw new ArgumentException("Exactly one choice must be marked as correct", nameof(updateQuestionDto.Choices));
 
             if (!string.IsNullOrWhiteSpace(updateQuestionDto.QuestionImage) &&
                 !IsValidUrl(updateQuestionDto.QuestionImage))
@@ -114,7 +134,7 @@ namespace HireGate.Service.Implementations
             {
                 existingQuestion.Choices.Add(new Choice
                 {
-                    ChoiceText = choice.ChoiceText,
+                    ChoiceText = choice.ChoiceText.Trim(),
                     IsCorrect = choice.IsCorrect
                 });
             }
@@ -165,13 +185,18 @@ namespace HireGate.Service.Implementations
             if (patchQuestionDto.Choices != null)
             {
                 if (!patchQuestionDto.Choices.Any())
-                    throw new ArgumentException("At least one choice is required", nameof(patchQuestionDto.Choices));
+                    throw new ArgumentException($"At least {MinChoicesPerQuestion} choices are required", nameof(patchQuestionDto.Choices));
+
+                var patchCount = patchQuestionDto.Choices.Count;
+                if (patchCount < MinChoicesPerQuestion || patchCount > MaxChoicesPerQuestion)
+                    throw new ArgumentException($"Number of choices must be between {MinChoicesPerQuestion} and {MaxChoicesPerQuestion}", nameof(patchQuestionDto.Choices));
 
                 if (patchQuestionDto.Choices.Any(c => !c.IsCorrect.HasValue))
                     throw new ArgumentException("IsCorrect is required for all choices", nameof(patchQuestionDto.Choices));
 
-                if (!patchQuestionDto.Choices.Any(c => c.IsCorrect == true))
-                    throw new ArgumentException("At least one choice must be marked as correct", nameof(patchQuestionDto.Choices));
+                var correctPatchCount = patchQuestionDto.Choices.Count(c => c.IsCorrect == true);
+                if (correctPatchCount != 1)
+                    throw new ArgumentException("Exactly one choice must be marked as correct", nameof(patchQuestionDto.Choices));
 
                 if (patchQuestionDto.Choices.Any(c => string.IsNullOrWhiteSpace(c.ChoiceText)))
                     throw new ArgumentException("Choice text is required for all choices", nameof(patchQuestionDto.Choices));
