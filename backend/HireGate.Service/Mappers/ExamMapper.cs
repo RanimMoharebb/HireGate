@@ -23,12 +23,29 @@ namespace HireGate.Service.Mappers
             };
         }
 
+        public static ExamDto ToDto(Exam e, IEnumerable<Question> questions)
+        {
+            return new ExamDto
+            {
+                Id = e.Id,
+                PositionTitle = e.PositionTitle!,
+                DurationMinutes = e.DurationMinutes,
+                WindowStartTime = e.WindowStartTime,
+                WindowEndTime = e.WindowEndTime,
+                Questions = questions
+                    .Select(ToQuestionDto)
+                    .ToList()
+            };
+        }
+
         // Helper method to map Question entity to QuestionDto
         public static QuestionDto ToQuestionDto(Question q)
         {
             return new QuestionDto
             {
                 Id = q.Id,
+                TopicId = q.TopicId,
+                TopicName = q.Topic?.TopicName ?? string.Empty,
                 QuestionText = q.QuestionText!,
                 QuestionImage = q.QuestionImage,
 
@@ -36,7 +53,9 @@ namespace HireGate.Service.Mappers
                     .Select(c => new ChoiceDto
                     {
                         Id = c.Id,
-                        ChoiceText = c.ChoiceText!
+                        QuestionId = c.QuestionId,
+                        ChoiceText = c.ChoiceText!,
+                        IsCorrect = c.IsCorrect
                     })
                     .ToList() ?? new List<ChoiceDto>()
             };
@@ -46,17 +65,15 @@ namespace HireGate.Service.Mappers
         // transforming DTO back to Entity (for Create/Update operations)
         // takes the input and transfer it into db model
         public static Exam ToEntity(CreateExamDto dto)
-{
-        return new Exam
         {
-            PositionTitle = dto.PositionTitle,
-            DurationMinutes = dto.DurationMinutes,
-            WindowStartTime = dto.WindowStartTime,
-            WindowEndTime = dto.WindowEndTime,
-
-            // IMPORTANT: do NOT map questions here
-            ExamQuestions = new List<ExamQuestion>()
-        };
-}
+            return new Exam
+            {
+                PositionTitle = dto.PositionTitle,
+                DurationMinutes = dto.DurationMinutes,
+                WindowStartTime = dto.WindowStartTime,
+                WindowEndTime = dto.WindowEndTime,
+                ExamQuestions = new List<ExamQuestion>()
+            };
+        }
     }
 }

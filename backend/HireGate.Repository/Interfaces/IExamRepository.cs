@@ -16,7 +16,10 @@ namespace HireGate.Repository.Interfaces
         Task AddQuestionAsync(int examId, int questionId);
         Task<bool> RemoveQuestionAsync(int examId, int questionId);
         Task<bool> ExamExistsAsync(int examId);
+        Task<bool> QuestionExistsAsync(int questionId);
         Task<bool> QuestionAlreadyInExamAsync(int examId, int questionId);
+
+        Task<List<int>> GetNonExistentQuestionIdsAsync(IEnumerable<int> questionIds);
 
         Task SaveAsync();
         

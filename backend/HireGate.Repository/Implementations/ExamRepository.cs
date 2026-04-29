@@ -21,6 +21,7 @@ namespace HireGate.Repository.Implementations
             // Exam <-> ExamQuestion <-> Question <-> Choice
             // Exam and ExamQuestion are many-to-many, so we include ExamQuestions, then include Question through it, and then include Choices through Question. We use AsSplitQuery to optimize the query and avoid cartesian explosion.
             return await _context.Exams
+                .AsNoTracking()
                 .Include(e => e.ExamQuestions)
                     .ThenInclude(eq => eq.Question)
                     .ThenInclude(q => q.Choices)
@@ -32,6 +33,7 @@ namespace HireGate.Repository.Implementations
         public async Task<Exam?> GetExamByIdAsync(int id)
         {
             return await _context.Exams
+                .AsNoTracking()
                 .Include(e => e.ExamQuestions)
                     .ThenInclude(eq => eq.Question)
                     .ThenInclude(q => q.Choices)
@@ -91,9 +93,28 @@ namespace HireGate.Repository.Implementations
             return true;
         }
 
+        public async Task<List<int>> GetNonExistentQuestionIdsAsync(IEnumerable<int> questionIds)
+        {
+            var ids = questionIds.Distinct().ToList();
+            if (ids.Count == 0)
+            {
+                return [];
+            }
+
+            var existingIds = await _context.Questions
+                .Where(q => ids.Contains(q.Id))
+                .Select(q => q.Id)
+                .ToListAsync();
+
+            return ids.Except(existingIds).ToList();
+        }
+
         // Helper methods for validation
         public async Task<bool> ExamExistsAsync(int examId)
             => await _context.Exams.AnyAsync(e => e.Id == examId);
+
+        public async Task<bool> QuestionExistsAsync(int questionId)
+            => await _context.Questions.AnyAsync(q => q.Id == questionId);
 
         public async Task<bool> QuestionAlreadyInExamAsync(int examId, int questionId)
             => await _context.ExamQuestions

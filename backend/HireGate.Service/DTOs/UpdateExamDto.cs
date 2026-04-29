@@ -5,4 +5,6 @@ public class UpdateExamDto
     public int? DurationMinutes { get; set; }
     public DateTime? WindowStartTime { get; set; }
     public DateTime? WindowEndTime { get; set; }
+    
+    public List<int>? QuestionIds { get; set; }
 }
