@@ -1,6 +1,7 @@
 using HireGate.Service.Interfaces;
 using HireGate.Service.DTOs;
 using FluentValidation;
+using HireGate.Service.Exceptions;
 namespace HireGate.API.Endpoints;
 
 
@@ -53,9 +54,20 @@ namespace HireGate.API.Endpoints;
                             error = e.ErrorMessage
                     }));
                     }
-
-                    var createdExam = await examService.CreateExamAsync(examDto);
-                    return Results.Created($"/api/exam/{createdExam.Id}", createdExam);
+                    try
+                    {
+                        var createdExam = await examService.CreateExamAsync(examDto);
+                        return Results.Created($"/api/exam/{createdExam.Id}", createdExam);
+                    }
+                    catch (InvalidQuestionIdsException)
+                    {
+                        return Results.BadRequest(new
+                        {
+                            field = "QuestionIds",
+                            error = "One or more question IDs are invalid.",
+                        });
+                    }
+                    
                 });
 
             // ────────────────────────────────────────────────────────
@@ -79,11 +91,21 @@ namespace HireGate.API.Endpoints;
                 }));
                 }
 
+                try{
                 var updatedExam = await examService.UpdateExamAsync(id, examDto);
-
                 return updatedExam is null
                     ? Results.NotFound()
                     : Results.Ok(updatedExam);
+                    
+                }catch(InvalidQuestionIdsException)
+                {
+                    return Results.BadRequest(new
+                    {
+                        field = "QuestionIds",
+                        error = "One or more question IDs are invalid.",
+                    });
+                }
+                
             });
 
             // ────────────────────────────────────────────────────────

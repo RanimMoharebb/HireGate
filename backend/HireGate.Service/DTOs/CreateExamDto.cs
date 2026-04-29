@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace HireGate.Service.DTOs;
 public class CreateExamDto
 {
@@ -5,4 +7,6 @@ public class CreateExamDto
     public int? DurationMinutes { get; set; }
     public DateTime? WindowStartTime { get; set; }
     public DateTime? WindowEndTime { get; set; }
+    [JsonPropertyName("questionIds")]
+    public List<int> QuestionIds { get; set; } = [];
 }
