@@ -5,12 +5,11 @@
 @questionId = 29
 
 ### Submit exam
-POST {{baseUrl}}/api/exam/submit
+POST {{baseUrl}}/api/exam/submit/token1
 Content-Type: application/json
 Accept: application/json
 
 {
-    "token": "token1",
     "answers": [
         { "questionId": 1, "choiceId": 2 },
         { "questionId": 2, "choiceId": 5 },
