@@ -2,8 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using HireGate.Data.Models;
 namespace HireGate.Data.Context
 {
-    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+    public class AppDbContext : DbContext
     {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
 
         public DbSet<Admin> Admins => Set<Admin>();
         public DbSet<Topic> Topics => Set<Topic>();
@@ -18,6 +21,8 @@ namespace HireGate.Data.Context
        
        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
             modelBuilder.Entity<ExamQuestion>()
                 .HasKey(eq => new { eq.ExamId, eq.QuestionId });
         }

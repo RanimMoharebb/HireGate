@@ -158,5 +158,24 @@ namespace HireGate.API.Endpoints;
                     ? Results.Ok($"Question {questionId} removed from Exam {id}.")
                     : Results.BadRequest($"Failed to remove Question {questionId}.");
             });
+
+            // ────────────────────────────────────────────────────────
+            // Submit exam
+            // ────────────────────────────────────────────────────────
+            group.MapPost("/submit", async (
+                SubmitExamDto dto,
+                IExamService examService) =>
+            {
+                try
+                {
+                    await examService.SubmitExamAsync(dto);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+
+                return Results.Ok("Submission successful.");
+            });
             }
     }

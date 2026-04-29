@@ -3,16 +3,121 @@ using HireGate.Repository.Interfaces;
 using HireGate.Service.DTOs;
 using HireGate.Service.Interfaces;
 using HireGate.Service.Mappers;
+using HireGate.Service.DTOs;
 
 namespace HireGate.Service.Implementations
 {
     public class ExamService : IExamService
     {
         private readonly IExamRepository _examRepository;
+        private readonly IQuestionRepository _questionRepository;
 
-        public ExamService(IExamRepository examRepository)
+        public ExamService(IExamRepository examRepository, IQuestionRepository questionRepository)
         {
-                _examRepository = examRepository;
+            _examRepository = examRepository;
+            _questionRepository = questionRepository;
+        }
+
+        public async Task SubmitExamAsync(SubmitExamDto dto)
+        {
+            var now = DateTime.UtcNow;
+
+            if (string.IsNullOrWhiteSpace(dto.Token))
+            {
+                throw new InvalidOperationException("Token is required.");
+            }
+
+            var candidate = await _examRepository.GetCandidateByTokenAsync(dto.Token);
+            if (candidate is null)
+            {
+                throw new InvalidOperationException("Invalid token or candidate not found.");
+            }
+
+            var exam = candidate.Exam;
+
+            // Window checks
+            if (exam.WindowStartTime.HasValue && DateTime.UtcNow < exam.WindowStartTime.Value)
+            {
+                throw new InvalidOperationException("Exam window has not started yet.");
+            }
+
+            if (exam.WindowEndTime.HasValue && DateTime.UtcNow > exam.WindowEndTime.Value)
+            {
+                throw new InvalidOperationException("Exam window has expired.");
+            }
+
+            // Duration check
+            if (candidate.StartedAt.HasValue && exam.DurationMinutes.HasValue)
+            {
+                var elapsed = (DateTime.UtcNow - candidate.StartedAt.Value).TotalMinutes;
+                if (elapsed > exam.DurationMinutes.Value)
+                {
+                    throw new InvalidOperationException("Exam duration exceeded.");
+                }
+            }
+
+            // Validate choices and questions
+            var choiceIds = dto.Answers.Select(a => a.ChoiceId).Distinct();
+            var choices = await _examRepository.GetChoicesByIdsAsync(choiceIds);
+
+            // Ensure the provided question IDs exist in the questions table
+            var questionIds = dto.Answers.Select(a => a.QuestionId).Distinct();
+            foreach (var qid in questionIds)
+            {
+                if (!await _questionRepository.QuestionExistsAsync(qid))
+                {
+                    throw new InvalidOperationException($"Question with id {qid} not found.");
+                }
+            }
+
+            // Ensure questions belong to this exam
+            var examQuestions = await _examRepository.GetQuestionsAsync(candidate.ExamId);
+            var examQuestionIds = examQuestions.Select(q => q.Id).ToHashSet();
+
+            var candidateAnswers = new List<CandidateAnswer>();
+            int score = 0;
+
+            foreach (var a in dto.Answers)
+            {
+                if (!examQuestionIds.Contains(a.QuestionId))
+                {
+                    throw new InvalidOperationException($"Question with id {a.QuestionId} not found in the exam.");
+                }
+
+                if (!choices.TryGetValue(a.ChoiceId, out var choice))
+                {
+                    throw new InvalidOperationException($"Choice with id {a.ChoiceId} not found.");
+                }
+
+                // ensure choice belongs to the provided question
+                if (choice.QuestionId != a.QuestionId)
+                {
+                    throw new InvalidOperationException($"Choice with id {a.ChoiceId} does not belong to question {a.QuestionId}.");
+                }
+
+                var isCorrect = choice.IsCorrect;
+                if (isCorrect) score++;
+
+                candidateAnswers.Add(new CandidateAnswer
+                {
+                    CandidateId = candidate.Id,
+                    ExamId = candidate.ExamId,
+                    QuestionId = a.QuestionId,
+                    ChoiceId = a.ChoiceId,
+                    IsCorrect = isCorrect
+                });
+            }
+
+            // persist
+            _examRepository.AddCandidateAnswers(candidateAnswers);
+
+            candidate.SubmittedAt = now;
+            candidate.FinalScore = score;
+            candidate.Token = null;
+
+            _examRepository.UpdateCandidate(candidate);
+            await _examRepository.SaveAsync();
+            return;
         }
 
         // ─────────────────────────────

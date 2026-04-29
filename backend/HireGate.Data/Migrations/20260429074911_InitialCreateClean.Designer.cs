@@ -3,6 +3,7 @@ using System;
 using HireGate.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HireGate.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260429074911_InitialCreateClean")]
+    partial class InitialCreateClean
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,6 +108,7 @@ namespace HireGate.Data.Migrations
                         .HasColumnName("submitted_at");
 
                     b.Property<string>("Token")
+                        .IsRequired()
                         .HasColumnType("varchar(255)")
                         .HasColumnName("token");
 

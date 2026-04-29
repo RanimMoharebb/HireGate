@@ -16,6 +16,8 @@ namespace HireGate.Service.Interfaces
         Task<IEnumerable<Question>> GetExamQuestionsAsync(int examId);
         Task<bool> AddQuestionToExamAsync(int examId, int questionId);
         Task<bool> RemoveQuestionFromExamAsync(int examId, int questionId);
+        
+        Task SubmitExamAsync(SubmitExamDto dto);
 
     }
 }

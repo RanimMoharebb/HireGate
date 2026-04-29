@@ -10,12 +10,14 @@ namespace HireGate.Api.Tests.Services
     public class ExamServiceTests
     {
         private readonly Mock<IExamRepository> _examRepositoryMock;
+        private readonly Mock<IQuestionRepository> _questionRepositoryMock;
         private readonly ExamService _examService;
 
         public ExamServiceTests()
         {
             _examRepositoryMock = new Mock<IExamRepository>();
-            _examService = new ExamService(_examRepositoryMock.Object);
+            _questionRepositoryMock = new Mock<IQuestionRepository>();
+            _examService = new ExamService(_examRepositoryMock.Object, _questionRepositoryMock.Object);
         }
 
         [Fact]

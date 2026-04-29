@@ -19,6 +19,12 @@ namespace HireGate.Repository.Interfaces
         Task<bool> QuestionAlreadyInExamAsync(int examId, int questionId);
 
         Task SaveAsync();
+        
+        // Submission helpers
+        Task<Candidate?> GetCandidateByTokenAsync(string token);
+        Task<Dictionary<int, Choice>> GetChoicesByIdsAsync(IEnumerable<int> choiceIds);
+        void AddCandidateAnswers(IEnumerable<CandidateAnswer> answers);
+        void UpdateCandidate(Candidate candidate);
 
     }
 }

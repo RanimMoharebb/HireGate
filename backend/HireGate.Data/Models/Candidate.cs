@@ -17,7 +17,7 @@ public class Candidate
     public string? PhoneNumber { get; set; }
     
     public int ExamId { get; set; }
-    public string Token { get; set; } = null!;
+    public string? Token { get; set; }
 
     public DateTime? StartedAt { get; set; }
     public DateTime? SubmittedAt { get; set; }
