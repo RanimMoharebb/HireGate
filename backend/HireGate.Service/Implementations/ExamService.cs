@@ -4,8 +4,6 @@ using HireGate.Service.DTOs;
 using HireGate.Service.Interfaces;
 using HireGate.Service.Mappers;
 using HireGate.Service.Exceptions;
-using HireGate.Service.DTOs;
-
 namespace HireGate.Service.Implementations
 {
     public class ExamService : IExamService
@@ -21,7 +19,20 @@ namespace HireGate.Service.Implementations
 
         public async Task SubmitExamAsync(SubmitExamDto dto)
         {
-            var now = DateTime.UtcNow;
+            DateTime now;
+            try
+            {
+                var egyptTz = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
+                now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, egyptTz);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                now = DateTime.UtcNow;
+            }
+            catch (InvalidTimeZoneException)
+            {
+                now = DateTime.UtcNow;
+            }
 
             if (string.IsNullOrWhiteSpace(dto.Token))
             {
@@ -37,12 +48,12 @@ namespace HireGate.Service.Implementations
             var exam = candidate.Exam;
 
             // Window checks
-            if (exam.WindowStartTime.HasValue && DateTime.UtcNow < exam.WindowStartTime.Value)
+            if (exam.WindowStartTime.HasValue && now < exam.WindowStartTime.Value)
             {
                 throw new InvalidOperationException("Exam window has not started yet.");
             }
 
-            if (exam.WindowEndTime.HasValue && DateTime.UtcNow > exam.WindowEndTime.Value)
+            if (exam.WindowEndTime.HasValue && now > exam.WindowEndTime.Value)
             {
                 throw new InvalidOperationException("Exam window has expired.");
             }
@@ -50,7 +61,7 @@ namespace HireGate.Service.Implementations
             // Duration check
             if (candidate.StartedAt.HasValue && exam.DurationMinutes.HasValue)
             {
-                var elapsed = (DateTime.UtcNow - candidate.StartedAt.Value).TotalMinutes;
+                var elapsed = (now - candidate.StartedAt.Value).TotalMinutes;
                 if (elapsed > exam.DurationMinutes.Value)
                 {
                     throw new InvalidOperationException("Exam duration exceeded.");
@@ -108,8 +119,6 @@ namespace HireGate.Service.Implementations
                     IsCorrect = isCorrect
                 });
             }
-
-            // persist
             _examRepository.AddCandidateAnswers(candidateAnswers);
 
             candidate.SubmittedAt = now;
@@ -118,7 +127,6 @@ namespace HireGate.Service.Implementations
 
             _examRepository.UpdateCandidate(candidate);
             await _examRepository.SaveAsync();
-            return;
         }
 
         // ─────────────────────────────

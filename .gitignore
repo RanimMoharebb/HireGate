@@ -1,2 +1,35 @@
+# Build output
+[Bb]in/
+[Oo]bj/
 bin/
 obj/
+
+# Backend-specific files
+/backend/backend.http
+/backend/HireGate.API/appsettings.json
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+
+# IDE folders
+.vs/
+.vscode/
+.idea/
+
+# Test results
+TestResults/
+*.trx
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Local CLI/tooling cache
+.dotnet/
+
+# OS files
+.DS_Store
+Thumbs.db
