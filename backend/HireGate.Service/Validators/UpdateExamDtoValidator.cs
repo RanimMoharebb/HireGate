@@ -9,10 +9,12 @@ namespace HireGate.Service.Validators
         {
             RuleFor(x => x.PositionTitle)
                 .NotEmpty()
-                .Length(3, 100);
+                .Length(3, 100)
+                .When(x => x.PositionTitle is not null);
 
             RuleFor(x => x.DurationMinutes)
-                .GreaterThan(0);
+                .GreaterThan(0)
+                .When(x => x.DurationMinutes.HasValue);
 
             RuleFor(x => x.WindowEndTime)
                 .GreaterThan(x => x.WindowStartTime)

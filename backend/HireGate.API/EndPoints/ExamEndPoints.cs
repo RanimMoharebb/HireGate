@@ -74,7 +74,7 @@ namespace HireGate.API.Endpoints;
             // Update Exam
             // ────────────────────────────────────────────────────────
 
-            group.MapPut("/{id:int}", async (
+            group.MapPatch("/{id:int}", async (
             int id,
             UpdateExamDto examDto,
             IExamService examService,
@@ -101,7 +101,7 @@ namespace HireGate.API.Endpoints;
                 {
                     return Results.BadRequest(new
                     {
-                        field = "QuestionIds",
+                        field = "AddedQuestionIds/RemovedQuestionIds",
                         error = "One or more question IDs are invalid.",
                     });
                 }
