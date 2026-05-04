@@ -69,9 +69,15 @@ public async Task<CreateCandidateResponseDto> CreateCandidate(CreateCandidateDto
 {
     var exists = await _repo.ExistsByEmail(dto.Email);
 
-    if (exists)
-        throw new Exception("Email already exists");
-
+        if (exists)
+    {
+        return new CreateCandidateResponseDto
+        {
+            Id = 0,
+            Email = dto.Email,
+            Message = "Email already exists"
+        };
+    }
     var candidate = new Candidate
     {
         Email = dto.Email,
@@ -264,9 +270,9 @@ if (candidate.StartedAt != null)
 }
 
 
-public async Task<object> StartExam(StartExamDto dto)
+public async Task<object> StartExam(string token)
 {
-    var candidate = await _repo.GetByToken(dto.Token);
+    var candidate = await _repo.GetByToken(token);
 
     if (candidate == null || candidate.Exam == null)
         return "Invalid token";

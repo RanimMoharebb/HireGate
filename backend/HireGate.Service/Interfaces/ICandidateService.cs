@@ -18,6 +18,7 @@ public interface ICandidateService
 
     Task<ExamPageDto?> GetExamPage(string token);
 
-   // Task<StartExamResponseDto?> StartExam(StartExamDto dto);
-    Task<object> StartExam(StartExamDto dto);}
+    Task<object> StartExam(string token);
+    
+    }
 }

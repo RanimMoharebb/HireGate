@@ -62,8 +62,16 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
     {
             var existing = await _repo.GetByEmail(dto.Email);
 
-    if (existing != null)
-        throw new Exception("Email already exists");
+        if (existing != null)
+    {
+        return new CreateAdminResponseDto
+        {
+            Id = 0,
+            Email = dto.Email,
+            Role = "",
+            Message = "Email already exists"
+        };
+    }
 
         var admin = new Admin
         {

@@ -13,23 +13,27 @@ public static class AdminEndpoints
           //             .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // CREATE ADMIN
-        group.MapPost("/", async (
-            [FromBody] CreateAdminRequestDto dto,
-            [FromServices] IAdminService service,
-            [FromServices] IValidator<CreateAdminRequestDto> validator
-        ) =>
-        {
-            var result = await validator.ValidateAsync(dto);
 
-            if (!result.IsValid)
-                return Results.BadRequest(result.Errors.Select(e => e.ErrorMessage));
 
-            var response = await service.CreateAdmin(dto);
+group.MapPost("/", async (
+    [FromBody] CreateAdminRequestDto dto,
+    [FromServices] IAdminService service,
+    [FromServices] IValidator<CreateAdminRequestDto> validator
+) =>
+{
+    var validation = await validator.ValidateAsync(dto);
 
-            return Results.Ok(response);
-        })
-        .RequireAuthorization(policy => policy.RequireRole("CEO"));
+    if (!validation.IsValid)
+        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
+    var response = await service.CreateAdmin(dto);
+
+    if (response.Message == "Email already exists")
+        return Results.BadRequest(response);
+
+    return Results.Ok(response);
+})
+.RequireAuthorization(policy => policy.RequireRole("CEO"));
         // GET ALL
         group.MapGet("/", async (
             [FromServices] IAdminService service

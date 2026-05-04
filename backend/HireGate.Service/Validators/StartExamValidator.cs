@@ -1,3 +1,4 @@
+/*
 using FluentValidation;
 using HireGate.Service.DTOs;
 
@@ -11,3 +12,4 @@ public class StartExamValidator : AbstractValidator<StartExamDto>
             .NotEmpty().WithMessage("Token is required");
     }
 }
+*/

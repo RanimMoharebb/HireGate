@@ -14,38 +14,49 @@ public static class AuthEndpoints
 
         // LOGIN
         group.MapPost("/login", async (
-            [FromBody] LoginDto dto,
-            [FromServices] IAuthService service,
-            [FromServices] IValidator<LoginDto> validator
-        ) =>
-        {
-            var validation = await validator.ValidateAsync(dto);
+    [FromBody] LoginDto dto,
+    [FromServices] IAuthService service,
+    [FromServices] IValidator<LoginDto> validator
+) =>
+{
+    var validation = await validator.ValidateAsync(dto);
 
-            if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+    if (!validation.IsValid)
+        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-            var token = await service.Login(dto.Email, dto.Password);
-            return Results.Ok(new { token });
-        });
+    var result = await service.Login(dto.Email, dto.Password);
+
+    if (result.Message == "Invalid credentials")
+        return Results.BadRequest(result);
+
+    return Results.Ok(result);
+});
 
         // COMPLETE REGISTRATION
-        group.MapPost("/complete-registration", async (
-            [FromBody] CompleteRegisterAdminDto dto,
-            [FromServices] IAuthService service,
-            [FromServices] IValidator<CompleteRegisterAdminDto> validator
-        ) =>
-        {
-            var validation = await validator.ValidateAsync(dto);
+group.MapPost("/complete-registration", async (
+    [FromBody] CompleteRegisterAdminDto dto,
+    [FromServices] IAuthService service,
+    [FromServices] IValidator<CompleteRegisterAdminDto> validator
+) =>
+{
+    var validation = await validator.ValidateAsync(dto);
 
-            if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+    if (!validation.IsValid)
+        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-            var result = await service.CompleteRegistration(dto);
-            return Results.Ok(result);
-        });
+    var result = await service.CompleteRegistration(dto);
+
+    if (result.Message == "Admin not found")
+        return Results.BadRequest(result);
+
+    if (result.Message == "Already registered")
+        return Results.BadRequest(result);
+
+    return Results.Ok(result);
+});
 
         // FORGOT PASSWORD
-        app.MapPost("/forgot-password", async (
+        group.MapPost("/forgot-password", async (
             ForgotPasswordDto dto,
             IAdminService service,
             IValidator<ForgotPasswordDto> validator
@@ -61,7 +72,7 @@ public static class AuthEndpoints
         });
 
         // RESET PASSWORD
-        app.MapPost("/reset-password", async (
+        group.MapPost("/reset-password", async (
             ResetPasswordDto dto,
             IAdminService service,
             IValidator<ResetPasswordDto> validator

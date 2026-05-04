@@ -30,19 +30,31 @@ public AuthService(IAdminRepository repo, IConfiguration config, IEmailService e
     var admin = await _repo.GetByEmail(email);
 
     if (admin == null)
-        throw new Exception("Invalid credentials");
+    {
+        return new LoginResponseDto
+        {
+            Token = "",
+            Message = "Invalid credentials"
+        };
+    }
 
     var isValid = BCrypt.Net.BCrypt.Verify(password, admin.PasswordHash);
 
-    if (!isValid)
-        throw new Exception("Invalid credentials");
-
+     if (!isValid)
+    {
+        return new LoginResponseDto
+        {
+            Token = "",
+            Message = "Invalid credentials"
+        };
+    }
     var token = GenerateJwt(admin);
 
-    return new LoginResponseDto
-    {
-        Token = token
-    };
+return new LoginResponseDto
+{
+    Token = token,
+    Message = "Login successful"
+};
 }
 
 private string GenerateJwt(Admin admin)
@@ -73,11 +85,21 @@ public async Task<CompleteRegisterAdminResponseDto> CompleteRegistration(Complet
 {
     var admin = await _repo.GetByEmail(dto.Email);
 
-    if (admin == null)
-        throw new Exception("Admin not found");
+        if (admin == null)
+    {
+        return new CompleteRegisterAdminResponseDto
+        {
+            Message = "Admin not found"
+        };
+    }
 
-    if (admin.PasswordHash != null)
-        throw new Exception("Already registered");
+        if (admin.PasswordHash != null)
+    {
+        return new CompleteRegisterAdminResponseDto
+        {
+            Message = "Already registered"
+        };
+    }
 
     // update fields
     admin.FirstName = dto.FirstName;

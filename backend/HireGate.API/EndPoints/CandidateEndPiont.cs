@@ -12,19 +12,26 @@ public static class CandidateEndpoints
         var group = app.MapGroup("/candidates");
 
         // CREATE
-        group.MapPost("/", async (
-            [FromBody] CreateCandidateDto dto,
-            [FromServices] ICandidateService service,
-            [FromServices] IValidator<CreateCandidateDto> validator
-        ) =>
-        {
-            var validation = await validator.ValidateAsync(dto);
 
-            if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+group.MapPost("/", async (
+    [FromBody] CreateCandidateDto dto,
+    [FromServices] ICandidateService service,
+    [FromServices] IValidator<CreateCandidateDto> validator
+) =>
+{
+    var validation = await validator.ValidateAsync(dto);
 
-            return Results.Ok(await service.CreateCandidate(dto));
-        });
+    if (!validation.IsValid)
+        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+
+    var result = await service.CreateCandidate(dto);
+
+    if (result.Message == "Email already exists")
+        return Results.BadRequest(result);
+
+    return Results.Ok(result);
+})
+.RequireAuthorization();
 
         // COMPLETE PROFILE
         group.MapPut("/complete-profile/{token}", async (
@@ -45,7 +52,8 @@ public static class CandidateEndpoints
                 return Results.NotFound("Invalid token");
 
             return Results.Ok(result);
-        });
+        })
+        .RequireAuthorization();
 
         // GET ALL
         group.MapGet("/", async ([FromServices] ICandidateService service) =>
@@ -65,7 +73,8 @@ public static class CandidateEndpoints
                 return Results.NotFound("Candidate not found");
 
             return Results.Ok(result);
-        });
+        })
+        .RequireAuthorization();
 
         // DELETE BY ID
         group.MapDelete("/{id:int}", async (
@@ -78,7 +87,8 @@ public static class CandidateEndpoints
             return result is null
                 ? Results.NotFound("Candidate not found")
                 : Results.Ok(result);
-        });
+        })
+        .RequireAuthorization();
 
         // SEND EMAIL
         group.MapPost("/{id:int}/send-exam-email", async (
@@ -98,7 +108,8 @@ public static class CandidateEndpoints
             var result = await service.SendExamEmail(dto);
 
             return Results.Ok(result);
-        });
+        })
+        .RequireAuthorization();
 
         // Send BULK EMAIL
         group.MapPost("/send-bulk-exam-email", async (
@@ -115,27 +126,23 @@ public static class CandidateEndpoints
             var result = await service.SendBulkExamEmail(dto);
 
             return Results.Ok(result);
-        });
+        })
+        .RequireAuthorization();
 
         // START EXAM
-        group.MapPost("/start-exam", async (
-            [FromBody] StartExamDto dto,
-            [FromServices] ICandidateService service,
-            [FromServices] IValidator<StartExamDto> validator
-        ) =>
-        {
-            var validation = await validator.ValidateAsync(dto);
 
-            if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+group.MapPost("/start-exam/{token}", async (
+    string token,
+    [FromServices] ICandidateService service
+) =>
+{
+    var result = await service.StartExam(token);
 
-            var result = await service.StartExam(dto);
+    if (result is string message)
+        return Results.BadRequest(message);
 
-            if (result is string message)
-                return Results.BadRequest(message);
-
-            return Results.Ok(result);
-        });
+    return Results.Ok(result);
+});
 
         // EXAM PAGE
         group.MapGet("/exam-page/{token}", async (
@@ -148,6 +155,7 @@ public static class CandidateEndpoints
             return result is null
                 ? Results.BadRequest("Exam is not available at this time")
                 : Results.Ok(result);
-        });
+        })
+        .RequireAuthorization();
     }
 }
