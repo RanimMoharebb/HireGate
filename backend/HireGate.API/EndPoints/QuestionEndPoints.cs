@@ -1,6 +1,9 @@
 using HireGate.Service.Interfaces;
 using HireGate.Service.DTOs;
 using FluentValidation;
+using System;
+using System.Linq;
+using System.Collections.Generic;
 namespace HireGate.API.Endpoints
 {
     public static class QuestionEndpoints
@@ -32,12 +35,31 @@ namespace HireGate.API.Endpoints
                 .WithName("DeleteQuestion");
         }
 
-        private static async Task<IResult> GetAllQuestions(IQuestionService questionService)
+        private static async Task<IResult> GetAllQuestions(IQuestionService questionService, int page = 1, int pageSize = 10)
         {
             try
             {
-                var questions = await questionService.GetAllQuestionsAsync();
-                return Results.Ok(questions);
+                var validPage = Math.Max(1, page);
+                var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+
+                var (questions, totalCount) = await questionService.GetAllQuestionsAsync(validPage, validPageSize);
+
+                var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
+
+                var result = new
+                {
+                    data = questions,
+                    page = validPage,
+                    pageSize = validPageSize,
+                    totalCount,
+                    totalPages
+                };
+
+                return Results.Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {

@@ -26,10 +26,10 @@ namespace HireGate.Service.Implementations
             return question == null ? null : MapToQuestionDto(question);
         }
 
-        public async Task<IEnumerable<QuestionDto>> GetAllQuestionsAsync()
+        public async Task<(IEnumerable<QuestionDto> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize)
         {
-            var questions = await _repository.GetAllQuestionsAsync();
-            return questions.Select(MapToQuestionDto).ToList();
+            var (items, totalCount) = await _repository.GetAllQuestionsAsync(pageNumber, pageSize);
+            return (items.Select(MapToQuestionDto).ToList(), totalCount);
         }
 
         public async Task<IEnumerable<QuestionDto>> GetQuestionsByTopicIdAsync(int topicId)
