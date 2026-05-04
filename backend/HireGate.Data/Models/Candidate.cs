@@ -16,14 +16,15 @@ public class Candidate
     [MaxLength(15)]
     public string? PhoneNumber { get; set; }
     
-    public int ExamId { get; set; }
+    // removed the question mark
+    public int? ExamId { get; set; } 
     public string? Token { get; set; }
 
     public DateTime? StartedAt { get; set; }
     public DateTime? SubmittedAt { get; set; }
     public int? FinalScore { get; set; }
 
-    public Exam Exam { get; set; } = null!;
+    public Exam? Exam { get; set; }
 
     public ICollection<CandidateAnswer> Answers { get; set; } = new List<CandidateAnswer>();
 

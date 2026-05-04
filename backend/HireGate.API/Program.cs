@@ -1,3 +1,7 @@
+using System.Text;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using HireGate.Data.Context;
 using HireGate.Repository.Interfaces;
@@ -31,11 +35,83 @@ builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IChoiceRepository, ChoiceRepository>();
 builder.Services.AddScoped<IChoiceService, ChoiceService>();
+
+builder.Services.AddScoped<IAdminRepository, HrManagerRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ICandidateService, CandidateService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddValidatorsFromAssemblyContaining<CreateExamDtoValidator>();
+
+
+// =========================
+// VALIDATORS
+// =========================
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCandidateValidator>();
+
+
+
+// =========================
+// AUTHENTICATION
+// =========================
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtKey = builder.Configuration["Jwt:Key"];
+
+        if (string.IsNullOrEmpty(jwtKey))
+            throw new Exception("JWT Key is missing in appsettings.json");
+
+        var key = Encoding.UTF8.GetBytes(jwtKey);
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            RoleClaimType = ClaimTypes.Role
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// =========================
+// CORS
+// =========================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", p =>
+        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
+// =========================
+// JSON OPTIONS
+// =========================
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
+
+
+
 
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+
 
 // --------------------
 // Minimal API endpoints
@@ -44,5 +120,8 @@ app.MapExamEndpoints();
 app.MapTopicEndpoints(app.Services);
 app.MapQuestionEndpoints(app.Services);
 app.MapChoiceEndpoints(app.Services);
+app.MapCandidateEndpoints();
+app.MapAuthEndpoints();
+app.MapAdminEndpoints();
 
 app.Run();

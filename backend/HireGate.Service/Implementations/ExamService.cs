@@ -82,9 +82,15 @@ namespace HireGate.Service.Implementations
                     throw new InvalidOperationException($"Question with id {qid} not found.");
                 }
             }
-
+            // new by me
+            if (!candidate.ExamId.HasValue)
+                throw new Exception("Candidate has no exam assigned");
+            // new by me
+            int examId = candidate.ExamId.Value;
+            
             // Ensure questions belong to this exam
-            var examQuestions = await _examRepository.GetQuestionsAsync(candidate.ExamId);
+            //var examQuestions = await _examRepository.GetQuestionsAsync(candidate.ExamId);
+            var examQuestions = await _examRepository.GetQuestionsAsync(examId);
             var examQuestionIds = examQuestions.Select(q => q.Id).ToHashSet();
 
             var candidateAnswers = new List<CandidateAnswer>();
@@ -114,7 +120,8 @@ namespace HireGate.Service.Implementations
                 candidateAnswers.Add(new CandidateAnswer
                 {
                     CandidateId = candidate.Id,
-                    ExamId = candidate.ExamId,
+                    //ExamId = candidate.ExamId,
+                    ExamId = examId,
                     QuestionId = a.QuestionId,
                     ChoiceId = a.ChoiceId,
                     IsCorrect = isCorrect
