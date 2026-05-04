@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using HireGate.Data.Models;
+using HireGate.Data.Configurations;
+
 namespace HireGate.Data.Context
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
 
         public DbSet<Admin> Admins => Set<Admin>();
         public DbSet<Topic> Topics => Set<Topic>();
@@ -25,6 +24,11 @@ namespace HireGate.Data.Context
 
             modelBuilder.Entity<ExamQuestion>()
                 .HasKey(eq => new { eq.ExamId, eq.QuestionId });
+
+            modelBuilder.Entity<Admin>() // Store the enum as text instead of numbers
+                .Property(a => a.Role)
+                .HasConversion<string>(); // Enum Role change
+        
         }
     }
 }

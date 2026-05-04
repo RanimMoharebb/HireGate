@@ -43,13 +43,19 @@ namespace HireGate.Data.Migrations
                         .HasColumnName("last_name");
 
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("password_hash");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("int")
+                    b.Property<DateTime?>("ResetOtpExpiry")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ResetOtpHash")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("longtext")
                         .HasColumnName("role");
 
                     b.HasKey("Id");
@@ -73,7 +79,7 @@ namespace HireGate.Data.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("email");
 
-                    b.Property<int>("ExamId")
+                    b.Property<int?>("ExamId")
                         .HasColumnType("int")
                         .HasColumnName("exam_id");
 
@@ -297,9 +303,7 @@ namespace HireGate.Data.Migrations
                 {
                     b.HasOne("HireGate.Data.Models.Exam", "Exam")
                         .WithMany()
-                        .HasForeignKey("ExamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ExamId");
 
                     b.Navigation("Exam");
                 });

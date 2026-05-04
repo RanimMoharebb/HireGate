@@ -13,11 +13,11 @@ public class Admin
     [EmailAddress]
     public string Email { get; set; } = null!;
     [MinLength(6)]
-    public string PasswordHash { get; set; } = null!;
-
-    public enum UserRole { HRManager, Manager }
-
-    public UserRole Role { get; set; } = UserRole.HRManager;
-
+    public string? PasswordHash { get; set; }
+    public UserRole Role { get; set; }
+    // public UserRole Role { get; set; } = UserRole.HRManager;
+    public string? ResetOtpHash { get; set; }
+    public DateTime? ResetOtpExpiry { get; set; }
     
 }
+

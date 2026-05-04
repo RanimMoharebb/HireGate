@@ -25,6 +25,9 @@ namespace HireGate.Repository.Implementations
                 .Include(e => e.ExamQuestions)
                     .ThenInclude(eq => eq.Question)
                     .ThenInclude(q => q.Choices)
+                .Include(e => e.ExamQuestions)
+                    .ThenInclude(eq => eq.Question)
+                    .ThenInclude(q => q.Topic)
                 .AsSplitQuery()
                 .ToListAsync();
         }
@@ -37,6 +40,9 @@ namespace HireGate.Repository.Implementations
                 .Include(e => e.ExamQuestions)
                     .ThenInclude(eq => eq.Question)
                     .ThenInclude(q => q.Choices)
+                .Include(e => e.ExamQuestions)
+                    .ThenInclude(eq => eq.Question)
+                    .ThenInclude(q => q.Topic)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(e => e.Id == id);
         } 

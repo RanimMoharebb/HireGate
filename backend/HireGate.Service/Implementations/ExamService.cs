@@ -4,6 +4,7 @@ using HireGate.Service.DTOs;
 using HireGate.Service.Interfaces;
 using HireGate.Service.Mappers;
 using HireGate.Service.Exceptions;
+
 namespace HireGate.Service.Implementations
 {
     public class ExamService : IExamService
@@ -81,9 +82,15 @@ namespace HireGate.Service.Implementations
                     throw new InvalidOperationException($"Question with id {qid} not found.");
                 }
             }
-
+            // new by me
+            if (!candidate.ExamId.HasValue)
+                throw new Exception("Candidate has no exam assigned");
+            // new by me
+            int examId = candidate.ExamId.Value;
+            
             // Ensure questions belong to this exam
-            var examQuestions = await _examRepository.GetQuestionsAsync(candidate.ExamId);
+            //var examQuestions = await _examRepository.GetQuestionsAsync(candidate.ExamId);
+            var examQuestions = await _examRepository.GetQuestionsAsync(examId);
             var examQuestionIds = examQuestions.Select(q => q.Id).ToHashSet();
 
             var candidateAnswers = new List<CandidateAnswer>();
@@ -113,7 +120,8 @@ namespace HireGate.Service.Implementations
                 candidateAnswers.Add(new CandidateAnswer
                 {
                     CandidateId = candidate.Id,
-                    ExamId = candidate.ExamId,
+                    //ExamId = candidate.ExamId,
+                    ExamId = examId,
                     QuestionId = a.QuestionId,
                     ChoiceId = a.ChoiceId,
                     IsCorrect = isCorrect
@@ -185,33 +193,44 @@ namespace HireGate.Service.Implementations
             if (exam is null)
                 return null;
             
-            var questionIds = dto.QuestionIds ?? [];
-            var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(questionIds);
+            var addedQuestionIds = dto.AddedQuestionIds?.Distinct().ToList() ?? [];
+            var removedQuestionIds = dto.RemovedQuestionIds?.Distinct().ToList() ?? [];
+            var idsToValidate = addedQuestionIds.Concat(removedQuestionIds).Distinct().ToList();
+            var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(idsToValidate);
             if (invalidIds.Any())
                 throw new InvalidQuestionIdsException(invalidIds);
 
-            // Update basic fields
-            exam.PositionTitle = dto.PositionTitle;
-            exam.DurationMinutes = dto.DurationMinutes;
-            exam.WindowStartTime = dto.WindowStartTime;
-            exam.WindowEndTime = dto.WindowEndTime;
+            // Only update values that were actually sent.
+            if (dto.PositionTitle is not null)
+                exam.PositionTitle = dto.PositionTitle;
+
+            if (dto.DurationMinutes.HasValue)
+                exam.DurationMinutes = dto.DurationMinutes;
+
+            if (dto.WindowStartTime.HasValue)
+                exam.WindowStartTime = dto.WindowStartTime;
+
+            if (dto.WindowEndTime.HasValue)
+                exam.WindowEndTime = dto.WindowEndTime;
 
             _examRepository.UpdateExam(exam);
 
             // ── Sync questions ──────────────────────────────────────
             var existingIds = exam.ExamQuestions.Select(eq => eq.QuestionId).ToHashSet();
-            var newIds = questionIds.Distinct().ToHashSet();
 
-            // Remove questions that are no longer in the list
-            var toRemove = existingIds.Except(newIds);
-            foreach (var qId in toRemove)
-                await _examRepository.RemoveQuestionAsync(id, qId);
+            if (removedQuestionIds.Count != 0)
+            {
+                var toRemove = removedQuestionIds.Where(existingIds.Contains);
+                foreach (var qId in toRemove)
+                    await _examRepository.RemoveQuestionAsync(id, qId);
+            }
 
-            // Add questions that weren't there before
-            var toAdd = newIds.Except(existingIds);
-            foreach (var qId in toAdd)
-                if (await _examRepository.QuestionExistsAsync(qId))
+            if (addedQuestionIds.Count != 0)
+            {
+                var toAdd = addedQuestionIds.Where(qId => !existingIds.Contains(qId));
+                foreach (var qId in toAdd)
                     await _examRepository.AddQuestionAsync(id, qId);
+            }
             // ────────────────────────────────────────────────────────
 
             await _examRepository.SaveAsync();
