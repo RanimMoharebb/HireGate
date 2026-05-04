@@ -39,23 +39,16 @@ namespace HireGate.API.Endpoints
         {
             try
             {
-                var questions = await questionService.GetAllQuestionsAsync();
-
-                var list = questions != null
-                    ? questions.Select(q => (object)q).ToList()
-                    : new List<object>();
-
                 var validPage = Math.Max(1, page);
                 var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
 
-                var totalCount = list.Count;
-                var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
+                var (questions, totalCount) = await questionService.GetAllQuestionsAsync(validPage, validPageSize);
 
-                var pagedItems = list.Skip((validPage - 1) * validPageSize).Take(validPageSize);
+                var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
 
                 var result = new
                 {
-                    data = pagedItems,
+                    data = questions,
                     page = validPage,
                     pageSize = validPageSize,
                     totalCount,
@@ -63,6 +56,10 @@ namespace HireGate.API.Endpoints
                 };
 
                 return Results.Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
