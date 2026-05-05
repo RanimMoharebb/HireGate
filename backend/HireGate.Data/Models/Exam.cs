@@ -15,4 +15,5 @@ public class Exam
     public DateTime? WindowEndTime { get; set; }
     
     public ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
+    public ICollection<Candidate> Candidates { get; set; } = new List<Candidate>();
 }

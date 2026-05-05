@@ -15,8 +15,6 @@ public class Candidate
     public string Email { get; set; } = null!;
     [MaxLength(15)]
     public string? PhoneNumber { get; set; }
-    
-    // removed the question mark
     public int? ExamId { get; set; } 
     public string? Token { get; set; }
 

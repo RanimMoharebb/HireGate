@@ -49,7 +49,7 @@ namespace HireGate.Service.Implementations
             if (string.IsNullOrWhiteSpace(createQuestionDto.QuestionText))
                 throw new ArgumentException("Question text is required", nameof(createQuestionDto.QuestionText));
 
-            if (createQuestionDto.TopicId <= 0)
+            if (createQuestionDto.TopicId.HasValue && createQuestionDto.TopicId.Value <= 0)
                 throw new ArgumentException("Valid topic ID is required", nameof(createQuestionDto.TopicId));
 
             if (createQuestionDto.Choices == null || !createQuestionDto.Choices.Any())
@@ -104,6 +104,9 @@ namespace HireGate.Service.Implementations
 
             if (string.IsNullOrWhiteSpace(updateQuestionDto.QuestionText))
                 throw new ArgumentException("Question text is required", nameof(updateQuestionDto.QuestionText));
+
+            if (updateQuestionDto.TopicId.HasValue && updateQuestionDto.TopicId.Value <= 0)
+                throw new ArgumentException("Valid topic ID is required", nameof(updateQuestionDto.TopicId));
 
             if (updateQuestionDto.Choices == null || !updateQuestionDto.Choices.Any())
                 throw new ArgumentException($"At least {MinChoicesPerQuestion} choices are required", nameof(updateQuestionDto.Choices));

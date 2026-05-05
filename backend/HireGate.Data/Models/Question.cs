@@ -5,8 +5,8 @@ public class Question
     [Key]
     public int Id { get; set; }
 
-    public int TopicId { get; set; }
-    public Topic Topic { get; set; } = null!;
+    public int? TopicId { get; set; }
+    public Topic? Topic { get; set; }
 
     [MaxLength(200)]
     public string QuestionText { get; set; } = null!;

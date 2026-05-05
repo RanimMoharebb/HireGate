@@ -4,8 +4,7 @@ namespace HireGate.Service.DTOs
 {
     public class UpdateQuestionDto
     {
-        [Required]
-        public int TopicId { get; set; }
+        public int? TopicId { get; set; }
 
         [Required]
         [MaxLength(200)]

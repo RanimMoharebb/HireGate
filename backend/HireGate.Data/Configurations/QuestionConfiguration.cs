@@ -20,6 +20,10 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .IsRequired();
 
         builder.Property(q => q.QuestionImage).HasColumnName("question_image");
+        builder.HasOne(q => q.Topic)          
+            .WithMany(t => t.Questions)      
+            .HasForeignKey(q => q.TopicId)    
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(q => q.TopicId).HasDatabaseName("IX_Questions_TopicId");
     }

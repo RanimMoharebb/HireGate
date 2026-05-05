@@ -25,6 +25,11 @@ public class CandidateConfiguration : IEntityTypeConfiguration<Candidate>
         builder.Property(c => c.SubmittedAt).HasColumnName("submitted_at");
         builder.Property(c => c.FinalScore).HasColumnName("final_score");
 
+        builder.HasOne(q => q.Exam)          
+            .WithMany(t => t.Candidates)      
+            .HasForeignKey(q => q.ExamId)    
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasIndex(c => c.Email).IsUnique().HasDatabaseName("UX_Candidates_Email");
         builder.HasIndex(c => c.Token).IsUnique().HasDatabaseName("UX_Candidates_Token");
     }

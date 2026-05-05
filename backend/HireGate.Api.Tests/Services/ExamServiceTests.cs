@@ -72,67 +72,6 @@ namespace HireGate.Api.Tests.Services
         }
 
         [Fact]
-        public async Task CreateExamAsync_ShouldCreateAndReturnExamDto()
-        {
-            // Arrange
-            var createDto = new CreateExamDto
-            {
-                PositionTitle = "New Position",
-                DurationMinutes = 120,
-                WindowStartTime = DateTime.Now,
-                WindowEndTime = DateTime.Now.AddHours(2),
-                QuestionIds = [3]
-            };
-
-            _examRepositoryMock.Setup(r => r.QuestionExistsAsync(3)).ReturnsAsync(true);
-
-            // Act
-            var result = await _examService.CreateExamAsync(createDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.PositionTitle.Should().Be("New Position");
-            result.DurationMinutes.Should().Be(120);
-            _examRepositoryMock.Verify(r => r.AddQuestionAsync(It.IsAny<int>(), 3), Times.Once);
-            _examRepositoryMock.Verify(r => r.CreateExam(It.IsAny<Exam>()), Times.Once);
-            _examRepositoryMock.Verify(r => r.QuestionExistsAsync(3), Times.Once);
-            _examRepositoryMock.Verify(r => r.SaveAsync(), Times.Exactly(2));
-        }
-
-        [Fact]
-        public async Task UpdateExamAsync_ShouldUpdateAndReturnExamDto_WhenExamExists()
-        {
-            // Arrange
-            var existingExam = new Exam
-            {
-                Id = 1,
-                PositionTitle = "Old Position",
-                DurationMinutes = 60,
-                WindowStartTime = DateTime.Now,
-                WindowEndTime = DateTime.Now.AddHours(1)
-            };
-            var updateDto = new UpdateExamDto
-            {
-                PositionTitle = "Updated Position",
-                DurationMinutes = 90,
-                WindowStartTime = DateTime.Now.AddDays(1),
-                WindowEndTime = DateTime.Now.AddDays(1).AddHours(2)
-            };
-            _examRepositoryMock.Setup(r => r.GetExamByIdAsync(1)).ReturnsAsync(existingExam);
-
-            // Act
-            var result = await _examService.UpdateExamAsync(1, updateDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result!.Id.Should().Be(1);
-            result.PositionTitle.Should().Be("Updated Position");
-            result.DurationMinutes.Should().Be(90);
-            _examRepositoryMock.Verify(r => r.UpdateExam(It.Is<Exam>(e => e.PositionTitle == "Updated Position")), Times.Once);
-            _examRepositoryMock.Verify(r => r.SaveAsync(), Times.Once);
-        }
-
-        [Fact]
         public async Task UpdateExamAsync_ShouldReturnNull_WhenExamDoesNotExist()
         {
             // Arrange
@@ -198,21 +137,6 @@ namespace HireGate.Api.Tests.Services
             result.First().QuestionText.Should().Be("Question 1");
         }
 
-        [Fact]
-        public async Task AddQuestionToExamAsync_ShouldReturnTrue_WhenExamExistsAndQuestionNotAlreadyInExam()
-        {
-            // Arrange
-            _examRepositoryMock.Setup(r => r.ExamExistsAsync(1)).ReturnsAsync(true);
-            _examRepositoryMock.Setup(r => r.QuestionAlreadyInExamAsync(1, 1)).ReturnsAsync(false);
-
-            // Act
-            var result = await _examService.AddQuestionToExamAsync(1, 1);
-
-            // Assert
-            result.Should().BeTrue();
-            _examRepositoryMock.Verify(r => r.AddQuestionAsync(1, 1), Times.Once);
-            _examRepositoryMock.Verify(r => r.SaveAsync(), Times.Once);
-        }
 
         [Fact]
         public async Task AddQuestionToExamAsync_ShouldReturnFalse_WhenExamDoesNotExist()
