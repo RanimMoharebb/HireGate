@@ -20,9 +20,6 @@ namespace HireGate.API.Endpoints
             adminGroup.MapGet("/{id}", GetQuestionById)
                 .WithName("GetQuestionById");
 
-            adminGroup.MapGet("/topic/{topicId}", GetQuestionsByTopicId)
-                .WithName("GetQuestionsByTopicId");
-
             adminGroup.MapPost("/", CreateQuestion)
                 .WithName("CreateQuestion");
 
@@ -36,14 +33,14 @@ namespace HireGate.API.Endpoints
                 .WithName("DeleteQuestion");
         }
 
-        private static async Task<IResult> GetAllQuestions(IQuestionService questionService, int page = 1, int pageSize = 10)
+        private static async Task<IResult> GetAllQuestions(IQuestionService questionService, int page = 1, int pageSize = 10, int? topicId = null)
         {
             try
             {
                 var validPage = Math.Max(1, page);
                 var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
 
-                var (questions, totalCount) = await questionService.GetAllQuestionsAsync(validPage, validPageSize);
+                var (questions, totalCount) = await questionService.GetAllQuestionsAsync(validPage, validPageSize, topicId);
 
                 var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
 
@@ -77,23 +74,6 @@ namespace HireGate.API.Endpoints
                     return Results.NotFound(new { message = $"Question with ID {id} not found" });
 
                 return Results.Ok(question);
-            }
-            catch (ArgumentException ex)
-            {
-                return Results.BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Results.BadRequest(new { message = ex.Message });
-            }
-        }
-
-        private static async Task<IResult> GetQuestionsByTopicId(int topicId, IQuestionService questionService)
-        {
-            try
-            {
-                var questions = await questionService.GetQuestionsByTopicIdAsync(topicId);
-                return Results.Ok(questions);
             }
             catch (ArgumentException ex)
             {
