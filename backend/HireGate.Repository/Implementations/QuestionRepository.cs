@@ -22,25 +22,23 @@ namespace HireGate.Repository.Implementations
                 .FirstOrDefaultAsync(q => q.Id == id);
         }
 
-        public async Task<(IEnumerable<Question> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize)
+        public async Task<(IEnumerable<Question> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize, int? topicId = null)
         {
-            var totalCount = await _context.Questions.CountAsync();
-            var items = await _context.Questions
+            IQueryable<Question> query = _context.Questions;
+
+            if (topicId.HasValue)
+            {
+                query = query.Where(q => q.TopicId == topicId.Value);
+            }
+
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .Include(q => q.Topic)
                 .Include(q => q.Choices)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
             return (items, totalCount);
-        }
-
-        public async Task<IEnumerable<Question>> GetQuestionsByTopicIdAsync(int topicId)
-        {
-            return await _context.Questions
-                .Where(q => q.TopicId == topicId)
-                .Include(q => q.Topic)
-                .Include(q => q.Choices)
-                .ToListAsync();
         }
 
         public async Task<Question> CreateQuestionAsync(Question question)

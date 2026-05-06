@@ -26,19 +26,13 @@ namespace HireGate.Service.Implementations
             return question == null ? null : MapToQuestionDto(question);
         }
 
-        public async Task<(IEnumerable<QuestionDto> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize)
+        public async Task<(IEnumerable<QuestionDto> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize, int? topicId = null)
         {
-            var (items, totalCount) = await _repository.GetAllQuestionsAsync(pageNumber, pageSize);
-            return (items.Select(MapToQuestionDto).ToList(), totalCount);
-        }
-
-        public async Task<IEnumerable<QuestionDto>> GetQuestionsByTopicIdAsync(int topicId)
-        {
-            if (topicId <= 0)
+            if (topicId.HasValue && topicId.Value <= 0)
                 throw new ArgumentException("Invalid topic ID", nameof(topicId));
 
-            var questions = await _repository.GetQuestionsByTopicIdAsync(topicId);
-            return questions.Select(MapToQuestionDto).ToList();
+            var (items, totalCount) = await _repository.GetAllQuestionsAsync(pageNumber, pageSize, topicId);
+            return (items.Select(MapToQuestionDto).ToList(), totalCount);
         }   
 
         public async Task<QuestionDto> CreateQuestionAsync(CreateQuestionDto createQuestionDto)

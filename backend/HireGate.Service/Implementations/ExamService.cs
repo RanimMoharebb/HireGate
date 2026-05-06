@@ -47,6 +47,19 @@ namespace HireGate.Service.Implementations
             }
 
             var exam = candidate.Exam;
+            if (exam is null)
+            {
+                if (!candidate.ExamId.HasValue)
+                {
+                    throw new InvalidOperationException("Candidate has no exam assigned.");
+                }
+
+                exam = await _examRepository.GetExamByIdAsync(candidate.ExamId.Value);
+                if (exam is null)
+                {
+                    throw new InvalidOperationException("Assigned exam not found.");
+                }
+            }
 
             // Window checks
             if (exam.WindowStartTime.HasValue && now < exam.WindowStartTime.Value)
