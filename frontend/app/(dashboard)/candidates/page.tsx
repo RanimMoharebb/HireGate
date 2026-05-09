@@ -1,3 +1,3 @@
-export default function CandidatesPage() {
+export default async function CandidateDetailsPage() {
   return <section />;
 }
