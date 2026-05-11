@@ -61,7 +61,14 @@ export function Button(props: ButtonProps) {
     );
   }
 
-  const { as: _as, variant: _variant, size: _size, ...buttonProps } = props;
+  const {
+    as: _as,
+    variant: _variant,
+    size: _size,
+    className: _className,
+    children: _children,
+    ...buttonProps
+  } = props;
 
   return (
     <button className={sharedClassName} {...buttonProps}>
