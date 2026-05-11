@@ -104,17 +104,16 @@ namespace HireGate.Service.Tests
             result.Items.Should().HaveCount(1);
             result.TotalCount.Should().Be(1);
             result.Items.First().Id.Should().Be(1);
+            result.Items.First().DeletedAt.Should().BeNull();
         }
 
         #endregion
 
-        #region GetQuestionsByTopicIdAsync Tests
-
         [Fact]
-        public async Task GetQuestionsByTopicIdAsync_ShouldThrowArgumentException_WhenTopicIdIsInvalid()
+        public async Task GetAllQuestionsAsync_ShouldThrowArgumentException_WhenTopicIdIsInvalid()
         {
             // Act
-            Func<Task> act = async () => await _questionService.GetQuestionsByTopicIdAsync(0);
+            Func<Task> act = async () => await _questionService.GetAllQuestionsAsync(1, 10, topicId: 0);
 
             // Assert
             await act.Should().ThrowAsync<ArgumentException>()
@@ -122,7 +121,7 @@ namespace HireGate.Service.Tests
         }
 
         [Fact]
-        public async Task GetQuestionsByTopicIdAsync_ShouldReturnQuestionsForTopic()
+        public async Task GetAllQuestionsAsync_ShouldReturnQuestionsForTopic()
         {
             // Arrange
             var topic = new Topic { Id = 1, TopicName = "Test Topic" };
@@ -137,17 +136,53 @@ namespace HireGate.Service.Tests
                     Choices = new List<Choice> { new Choice { Id = 1, ChoiceText = "Choice 1", IsCorrect = true } }
                 }
             };
-            _questionRepositoryMock.Setup(r => r.GetQuestionsByTopicIdAsync(1)).ReturnsAsync(questions);
+            _questionRepositoryMock.Setup(r => r.GetAllQuestionsAsync(1, 10, 1, null)).ReturnsAsync((questions, 1));
 
             // Act
-            var result = await _questionService.GetQuestionsByTopicIdAsync(1);
+            var (result, _) = await _questionService.GetAllQuestionsAsync(1, 10, topicId: 1);
 
             // Assert
             result.Should().HaveCount(1);
             result.First().Id.Should().Be(1);
         }
 
-        #endregion
+        [Fact]
+        public async Task GetAllQuestionsAsync_ShouldPassDeletedFilterToRepository()
+        {
+            // Arrange
+            _questionRepositoryMock
+                .Setup(r => r.GetAllQuestionsAsync(1, 10, null, null, true))
+                .ReturnsAsync((new List<Question>(), 0));
+
+            // Act
+            await _questionService.GetAllQuestionsAsync(1, 10, isDeleted: true);
+
+            // Assert
+            _questionRepositoryMock.Verify(r => r.GetAllQuestionsAsync(1, 10, null, null, true), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetQuestionByIdAsync_ShouldReturnSoftDeleteFlag_WhenQuestionIsDeleted()
+        {
+            // Arrange
+            var question = new Question
+            {
+                Id = 1,
+                TopicId = 1,
+                QuestionText = "Deleted Question",
+                DeletedAt = DateTime.UtcNow,
+                Choices = new List<Choice>()
+            };
+            _questionRepositoryMock.Setup(r => r.GetQuestionByIdAsync(1)).ReturnsAsync(question);
+
+            // Act
+            var result = await _questionService.GetQuestionByIdAsync(1);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.DeletedAt.Should().NotBeNull();
+            result.DeletedAt.Should().NotBeNull();
+        }
 
         #region CreateQuestionAsync Tests
 
@@ -599,6 +634,64 @@ namespace HireGate.Service.Tests
 
             // Act
             var result = await _questionService.DeleteQuestionAsync(1);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        #endregion
+
+        #region RestoreQuestionAsync Tests
+
+        [Fact]
+        public async Task RestoreQuestionAsync_ShouldThrowArgumentException_WhenIdIsInvalid()
+        {
+            // Act
+            Func<Task> act = async () => await _questionService.RestoreQuestionAsync(0);
+
+            // Assert
+            await act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("Invalid question ID*");
+        }
+
+        [Fact]
+        public async Task RestoreQuestionAsync_ShouldThrowKeyNotFoundException_WhenQuestionDoesNotExist()
+        {
+            // Arrange
+            _questionRepositoryMock.Setup(r => r.QuestionExistsIncludingDeletedAsync(1)).ReturnsAsync(false);
+
+            // Act
+            Func<Task> act = async () => await _questionService.RestoreQuestionAsync(1);
+
+            // Assert
+            await act.Should().ThrowAsync<KeyNotFoundException>()
+                .WithMessage("Question with ID 1 not found");
+        }
+
+        [Fact]
+        public async Task RestoreQuestionAsync_ShouldThrowInvalidOperationException_WhenQuestionIsNotDeleted()
+        {
+            // Arrange
+            _questionRepositoryMock.Setup(r => r.QuestionExistsIncludingDeletedAsync(1)).ReturnsAsync(true);
+            _questionRepositoryMock.Setup(r => r.RestoreQuestionAsync(1)).ReturnsAsync(false);
+
+            // Act
+            Func<Task> act = async () => await _questionService.RestoreQuestionAsync(1);
+
+            // Assert
+            await act.Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("Question with ID 1 is not deleted");
+        }
+
+        [Fact]
+        public async Task RestoreQuestionAsync_ShouldReturnTrue_WhenRestoreSuccessful()
+        {
+            // Arrange
+            _questionRepositoryMock.Setup(r => r.QuestionExistsIncludingDeletedAsync(1)).ReturnsAsync(true);
+            _questionRepositoryMock.Setup(r => r.RestoreQuestionAsync(1)).ReturnsAsync(true);
+
+            // Act
+            var result = await _questionService.RestoreQuestionAsync(1);
 
             // Assert
             result.Should().BeTrue();

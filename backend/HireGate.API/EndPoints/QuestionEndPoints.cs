@@ -11,8 +11,8 @@ namespace HireGate.API.Endpoints
         public static void MapQuestionEndpoints(this WebApplication app, IServiceProvider serviceProvider)
         {
             var adminGroup = app.MapGroup("/api/admin/questions")
-                .WithName("Questions")
-                .RequireAuthorization();
+                .WithName("Questions");
+               // .RequireAuthorization();
 
             adminGroup.MapGet("/", GetAllQuestions)
                 .WithName("GetAllQuestions");
@@ -31,16 +31,32 @@ namespace HireGate.API.Endpoints
 
             adminGroup.MapDelete("/{id}", DeleteQuestion)
                 .WithName("DeleteQuestion");
+
+            adminGroup.MapPatch("/{id}/restore", RestoreQuestion)
+                .WithName("RestoreQuestion");
         }
 
-        private static async Task<IResult> GetAllQuestions(IQuestionService questionService, int page = 1, int pageSize = 10, int? topicId = null)
+        private static async Task<IResult> GetAllQuestions(
+            IQuestionService questionService,
+            int page = 1,
+            int pageSize = 10,
+            int? topicId = null,
+            string? search = null,
+            string deletedFilter = "active")
         {
             try
             {
                 var validPage = Math.Max(1, page);
                 var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+                bool? isDeleted = deletedFilter.ToLowerInvariant() switch
+                {
+                    "active" => false,
+                    "deleted" => true,
+                    "all" => (bool?)null,
+                    _ => throw new ArgumentException("deletedFilter must be one of: active, deleted, all")
+                };
 
-                var (questions, totalCount) = await questionService.GetAllQuestionsAsync(validPage, validPageSize, topicId);
+                var (questions, totalCount) = await questionService.GetAllQuestionsAsync(validPage, validPageSize, topicId, search, isDeleted);
 
                 var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
 
@@ -159,6 +175,34 @@ namespace HireGate.API.Endpoints
                 return Results.NotFound(new { message = ex.Message });
             }
             catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+        }
+
+        private static async Task<IResult> RestoreQuestion(int id, IQuestionService questionService)
+        {
+            try
+            {
+                var success = await questionService.RestoreQuestionAsync(id);
+                if (!success)
+                    return Results.NotFound(new { message = $"Question with ID {id} not found" });
+
+                return Results.NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return Results.NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
             {
                 return Results.BadRequest(new { message = ex.Message });
             }
