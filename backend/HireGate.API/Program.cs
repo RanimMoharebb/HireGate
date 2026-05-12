@@ -89,6 +89,8 @@ builder.Services.AddCors(options =>
         p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
+
+
 // =========================
 // JSON OPTIONS
 // =========================
@@ -125,3 +127,4 @@ app.MapAuthEndpoints();
 app.MapAdminEndpoints();
 
 app.Run();
+

@@ -50,11 +50,11 @@ public AuthService(IAdminRepository repo, IConfiguration config, IEmailService e
     }
     var token = GenerateJwt(admin);
 
-return new LoginResponseDto
-{
-    Token = token,
-    Message = "Login successful"
-};
+    return new LoginResponseDto
+    {
+        Token = token,
+        Message = "Login successful"
+    };
 }
 
 private string GenerateJwt(Admin admin)
@@ -116,10 +116,6 @@ public async Task<CompleteRegisterAdminResponseDto> CompleteRegistration(Complet
         Message = "Registration completed successfully"
     };
 }
-
-
-
-
 
 
 }

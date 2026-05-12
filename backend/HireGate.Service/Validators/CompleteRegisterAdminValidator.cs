@@ -7,18 +7,18 @@ public class CompleteRegisterAdminValidator : AbstractValidator<CompleteRegister
 {
     public CompleteRegisterAdminValidator()
     {
-        RuleFor(x => x.Email)
-            .NotEmpty()
-            .EmailAddress();
-
-        RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(6);
-
         RuleFor(x => x.FirstName)
-            .NotEmpty();
+            .NotEmpty()
+            .WithMessage("First name is required");
 
         RuleFor(x => x.LastName)
-            .NotEmpty();
+            .NotEmpty()
+            .WithMessage("Last name is required");
+
+        RuleFor(x => x.Email)
+            .NotEmpty()
+            .EmailAddress()
+            .WithMessage("Valid email is required");
+            
     }
 }

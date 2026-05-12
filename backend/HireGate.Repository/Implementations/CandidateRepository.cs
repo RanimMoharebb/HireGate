@@ -6,12 +6,10 @@ using Microsoft.EntityFrameworkCore;
 public class CandidateRepository : ICandidateRepository
 {
     private readonly AppDbContext _context;
-    // the connection to database
     public CandidateRepository(AppDbContext context)
     {
         _context = context;
     }
-    // Dependency Injection, ASP.NET gives  the DB context automatically
 
 
     public async Task<List<Candidate>> GetAll()
