@@ -63,8 +63,8 @@ export function QuestionFormModal({
         >
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
             <div className="space-y-6">
-              <section className="space-y-2">
-                <label htmlFor="question-text" className="text-sm font-medium text-gray-700">
+              <section className="flex flex-col gap-3">
+                <label htmlFor="question-text" className="block text-sm font-medium text-gray-700">
                   Question
                 </label>
                 <textarea
@@ -80,8 +80,8 @@ export function QuestionFormModal({
                 />
               </section>
 
-              <section className="space-y-2">
-                <label htmlFor="question-image-url" className="text-sm font-medium text-gray-700">
+              <section className="flex flex-col gap-3">
+                <label htmlFor="question-image-url" className="block text-sm font-medium text-gray-700">
                   Image URL <span className="font-normal text-gray-400">(optional)</span>
                 </label>
                 <Input
@@ -96,9 +96,6 @@ export function QuestionFormModal({
               </section>
 
               <section className="space-y-2">
-                <label htmlFor="question-topic" className="text-sm font-medium text-gray-700">
-                  Topic
-                </label>
                 <select
                   id="question-topic"
                   value={formData.topicId}
@@ -177,19 +174,18 @@ export function QuestionFormModal({
                   ))}
                 </div>
               </section>
-
-              {formError && (
-                <div
-                  role="alert"
-                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-                >
-                  {formError}
-                </div>
-              )}
             </div>
           </div>
 
-          <footer className="shrink-0 border-t border-gray-100 bg-slate-50/80 px-5 py-4 sm:px-6">
+          <footer className="shrink-0 space-y-3 border-t border-gray-100 bg-slate-50/80 px-5 py-4 sm:px-6">
+            {formError && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              >
+                {formError}
+              </div>
+            )}
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
               <button
                 type="button"

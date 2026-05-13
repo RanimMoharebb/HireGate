@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getUserFromToken } from "@/app/_lib/auth";
 import { useEffect, useState } from "react";
@@ -113,25 +112,32 @@ useEffect(() => {
   
       </nav>
 
-        <div className="border-t border-slate-200 px-4 py-4">
-          <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-600">
+        <div className="mt-auto shrink-0 border-t border-slate-200 bg-slate-50/40 px-4 pb-6 pt-5">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
               HG
             </div>
-            <div>
-              <p className="text-sm font-medium text-slate-900">HireGate Team</p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-slate-900">HireGate Team</p>
               <p className="text-xs text-slate-500">Internal dashboard</p>
             </div>
           </div>
   
-        {/* 🔥 LOGOUT BUTTON (NEW) */}
       <button
+              type="button"
         onClick={logout}
-        className="w-full rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition"
-      >
-        Logout
+              className="group flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 cursor-pointer"
+            >
+              <LogOut
+                size={18}
+                strokeWidth={2}
+                className="shrink-0 text-slate-500 transition-colors group-hover:text-red-600"
+                aria-hidden
+              />
+              Log out
       </button>
-        
+          </div>
       </div>
       </aside>
     </>
