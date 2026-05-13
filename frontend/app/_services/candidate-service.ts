@@ -22,7 +22,9 @@ export type Candidate = {
 export async function getCandidates(): Promise<Candidate[]> {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(BASE_URL, {
+  const listUrl = `${BASE_URL}?page=1&pageSize=100`;
+
+  const res = await fetch(listUrl, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -37,7 +39,22 @@ export async function getCandidates(): Promise<Candidate[]> {
     throw new Error(text || "Failed to fetch candidates");
   }
 
-  return JSON.parse(text);
+  const parsed: unknown = JSON.parse(text);
+
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+
+  if (
+    parsed !== null &&
+    typeof parsed === "object" &&
+    "data" in parsed &&
+    Array.isArray((parsed as { data: unknown }).data)
+  ) {
+    return (parsed as { data: Candidate[] }).data;
+  }
+
+  return [];
 }
 // -----------------------------------
 // GET BY ID
