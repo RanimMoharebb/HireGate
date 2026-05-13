@@ -100,4 +100,15 @@ public class CandidateRepository : ICandidateRepository
                 setters.SetProperty(c => c.ExamId, examId));
     }
 
+    public async Task<Candidate?> GetCandidateWithExam(int id)
+    {
+        return await _context.Candidates
+            .Include(c => c.Exam)
+                .ThenInclude(e => e.ExamQuestions)
+                    .ThenInclude(eq => eq.Question)
+                        .ThenInclude(q => q.Choices)
+            .Include(c => c.Answers) // IMPORTANT
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
 }

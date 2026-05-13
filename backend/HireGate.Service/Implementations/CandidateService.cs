@@ -323,5 +323,59 @@ public async Task<object> StartExam(string token)
 }
 
 
+
+public async Task<ExamReviewDto?> GetExamReview(int candidateId)
+{
+    var candidate = await _repo.GetCandidateWithExam(candidateId);
+
+    if (candidate == null || candidate.Exam == null)
+        return null;
+
+    var answers = candidate.Answers ?? new List<CandidateAnswer>();
+
+    var questions = candidate.Exam.ExamQuestions.Select(eq =>
+    {
+        var question = eq.Question;
+
+        var answer = answers.FirstOrDefault(a => a.QuestionId == question.Id);
+
+        var selectedChoiceId = answer?.ChoiceId;
+
+        var correctChoiceId =
+            question.Choices.FirstOrDefault(c => c.IsCorrect)?.Id;
+
+        var isCorrect =
+            selectedChoiceId != null &&
+            correctChoiceId != null &&
+            selectedChoiceId == correctChoiceId;
+
+        return new ExamReviewQuestionDto
+        {
+            QuestionId = question.Id,
+            QuestionText = question.QuestionText,
+
+            SelectedChoiceId = selectedChoiceId,
+
+            IsCorrect = isCorrect,
+
+            Choices = question.Choices.Select(c => new ExamReviewChoiceDto
+            {
+                Id = c.Id,
+                Text = c.ChoiceText,
+                IsCorrect = c.IsCorrect
+            }).ToList()
+        };
+    }).ToList();
+
+    var finalScore = questions.Count(q => q.IsCorrect);
+
+    return new ExamReviewDto
+    {
+        CandidateId = candidate.Id,
+        CandidateName = $"{candidate.FirstName} {candidate.LastName}".Trim(),
+        FinalScore = finalScore,
+        Questions = questions
+    };
+}
 }
 }

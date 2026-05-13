@@ -82,16 +82,8 @@ if (password !== confirmPassword) {
       setResendLoading(true);
       setError("");
       setMessage("");
-    /*
-          if (!validateOTP(otp)) {
-      setError("OTP is required");
-      return;
-    }
-      */
 
       const res = await resendOtp(email);
-
-      //setMessage(res);
 
     } catch (err: any) {
       setError(err.message);

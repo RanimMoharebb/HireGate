@@ -6,13 +6,11 @@ import { useRouter } from "next/navigation";
 export default function ThankYouPage() {
   const router = useRouter();
 
-  // prevent going back to exam page
   useEffect(() => {
-    // clear history entry for exam pages
     window.history.pushState(null, "", window.location.href);
 
     const handleBack = () => {
-      router.replace("/"); // or login page
+      router.replace("/candidates/thank-you"); 
     };
 
     window.addEventListener("popstate", handleBack);
@@ -26,6 +24,14 @@ export default function ThankYouPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="bg-white shadow rounded-2xl p-10 text-center max-w-md">
 
+{/* LOGO */}
+<div className="flex justify-center mb-6">
+  <img
+    src="/images/logo.png"
+    alt="logo"
+    className="h-10 w-auto"
+  />
+</div>
         {/* ICON */}
         <div className="text-green-600 text-6xl mb-4">
           ✔
@@ -38,7 +44,7 @@ export default function ThankYouPage() {
 
         {/* MESSAGE */}
         <p className="text-slate-600 mb-6">
-          Thank you for completing your exam.
+          Thank you for completing your exam. <br />
           Your answers have been recorded successfully.
         </p>
 
@@ -46,13 +52,6 @@ export default function ThankYouPage() {
           You cannot retake or modify this exam.
         </div>
 
-        {/* BUTTON */}
-        <button
-          onClick={() => router.push("/")}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg"
-        >
-          Go Home
-        </button>
 
       </div>
     </div>
