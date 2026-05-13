@@ -136,32 +136,42 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
     }
 
     // UPDATE ROLE
-    public async Task<UpdateAdminRoleResponseDto> UpdateRole(int id, UpdateAdminRoleDto dto)
+public async Task<UpdateAdminRoleResponseDto> UpdateRole(int id, UpdateAdminRoleDto dto)
+{
+    var admin = await _repo.GetById(id);
+
+    if (admin == null)
     {
-        var admin = await _repo.GetById(id);
-
-        if (admin == null)
-        {
-            return new UpdateAdminRoleResponseDto
-            {
-                Id = id,
-                Role = "",
-                Message = "Admin not found"
-            };
-        }
-
-        admin.Role = (UserRole)dto.Role;
-
-        await _repo.Update(admin);
-
         return new UpdateAdminRoleResponseDto
         {
-            Id = admin.Id,
-            Role = admin.Role.ToString(),
-            Message = "Role updated successfully"
+            Id = id,
+            Role = "",
+            Message = "Admin not found"
         };
     }
 
+    // safe enum conversion
+    if (!Enum.TryParse<UserRole>(dto.Role, true, out var role))
+    {
+        return new UpdateAdminRoleResponseDto
+        {
+            Id = id,
+            Role = "",
+            Message = "Invalid role"
+        };
+    }
+
+    admin.Role = role;
+
+    await _repo.Update(admin);
+
+    return new UpdateAdminRoleResponseDto
+    {
+        Id = admin.Id,
+        Role = admin.Role.ToString(),
+        Message = "Role updated successfully"
+    };
+}
 
 
 private string GenerateOtp()

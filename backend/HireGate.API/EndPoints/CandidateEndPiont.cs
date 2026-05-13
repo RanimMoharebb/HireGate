@@ -12,26 +12,25 @@ public static class CandidateEndpoints
         var group = app.MapGroup("/candidates");
 
         // CREATE
+        group.MapPost("/", async (
+            [FromBody] CreateCandidateDto dto,
+            [FromServices] ICandidateService service,
+            [FromServices] IValidator<CreateCandidateDto> validator
+        ) =>
+        {
+            var validation = await validator.ValidateAsync(dto);
 
-group.MapPost("/", async (
-    [FromBody] CreateCandidateDto dto,
-    [FromServices] ICandidateService service,
-    [FromServices] IValidator<CreateCandidateDto> validator
-) =>
-{
-    var validation = await validator.ValidateAsync(dto);
+            if (!validation.IsValid)
+                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-    if (!validation.IsValid)
-        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            var result = await service.CreateCandidate(dto);
 
-    var result = await service.CreateCandidate(dto);
+            if (result.Message == "Email already exists")
+                return Results.BadRequest(result);
 
-    if (result.Message == "Email already exists")
-        return Results.BadRequest(result);
-
-    return Results.Ok(result);
-})
-.RequireAuthorization();
+            return Results.Ok(result);
+        })
+        .RequireAuthorization();
 
         // COMPLETE PROFILE
         group.MapPut("/complete-profile/{token}", async (
@@ -52,8 +51,7 @@ group.MapPost("/", async (
                 return Results.NotFound("Invalid token");
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization();
+        });
 
         // GET ALL (paginated)
         group.MapGet("/", async (
@@ -146,19 +144,18 @@ group.MapPost("/", async (
         .RequireAuthorization();
 
         // START EXAM
+        group.MapPost("/start-exam/{token}", async (
+            string token,
+            [FromServices] ICandidateService service
+        ) =>
+        {
+            var result = await service.StartExam(token);
 
-group.MapPost("/start-exam/{token}", async (
-    string token,
-    [FromServices] ICandidateService service
-) =>
-{
-    var result = await service.StartExam(token);
+            if (result is string message)
+                return Results.BadRequest(message);
 
-    if (result is string message)
-        return Results.BadRequest(message);
-
-    return Results.Ok(result);
-});
+            return Results.Ok(result);
+        });
 
         // EXAM PAGE
         group.MapGet("/exam-page/{token}", async (
@@ -171,7 +168,6 @@ group.MapPost("/start-exam/{token}", async (
             return result is null
                 ? Results.BadRequest("Exam is not available at this time")
                 : Results.Ok(result);
-        })
-        .RequireAuthorization();
-    }
+        });
+            }
 }
