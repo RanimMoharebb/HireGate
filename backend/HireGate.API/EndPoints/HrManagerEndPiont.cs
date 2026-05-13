@@ -13,27 +13,26 @@ public static class AdminEndpoints
           //             .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // CREATE ADMIN
+        group.MapPost("/", async (
+            [FromBody] CreateAdminRequestDto dto,
+            [FromServices] IAdminService service,
+            [FromServices] IValidator<CreateAdminRequestDto> validator
+        ) =>
+        {
+            var validation = await validator.ValidateAsync(dto);
 
+            if (!validation.IsValid)
+                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-group.MapPost("/", async (
-    [FromBody] CreateAdminRequestDto dto,
-    [FromServices] IAdminService service,
-    [FromServices] IValidator<CreateAdminRequestDto> validator
-) =>
-{
-    var validation = await validator.ValidateAsync(dto);
+            var response = await service.CreateAdmin(dto);
 
-    if (!validation.IsValid)
-        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            if (response.Message == "Email already exists")
+                return Results.BadRequest(response);
 
-    var response = await service.CreateAdmin(dto);
-
-    if (response.Message == "Email already exists")
-        return Results.BadRequest(response);
-
-    return Results.Ok(response);
-})
-.RequireAuthorization(policy => policy.RequireRole("CEO"));
+            return Results.Ok(response);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("CEO"));
+        
         // GET ALL
         group.MapGet("/", async (
             [FromServices] IAdminService service
@@ -84,22 +83,32 @@ group.MapPost("/", async (
             var validation = await validator.ValidateAsync(dto);
 
             if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            {
+                return Results.BadRequest(new
+                {
+                    message = validation.Errors.First().ErrorMessage
+                });
+            }
+
 
             var result = await service.UpdateRole(id, dto);
 
             if (result.Message == "Admin not found")
-                return Results.NotFound(result);
+            {
+                return Results.NotFound(new
+                {
+                    message = result.Message
+                });
+            }
 
             return Results.Ok(result);
         })
         .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
+
         // DEBUG ROLE
         group.MapGet("/debug-role", (HttpContext ctx) =>
         {
-            var id = ctx.User.Claims.FirstOrDefault(c =>
-                c.Type.Contains("nameidentifier") || c.Type == "id")?.Value;
 
             var email = ctx.User.Claims.FirstOrDefault(c =>
                 c.Type.Contains("emailaddress"))?.Value;
@@ -109,12 +118,11 @@ group.MapPost("/", async (
 
             return Results.Ok(new
             {
-                id,
                 email,
                 roleFromToken = role
             });
     
-        });
+        }).RequireAuthorization();
 
 
     }
