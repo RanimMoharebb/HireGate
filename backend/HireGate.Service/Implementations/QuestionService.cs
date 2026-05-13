@@ -93,7 +93,7 @@ namespace HireGate.Service.Implementations
                 throw new ArgumentNullException(nameof(updateQuestionDto));
 
             var existingQuestion = await _repository.GetQuestionByIdAsync(id);
-            if (existingQuestion == null || existingQuestion.DeletedAt != null)
+            if (existingQuestion == null)
                 throw new KeyNotFoundException($"Question with ID {id} not found");
 
             if (string.IsNullOrWhiteSpace(updateQuestionDto.QuestionText))
@@ -229,7 +229,7 @@ namespace HireGate.Service.Implementations
             if (id <= 0)
                 throw new ArgumentException("Invalid question ID", nameof(id));
 
-            var exists = await _repository.QuestionExistsIncludingDeletedAsync(id);
+            var exists = await _repository.QuestionExistsAsync(id);
             if (!exists)
                 throw new KeyNotFoundException($"Question with ID {id} not found");
 

@@ -29,16 +29,22 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
 }
 
     // GET ALL
-    public async Task<List<AdminResponseDto>> GetAll()
+    public async Task<(List<AdminResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search)
     {
-        var admins = await _repo.GetAll();
+        var validPage = Math.Max(1, page);
+        var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+        var (admins, totalCount) = await _repo.GetAll(validPage, validPageSize, search);
 
-        return admins.Select(a => new AdminResponseDto
+        var data = admins.Select(a => new AdminResponseDto
         {
             Id = a.Id,
+            FirstName = a.FirstName,
+            LastName = a.LastName,
             Email = a.Email,
-            Role = a.Role.ToString()
+            Role = a.Role.ToString(),
         }).ToList();
+
+        return (data, totalCount);
     }
 
     // GET BY ID
@@ -110,8 +116,7 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
     // prevent deleting last CEO
     if (admin.Role == UserRole.CEO)
     {
-        var ceoCount = (await _repo.GetAll())
-            .Count(a => a.Role == UserRole.CEO);
+        var ceoCount = await _repo.CountByRole(UserRole.CEO);
 
         if (ceoCount <= 1)
             return new DeleteAdminResponseDto

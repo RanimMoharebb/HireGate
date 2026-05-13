@@ -2,12 +2,13 @@
 
 import { AlertMessage } from "@/app/_components/question-bank/alert-message";
 import { AddTopicModal } from "@/app/_components/question-bank/add-topic-modal";
-import { DeleteQuestionModal } from "@/app/_components/question-bank/delete-question-modal";
-import { PaginationControls } from "@/app/_components/question-bank/pagination-controls";
+import { DeleteConfirmationModal } from "@/app/_components/question-bank/delete-confirmation-modal";
+import { PaginationControls } from "@/app/_components/pagination-controls";
 import { QuestionBankHeader } from "@/app/_components/question-bank/question-bank-header";
 import { QuestionDetailsModal } from "@/app/_components/question-bank/question-details-modal";
 import { QuestionFormModal } from "@/app/_components/question-bank/question-form-modal";
 import { QuestionSearch } from "@/app/_components/question-bank/question-search";
+import { QuestionStatusFilter } from "@/app/_components/question-bank/question-status-filter";
 import { QuestionsTable } from "@/app/_components/question-bank/questions-table";
 import { TopicFilter } from "@/app/_components/question-bank/topic-filter";
 import { useQuestionBank } from "@/app/_hooks/use-question-bank";
@@ -18,6 +19,8 @@ export default function page() {
     topics,
     selectedTopic,
     setSelectedTopic,
+    deletedFilter,
+    setDeletedFilter,
     searchTerm,
     setSearchTerm,
     currentPage,
@@ -51,6 +54,7 @@ export default function page() {
     openEditQuestionModal,
     closeFormModal,
     confirmDeleteQuestion,
+    restoreQuestion,
   } = useQuestionBank();
 
   return (
@@ -92,12 +96,22 @@ export default function page() {
         }}
       />
 
+      <QuestionStatusFilter
+        value={deletedFilter}
+        onChange={(value) => {
+          setDeletedFilter(value);
+          setCurrentPage(1);
+        }}
+      />
+
       <QuestionsTable
         questions={questions}
         loading={loading}
+        deletedFilter={deletedFilter}
         onView={setSelectedQuestion}
         onEdit={openEditQuestionModal}
         onDelete={setDeleteQuestion}
+        onRestore={restoreQuestion}
       />
 
       <PaginationControls
@@ -111,6 +125,14 @@ export default function page() {
       <QuestionDetailsModal
         question={showQuestionDetails ? selectedQuestion : null}
         onClose={() => setSelectedQuestion(null)}
+        loading={loading}
+        onRestore={
+          showQuestionDetails && selectedQuestion?.deletedAt
+            ? () => {
+                void restoreQuestion(selectedQuestion);
+              }
+            : undefined
+        }
       />
 
       <QuestionFormModal
@@ -135,9 +157,12 @@ export default function page() {
         onTopicNameChange={setTopicName}
       />
 
-      <DeleteQuestionModal
-        question={deleteQuestion}
+      <DeleteConfirmationModal
+        isOpen={!!deleteQuestion}
         loading={loading}
+        title="Delete Question"
+        description="Are you sure you want to delete this question? This action cannot be undone."
+        itemLabel={deleteQuestion?.questionText}
         onCancel={() => setDeleteQuestion(null)}
         onConfirm={confirmDeleteQuestion}
       />

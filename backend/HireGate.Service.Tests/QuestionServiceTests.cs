@@ -658,7 +658,7 @@ namespace HireGate.Service.Tests
         public async Task RestoreQuestionAsync_ShouldThrowKeyNotFoundException_WhenQuestionDoesNotExist()
         {
             // Arrange
-            _questionRepositoryMock.Setup(r => r.QuestionExistsIncludingDeletedAsync(1)).ReturnsAsync(false);
+            _questionRepositoryMock.Setup(r => r.QuestionExistsAsync(1)).ReturnsAsync(false);
 
             // Act
             Func<Task> act = async () => await _questionService.RestoreQuestionAsync(1);
@@ -672,7 +672,7 @@ namespace HireGate.Service.Tests
         public async Task RestoreQuestionAsync_ShouldThrowInvalidOperationException_WhenQuestionIsNotDeleted()
         {
             // Arrange
-            _questionRepositoryMock.Setup(r => r.QuestionExistsIncludingDeletedAsync(1)).ReturnsAsync(true);
+            _questionRepositoryMock.Setup(r => r.QuestionExistsAsync(1)).ReturnsAsync(true);
             _questionRepositoryMock.Setup(r => r.RestoreQuestionAsync(1)).ReturnsAsync(false);
 
             // Act
@@ -687,7 +687,7 @@ namespace HireGate.Service.Tests
         public async Task RestoreQuestionAsync_ShouldReturnTrue_WhenRestoreSuccessful()
         {
             // Arrange
-            _questionRepositoryMock.Setup(r => r.QuestionExistsIncludingDeletedAsync(1)).ReturnsAsync(true);
+            _questionRepositoryMock.Setup(r => r.QuestionExistsAsync(1)).ReturnsAsync(true);
             _questionRepositoryMock.Setup(r => r.RestoreQuestionAsync(1)).ReturnsAsync(true);
 
             // Act

@@ -28,6 +28,22 @@ namespace HireGate.Repository.Tests
         }
 
         [Fact]
+        public async Task GetChoicesByQuestionIdAsync_ShouldReturnChoicesForQuestion_OrderedById()
+        {
+            _context.Choices.AddRange(
+                new Choice { QuestionId = 1, ChoiceText = "B", IsCorrect = false },
+                new Choice { QuestionId = 2, ChoiceText = "Other Q", IsCorrect = true },
+                new Choice { QuestionId = 1, ChoiceText = "A", IsCorrect = true }
+            );
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.GetChoicesByQuestionIdAsync(1);
+
+            result.Should().HaveCount(2);
+            result.Select(c => c.ChoiceText).Should().ContainInOrder("B", "A");
+        }
+
+        [Fact]
         public async Task CreateChoiceAsync_ShouldAddChoiceToDatabase()
         {
             // Arrange

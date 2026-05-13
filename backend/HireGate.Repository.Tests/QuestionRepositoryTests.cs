@@ -394,26 +394,5 @@ namespace HireGate.Repository.Tests
             // Assert
             result.Should().BeFalse();
         }
-
-        [Fact]
-        public async Task QuestionExistsIncludingDeletedAsync_ShouldReturnTrue_WhenSoftDeletedExists()
-        {
-            // Arrange
-            var question = new Question
-            {
-                TopicId = 1,
-                QuestionText = "Soft Deleted Question",
-                DeletedAt = DateTime.UtcNow,
-                Choices = new List<Choice>()
-            };
-            _context.Questions.Add(question);
-            await _context.SaveChangesAsync();
-
-            // Act
-            var result = await _repository.QuestionExistsIncludingDeletedAsync(question.Id);
-
-            // Assert
-            result.Should().BeTrue();
-        }
     }
 }

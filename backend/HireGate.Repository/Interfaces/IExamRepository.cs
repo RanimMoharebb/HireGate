@@ -5,7 +5,7 @@ namespace HireGate.Repository.Interfaces
     public interface IExamRepository
     {
         // Exam CRUD operations
-        Task<IEnumerable<Exam>> GetAllExamsAsync();
+        Task<(IEnumerable<Exam> Exams, int TotalCount)> GetAllExamsAsync(int pageNumber, int pageSize, string? search = null);
         Task<Exam?> GetExamByIdAsync(int id);
         void CreateExam(Exam exam);
         void UpdateExam(Exam exam);
@@ -20,6 +20,9 @@ namespace HireGate.Repository.Interfaces
         Task<bool> QuestionAlreadyInExamAsync(int examId, int questionId);
 
         Task<List<int>> GetNonExistentQuestionIdsAsync(IEnumerable<int> questionIds);
+
+        /// <summary>Sets exams.question_count from exam_questions row count (authoritative).</summary>
+        Task SyncExamQuestionCountAsync(int examId);
 
         Task SaveAsync();
         

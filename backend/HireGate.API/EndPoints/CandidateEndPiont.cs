@@ -55,10 +55,26 @@ group.MapPost("/", async (
         })
         .RequireAuthorization();
 
-        // GET ALL
-        group.MapGet("/", async ([FromServices] ICandidateService service) =>
+        // GET ALL (paginated)
+        group.MapGet("/", async (
+            [FromServices] ICandidateService service,
+            int page = 1,
+            int pageSize = 10,
+            string? search = null) =>
         {
-            return Results.Ok(await service.GetAll());
+            var validPage = Math.Max(1, page);
+            var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+            var (data, totalCount) = await service.GetAll(validPage, validPageSize, search);
+            var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
+
+            return Results.Ok(new
+            {
+                data,
+                page = validPage,
+                pageSize = validPageSize,
+                totalCount,
+                totalPages
+            });
         });
         
         // GET BY ID

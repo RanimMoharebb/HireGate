@@ -12,7 +12,5 @@ namespace HireGate.Repository.Interfaces
         Task<bool> RestoreQuestionAsync(int id);
   
         Task<bool> QuestionExistsAsync(int id);
-        Task<bool> QuestionExistsIncludingDeletedAsync(int id);
-    
     }
 }

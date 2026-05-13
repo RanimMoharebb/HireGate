@@ -8,7 +8,8 @@ public interface IAdminRepository
     Task Add(Admin admin);
     Task<Admin?> GetByEmail(string email);
     Task<Admin?> GetById(int id);
-    Task<List<Admin>> GetAll();
+    Task<(List<Admin> Items, int TotalCount)> GetAll(int page, int pageSize, string? search);
+    Task<int> CountByRole(UserRole role);
     Task Update(Admin admin);
     Task Delete(Admin admin);
     Task Delete(int id);

@@ -14,6 +14,15 @@ namespace HireGate.Repository.Implementations
             _context = context;
         }
 
+        public async Task<IReadOnlyList<Choice>> GetChoicesByQuestionIdAsync(int questionId)
+        {
+            return await _context.Choices
+                .AsNoTracking()
+                .Where(c => c.QuestionId == questionId)
+                .OrderBy(c => c.Id)
+                .ToListAsync();
+        }
+
         public async Task<Choice> CreateChoiceAsync(Choice choice)
         {
             _context.Choices.Add(choice);

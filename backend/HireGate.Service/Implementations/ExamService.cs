@@ -153,10 +153,10 @@ namespace HireGate.Service.Implementations
         // ─────────────────────────────
         // GET ALL
         // ─────────────────────────────
-        public async Task<IEnumerable<ExamDto>> GetAllExamsAsync()
+        public async Task<(IEnumerable<ExamListDto> Exams, int TotalCount)> GetAllExamsAsync(int pageNumber, int pageSize, string? search = null)
         {
-            var exams = await _examRepository.GetAllExamsAsync();
-            return exams.Select(ExamMapper.ToDto);
+            var (exams, totalCount) = await _examRepository.GetAllExamsAsync(pageNumber, pageSize, search);
+            return (exams.Select(ExamMapper.ToListDto), totalCount);
         }
 
         // ─────────────────────────────
@@ -173,7 +173,7 @@ namespace HireGate.Service.Implementations
         // ─────────────────────────────
         public async Task<ExamDto> CreateExamAsync(CreateExamDto dto)
         {
-            var questionIds = dto.QuestionIds ?? [];
+            var questionIds = (dto.QuestionIds ?? []).Distinct().ToList();
             var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(questionIds);
             if (invalidIds.Any())
                  throw new InvalidQuestionIdsException(invalidIds);
@@ -184,13 +184,15 @@ namespace HireGate.Service.Implementations
             await _examRepository.SaveAsync(); // exam.Id is now generated
 
             // Attach each question, skip any invalid IDs silently (or you can throw)
-            foreach (var qId in questionIds.Distinct())
+            foreach (var qId in questionIds)
             {
                     await _examRepository.AddQuestionAsync(exam.Id, qId); 
             }
 
             if (questionIds.Any())
                 await _examRepository.SaveAsync();
+
+            await _examRepository.SyncExamQuestionCountAsync(exam.Id);
 
             // Re-fetch so the returned DTO includes the questions with their data
             var created = await _examRepository.GetExamByIdAsync(exam.Id);
@@ -226,8 +228,6 @@ namespace HireGate.Service.Implementations
             if (dto.WindowEndTime.HasValue)
                 exam.WindowEndTime = dto.WindowEndTime;
 
-            _examRepository.UpdateExam(exam);
-
             // ── Sync questions ──────────────────────────────────────
             var existingIds = exam.ExamQuestions.Select(eq => eq.QuestionId).ToHashSet();
 
@@ -244,9 +244,12 @@ namespace HireGate.Service.Implementations
                 foreach (var qId in toAdd)
                     await _examRepository.AddQuestionAsync(id, qId);
             }
+
+            _examRepository.UpdateExam(exam);
             // ────────────────────────────────────────────────────────
 
             await _examRepository.SaveAsync();
+            await _examRepository.SyncExamQuestionCountAsync(id);
 
             // Re-fetch so returned DTO reflects the updated questions
             var updated = await _examRepository.GetExamByIdAsync(id);
@@ -284,6 +287,7 @@ namespace HireGate.Service.Implementations
 
             await _examRepository.AddQuestionAsync(examId, questionId);
             await _examRepository.SaveAsync();
+            await _examRepository.SyncExamQuestionCountAsync(examId);
             return true;
         }
 
@@ -295,6 +299,7 @@ namespace HireGate.Service.Implementations
                 if (!result) return false;
 
                 await _examRepository.SaveAsync();
+                await _examRepository.SyncExamQuestionCountAsync(examId);
                 return true;
                } 
     }

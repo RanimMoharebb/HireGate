@@ -4,12 +4,16 @@ export interface Choice {
   isCorrect: boolean;
 }
 
+export type QuestionDeletedFilter = "active" | "deleted";
+
 export interface Question {
   id: number;
   questionText: string;
   topicId?: number;
   topicName: string;
   questionImage?: string;
+  /** ISO timestamp when soft-deleted; omitted or null when active */
+  deletedAt?: string | null;
   choices: Choice[];
 }
 

@@ -5,7 +5,7 @@ namespace HireGate.Service.Interfaces
 
 public interface IAdminService
 {
-    Task<List<AdminResponseDto>> GetAll();
+    Task<(List<AdminResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search);
     Task<AdminResponseDto?> GetById(int id);
 
     Task<CreateAdminResponseDto> CreateAdmin(CreateAdminRequestDto dto);

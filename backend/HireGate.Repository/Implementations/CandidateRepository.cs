@@ -14,9 +14,28 @@ public class CandidateRepository : ICandidateRepository
     // Dependency Injection, ASP.NET gives  the DB context automatically
 
 
-    public async Task<List<Candidate>> GetAll()
+    public async Task<(List<Candidate> Items, int TotalCount)> GetAll(int page, int pageSize, string? search)
     {
-        return await _context.Candidates.ToListAsync();
+        var query = _context.Candidates.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(c =>
+                c.Email.ToLower().Contains(term) ||
+                (c.FirstName != null && c.FirstName.ToLower().Contains(term)) ||
+                (c.LastName != null && c.LastName.ToLower().Contains(term)) ||
+                (c.PhoneNumber != null && c.PhoneNumber.ToLower().Contains(term)));
+        }
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderBy(c => c.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 
 

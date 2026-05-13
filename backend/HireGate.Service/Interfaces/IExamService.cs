@@ -5,7 +5,7 @@ namespace HireGate.Service.Interfaces
 {
     public interface IExamService
     {
-        Task<IEnumerable<ExamDto>> GetAllExamsAsync();
+        Task<(IEnumerable<ExamListDto> Exams, int TotalCount)> GetAllExamsAsync(int pageNumber, int pageSize, string? search = null);
         Task<ExamDto?> GetExamByIdAsync(int id);
         Task<ExamDto> CreateExamAsync(CreateExamDto examDto);
 

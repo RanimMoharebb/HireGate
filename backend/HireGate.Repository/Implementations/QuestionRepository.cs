@@ -90,12 +90,7 @@ namespace HireGate.Repository.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
-          public async Task<bool> QuestionExistsAsync(int id)
-        {
-            return await _context.Questions.AnyAsync(q => q.Id == id && q.DeletedAt == null);
-        }
-
-        public async Task<bool> QuestionExistsIncludingDeletedAsync(int id)
+        public async Task<bool> QuestionExistsAsync(int id)
         {
             return await _context.Questions.AnyAsync(q => q.Id == id);
         }

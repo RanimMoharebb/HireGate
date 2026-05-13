@@ -21,7 +21,7 @@ export function QuestionBankHeader({
         <button
           onClick={onAddTopic}
           disabled={loading}
-          className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 w-full sm:w-auto cursor-pointer"
         >
           <Plus size={20} />
           Add Topic
@@ -29,7 +29,7 @@ export function QuestionBankHeader({
         <button
           onClick={onAddQuestion}
           disabled={loading}
-          className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400 w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400 w-full sm:w-auto cursor-pointer"
         >
           <Plus size={20} />
           Add Question
