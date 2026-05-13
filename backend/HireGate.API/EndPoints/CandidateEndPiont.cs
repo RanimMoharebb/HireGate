@@ -154,5 +154,31 @@ public static class CandidateEndpoints
                 ? Results.BadRequest("Exam is not available at this time")
                 : Results.Ok(result);
         });
+
+        //exam review
+        group.MapGet("/{id:int}/exam-review", async (
+            int id,
+            ICandidateService service
+        ) =>
+        {
+            var result = await service.GetExamReview(id);
+
+            if (result == null)
+            {
+                return Results.Ok(new
+                {
+                    message = "No exam assigned yet",
+                    candidateId = id,
+                    questions = new List<object>()
+                });
             }
+
+            return Results.Ok(result);
+        })
+        .RequireAuthorization();
+
+    }
 }
+
+
+    

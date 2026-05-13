@@ -15,5 +15,6 @@ public interface ICandidateRepository
     Task<bool> Delete(int id);
     Task<Candidate?> GetByToken(string token);
     Task AssignExam(int candidateId, int examId);
+    Task<Candidate?> GetCandidateWithExam(int candidateId);
 }
 }

@@ -11,29 +11,60 @@ export default function ExamPage() {
 
   const token = params.token as string;
 
+  const [candidateData, setCandidateData] = useState<any>(null);
   const [examData, setExamData] = useState<any>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchExam = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getExamPageData(token);
-        setExamData(data);
+        // Candidate data (from token)
+        const candidate = await getExamPageData(token);
+        setCandidateData(candidate);
+
+        // Exam data (from examId)
+        if (candidate?.examId) {
+          const examRes = await fetch(
+            `http://localhost:5116/api/exam/${candidate.examId}`
+          );
+
+          if (!examRes.ok) {
+            throw new Error("Failed to fetch exam data");
+          }
+
+          const exam = await examRes.json();
+          setExamData(exam);
+        }
+
       } catch (err: any) {
-        setError(err.message);
+  const message = err.message?.toLowerCase();
+
+  if (
+    message.includes("invalid token") ||
+    message.includes("already submitted") ||
+    message.includes("expired")
+  ) {
+    router.replace("/candidates/thank-you");
+    return;
+  }
+
+  setError(err.message);
+
       } finally {
         setLoading(false);
       }
     };
 
-    fetchExam();
+    fetchData();
   }, [token]);
 
   const handleStartExam = () => {
     router.push(`/candidates/start-exam/${token}`);
   };
 
+  // ---------------- LOADING ----------------
   if (loading) {
     return (
       <div className="p-10 text-center">
@@ -42,6 +73,7 @@ export default function ExamPage() {
     );
   }
 
+  // ---------------- ERROR ----------------
   if (error) {
     return (
       <div className="p-10 text-center text-red-500">
@@ -51,35 +83,80 @@ export default function ExamPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="bg-white w-full max-w-2xl rounded-2xl p-8 shadow">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
 
-        <h1 className="text-3xl font-bold mb-4">
-          Exam Information
-        </h1>
+      <div className="bg-white w-full max-w-2xl rounded-2xl p-8 shadow text-center">
 
-        <div className="space-y-3 mb-8">
+{/* LOGO */}
+<div className="flex justify-center mb-6">
+  <img
+    src="/images/logo.png"
+    alt="logo"
+    className="h-10 w-auto"
+  />
+</div>
 
-          <p>
-            <span className="font-semibold">Candidate:</span>{" "}
-            {examData.candidateName}
+
+        {/* GREETING */}
+        <div className="mb-6 text-left">
+
+
+          <p className="mt-2 text-gray-700">
+            We are pleased to invite you to the{" "}
+            <span className="font-semibold">
+              {examData?.positionTitle}
+            </span>
           </p>
-
-          <p>
-            <span className="font-semibold">Exam:</span>{" "}
-            {examData.positionTitle}
-          </p>
-
-          <p>
-            <span className="font-semibold">Duration:</span>{" "}
-            {examData.durationMinutes} minutes
-          </p>
-
         </div>
 
+        {/* INSTRUCTIONS BOX */}
+        <div className="bg-slate-50 rounded-xl p-6 mb-8 text-left border-2 border-gray-300">
+
+          <h2 className="font-semibold mb-4 text-center text-base">
+            Exam Instructions
+          </h2>
+
+          <div className="text-sm text-gray-600 leading-6 space-y-4">
+
+            {/* DURATION */}
+            <div>
+              <span className="font-medium">Exam duration and schedule:</span>
+              <br />
+              • {examData?.durationMinutes ?? "—"} minutes (maximum)
+              <br />
+              • From{" "}
+              {examData?.windowStartTime
+                ? new Date(examData.windowStartTime).toLocaleString()
+                : "Not available"}
+              till {" "}
+              {examData?.windowEndTime
+                ? new Date(examData.windowEndTime).toLocaleString()
+                : "Not available"} 
+              
+            </div>
+<br />
+            {/* Guidelines */}
+            <div>
+              <span className="font-medium">Exam guidelines:</span>
+              <br />
+              • You can start the exam whenever you are ready within the allowed period
+              <br />
+              • Please ensure stable internet connection throughout the exam
+              <br />
+              • Once submitted, the exam cannot be retaken
+              <br />
+              • For support: support@eozom.com
+            </div>
+                
+            </div>
+
+          </div>
+
+
+        {/* BUTTON */}
         <button
           onClick={handleStartExam}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg"
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
         >
           Start Exam
         </button>

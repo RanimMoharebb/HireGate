@@ -19,6 +19,6 @@ public interface ICandidateService
     Task<ExamPageDto?> GetExamPage(string token);
 
     Task<object> StartExam(string token);
-    
+    Task<ExamReviewDto?> GetExamReview(int candidateId);    
     }
 }

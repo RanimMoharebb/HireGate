@@ -1,0 +1,24 @@
+[33m37b14b2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/candidatespage-email-examreview[m[33m, [m[1;32md[m[33m, [m[1;32mbroken-state[m[33m)[m HEAD@{0}: reset: moving to 37b14b2
+[33m37b14b2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/candidatespage-email-examreview[m[33m, [m[1;32md[m[33m, [m[1;32mbroken-state[m[33m)[m HEAD@{1}: checkout: moving from feature/candidatespage-email-examreview to feature/candidatespage-email-examreview
+[33m37b14b2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/candidatespage-email-examreview[m[33m, [m[1;32md[m[33m, [m[1;32mbroken-state[m[33m)[m HEAD@{2}: reset: moving to 37b14b2
+[33m818c842[m[33m ([m[1;32mfeature/candidate-exam-flow[m[33m)[m HEAD@{3}: reset: moving to 818c842
+[33m37b14b2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/candidatespage-email-examreview[m[33m, [m[1;32md[m[33m, [m[1;32mbroken-state[m[33m)[m HEAD@{4}: commit: Add candidate management, email service, and exam review features
+[33m2f9e4c0[m HEAD@{5}: commit (merge): Merge branch 'authorization/authentication' of https://gitlab.enozom.com/enozom/hiregate into feature/candidatespage-email-examreview
+[33m818c842[m[33m ([m[1;32mfeature/candidate-exam-flow[m[33m)[m HEAD@{6}: checkout: moving from feature/candidate-exam-flow to feature/candidatespage-email-examreview
+[33m818c842[m[33m ([m[1;32mfeature/candidate-exam-flow[m[33m)[m HEAD@{7}: reset: moving to HEAD
+[33m818c842[m[33m ([m[1;32mfeature/candidate-exam-flow[m[33m)[m HEAD@{8}: checkout: moving from feature/candidate-exam-flow to feature/candidate-exam-flow
+[33m818c842[m[33m ([m[1;32mfeature/candidate-exam-flow[m[33m)[m HEAD@{9}: commit: add candidate exam flow pages and integrate with backend
+[33m35380df[m[33m ([m[1;32mfeature/auth-ui-backend-integration[m[33m)[m HEAD@{10}: Branch: renamed refs/heads/feature/candidate-exam-flowCandidate-exam-flow to refs/heads/feature/candidate-exam-flow
+[33m35380df[m[33m ([m[1;32mfeature/auth-ui-backend-integration[m[33m)[m HEAD@{12}: checkout: moving from feature/auth-ui-backend-integration to feature/candidate-exam-flowCandidate-exam-flow
+[33m35380df[m[33m ([m[1;32mfeature/auth-ui-backend-integration[m[33m)[m HEAD@{13}: commit: integrate backendwith auth UI pages
+[33mbbeb839[m[33m ([m[1;32mfeature/auth-ui-pages[m[33m)[m HEAD@{14}: checkout: moving from feature/auth-ui-pages to feature/auth-ui-backend-integration
+[33mbbeb839[m[33m ([m[1;32mfeature/auth-ui-pages[m[33m)[m HEAD@{15}: commit: Resolve reset password conflict and keep Stage 2
+[33md3e27b5[m[33m ([m[1;32mlogin-register-resetPassword-UI[m[33m)[m HEAD@{16}: Branch: renamed refs/heads/stage1-auth to refs/heads/feature/auth-ui-pages
+[33md3e27b5[m[33m ([m[1;32mlogin-register-resetPassword-UI[m[33m)[m HEAD@{18}: checkout: moving from feature/auth-login-register-reset to stage1-auth
+[33madaedff[m[33m ([m[1;32mfeature/auth-login-register-reset[m[33m)[m HEAD@{19}: reset: moving to HEAD
+[33madaedff[m[33m ([m[1;32mfeature/auth-login-register-reset[m[33m)[m HEAD@{20}: reset: moving to HEAD
+[33madaedff[m[33m ([m[1;32mfeature/auth-login-register-reset[m[33m)[m HEAD@{21}: commit: Connect auth pages with backend APIs
+[33md3e27b5[m[33m ([m[1;32mlogin-register-resetPassword-UI[m[33m)[m HEAD@{22}: checkout: moving from login-register-resetPassword-UI to feature/auth-login-register-reset
+[33md3e27b5[m[33m ([m[1;32mlogin-register-resetPassword-UI[m[33m)[m HEAD@{23}: commit: Add auth UI pages (login, register, resetPassword)
+[33m58e167e[m[33m ([m[1;31morigin/frontend-setup[m[33m, [m[1;32mfrontend-setup[m[33m)[m HEAD@{24}: checkout: moving from frontend-setup to login-register-resetPassword-UI
+[33m58e167e[m[33m ([m[1;31morigin/frontend-setup[m[33m, [m[1;32mfrontend-setup[m[33m)[m HEAD@{25}: clone: from https://gitlab.enozom.com/enozom/hiregate.git
