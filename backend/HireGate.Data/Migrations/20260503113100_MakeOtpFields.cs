@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace HireGate.Data.Data.Migrations
+namespace HireGate.Data.Migrations
 {
     /// <inheritdoc />
     public partial class MakeOtpFields : Migration

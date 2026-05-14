@@ -7,6 +7,7 @@ namespace HireGate.Repository.Interfaces
         // Exam CRUD operations
         Task<IEnumerable<Exam>> GetAllExamsAsync();
         Task<Exam?> GetExamByIdAsync(int id);
+        Task<Exam?> GetExamByIdForUpdateAsync(int id);
         void CreateExam(Exam exam);
         void UpdateExam(Exam exam);
         void DeleteExam(Exam exam);

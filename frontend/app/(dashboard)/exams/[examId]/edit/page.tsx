@@ -1,5 +1,5 @@
 import Header from "@/app/_components/layout/header";
-import ExamForm from "@/app/_components/exams/exam-form";
+import UpdateExamForm from "@/app/_components/exams/update-exam-form";
 import { getExamById } from "@/app/_services/exam-service";
 
 type EditExamPageProps = {
@@ -18,7 +18,8 @@ export default async function EditExamPage({ params }: EditExamPageProps) {
         title={`Edit ${exam.title}`}
         description="Update exam settings and sync the attached question IDs."
       />
-      <ExamForm mode="edit" exam={exam} />
+      <UpdateExamForm exam={exam} />
     </section>
   );
 }
+

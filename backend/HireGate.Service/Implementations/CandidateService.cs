@@ -46,6 +46,49 @@ public async Task<CandidateResponseDto?> GetById(int id)
     };
 }
 
+public async Task<CandidateExamReviewDto?> GetExamReview(int id)
+{
+    var candidate = await _repo.GetByIdWithExamReview(id);
+
+    if (candidate == null || candidate.Exam == null)
+        return null;
+
+    var answersByQuestionId = candidate.Answers
+        .GroupBy(answer => answer.QuestionId)
+        .ToDictionary(group => group.Key, group => group.Last().ChoiceId);
+
+    return new CandidateExamReviewDto
+    {
+        CandidateId = candidate.Id,
+        CandidateName = $"{candidate.FirstName} {candidate.LastName}".Trim(),
+        CandidateEmail = candidate.Email,
+        ExamId = candidate.ExamId,
+        ExamTitle = candidate.Exam.PositionTitle ?? "Exam",
+        FinalScore = candidate.FinalScore,
+        SubmittedAt = candidate.SubmittedAt,
+        Questions = candidate.Exam.ExamQuestions
+            .Where(eq => eq.Question != null)
+            .OrderBy(eq => eq.QuestionId)
+            .Select(eq => new CandidateExamReviewQuestionDto
+            {
+                QuestionId = eq.QuestionId,
+                QuestionText = eq.Question.QuestionText,
+                Choices = eq.Question.Choices
+                    .OrderBy(choice => choice.Id)
+                    .Select(choice => new CandidateExamReviewChoiceDto
+                    {
+                        ChoiceId = choice.Id,
+                        ChoiceText = choice.ChoiceText ?? string.Empty,
+                        IsCorrect = choice.IsCorrect,
+                        IsSelectedByCandidate = answersByQuestionId.TryGetValue(eq.QuestionId, out var selectedChoiceId)
+                            && selectedChoiceId == choice.Id,
+                    })
+                    .ToList(),
+            })
+            .ToList(),
+    };
+}
+
 public async Task<List<CandidateResponseDto>> GetAll()
 {
     var candidates = await _repo.GetAll();

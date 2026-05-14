@@ -20,10 +20,10 @@ export default function ExamCard({ exam }: ExamCardProps) {
                 <p className="text-sm text-slate-600">{exam.description}</p>
             </div>
             <div className="mb-4 space-y-3 text-sm text-slate-600">
-                <p> Duration : {exam.duration}</p>
-                <p> Question Count : {exam.questionCount}</p>
-                <p> Window Start Time : {windowStartTime}</p>
-                <p> Window End Time : {windowEndTime}</p>
+                <p>⏱️ {exam.duration }</p>
+                <p>📄 {exam.questionCount} Questions</p>
+                <p><strong>Start Time :</strong> {windowStartTime}</p>
+                <p><strong>End Time :</strong> {windowEndTime}</p>
             </div>
 
             <div className="flex gap-2 border-t border-slate-200 pt-4">

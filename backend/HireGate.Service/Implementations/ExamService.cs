@@ -201,7 +201,7 @@ namespace HireGate.Service.Implementations
         // ─────────────────────────────
        public async Task<ExamDto?> UpdateExamAsync(int id, UpdateExamDto dto)
         {
-            var exam = await _examRepository.GetExamByIdAsync(id);
+            var exam = await _examRepository.GetExamByIdForUpdateAsync(id);
 
             if (exam is null)
                 return null;
@@ -226,7 +226,6 @@ namespace HireGate.Service.Implementations
             if (dto.WindowEndTime.HasValue)
                 exam.WindowEndTime = dto.WindowEndTime;
 
-            _examRepository.UpdateExam(exam);
 
             // ── Sync questions ──────────────────────────────────────
             var existingIds = exam.ExamQuestions.Select(eq => eq.QuestionId).ToHashSet();

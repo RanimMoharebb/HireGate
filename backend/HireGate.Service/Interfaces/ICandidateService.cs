@@ -7,6 +7,7 @@ public interface ICandidateService
 {
     Task<List<CandidateResponseDto>> GetAll();
     Task<CandidateResponseDto?> GetById(int id);
+    Task<CandidateExamReviewDto?> GetExamReview(int id);
 
     Task<CreateCandidateResponseDto> CreateCandidate(CreateCandidateDto dto);
 

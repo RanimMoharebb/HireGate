@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace HireGate.Data.Data.Migrations
+namespace HireGate.Data.Migrations
 {
     /// <inheritdoc />
     public partial class MakeTokenNullable : Migration

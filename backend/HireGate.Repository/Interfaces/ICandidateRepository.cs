@@ -10,6 +10,7 @@ public interface ICandidateRepository
     Task<List<Candidate>> GetAll();
     Task<bool> ExistsByEmail(string email);
     Task<Candidate?> GetById(int id);
+    Task<Candidate?> GetByIdWithExamReview(int id);
     Task Add(Candidate candidate);
     Task Update(Candidate candidate);
     Task<bool> Delete(int id);

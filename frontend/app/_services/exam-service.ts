@@ -52,6 +52,16 @@ export type UpdateExamPayload = {
   removedQuestionIds?: number[];
 };
 
+export class ExamApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ExamApiError";
+    this.status = status;
+  }
+}
+
 const DEFAULT_BACKEND_URL = "http://localhost:5116";
 
 function getBackendBaseUrl() {
@@ -92,7 +102,16 @@ async function fetchExamApi<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Exam API request failed with status ${response.status}`);
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string; message?: string }
+      | Array<{ error?: string; field?: string }>
+      | null;
+
+    const message = Array.isArray(payload)
+      ? payload.map((item) => item.error).filter(Boolean).join(", ")
+      : payload?.error ?? payload?.message ?? `Exam API request failed with status ${response.status}`;
+
+    throw new ExamApiError(message, response.status);
   }
 
   if (response.status === 204) {
@@ -105,6 +124,11 @@ async function fetchExamApi<T>(path: string, init?: RequestInit): Promise<T> {
 export async function getExams(): Promise<Exam[]> {
   const exams = await fetchExamApi<BackendExamDto[]>("/api/exam/");
   return exams.map(mapBackendExamToExam);
+}
+
+export async function getExamTitles(): Promise<Pick<Exam, 'id' | 'title'>[]> {
+  const exams = await fetchExamApi<BackendExamDto[]>("/api/exam/");
+  return exams.map(exam => ({ id: exam.id, title: exam.positionTitle }));
 }
 
 export async function getExamById(examId: number): Promise<Exam> {

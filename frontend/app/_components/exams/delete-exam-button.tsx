@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/app/_components/ui/button";
+import { deleteExam } from "@/app/_services/exam-service";
 
 type DeleteExamButtonProps = {
   examId: number;
@@ -29,14 +30,7 @@ export default function DeleteExamButton({
     setErrorMessage(null);
 
     try {
-      const response = await fetch(`/api/exams/${examId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(payload?.error ?? "Failed to delete exam");
-      }
+      await deleteExam(examId);
 
       if (redirectTo) {
         router.push(redirectTo);

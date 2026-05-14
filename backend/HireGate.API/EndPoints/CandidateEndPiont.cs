@@ -76,6 +76,19 @@ group.MapPost("/", async (
         })
         .RequireAuthorization();
 
+        group.MapGet("/{id:int}/exam-review", async (
+            int id,
+            [FromServices] ICandidateService service
+        ) =>
+        {
+            var result = await service.GetExamReview(id);
+
+            if (result == null)
+                return Results.NotFound("Candidate review not found");
+
+            return Results.Ok(result);
+        });
+
         // DELETE BY ID
         group.MapDelete("/{id:int}", async (
             int id,

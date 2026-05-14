@@ -45,7 +45,20 @@ namespace HireGate.Repository.Implementations
                     .ThenInclude(q => q.Topic)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(e => e.Id == id);
-        } 
+        }
+
+        public async Task<Exam?> GetExamByIdForUpdateAsync(int id)
+        {
+            return await _context.Exams
+                .Include(e => e.ExamQuestions)
+                    .ThenInclude(eq => eq.Question)
+                    .ThenInclude(q => q.Choices)
+                .Include(e => e.ExamQuestions)
+                    .ThenInclude(eq => eq.Question)
+                    .ThenInclude(q => q.Topic)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
         
         // Create, Update, Delete Exam
          public void CreateExam(Exam exam)

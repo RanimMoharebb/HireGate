@@ -52,7 +52,7 @@ export default async function ExamDetailsPage({ params }: ExamDetailsPageProps) 
         </CardContent>
       </Card>
 
-      <ExamQuestionsManager examId={exam.id} initialQuestions={exam.questions} />
+      <ExamQuestionsManager initialQuestions={exam.questions} />
     </section>
   );
 }
