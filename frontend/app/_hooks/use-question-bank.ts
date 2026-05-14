@@ -1,15 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { DEFAULT_PAGE_SIZE } from "@/app/_lib/pagination";
 import {
   EMPTY_QUESTION_FORM,
   Question,
+  QuestionDeletedFilter,
   QuestionFormData,
   Topic,
 } from "@/app/_lib/question-bank.types";
 import { questionBankService } from "@/app/_services/question-bank-service";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const validateQuestionForm = (formData: QuestionFormData): string | null => {
   if (!formData.topicId) {
@@ -32,12 +34,14 @@ export const useQuestionBank = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
+  const [deletedFilter, setDeletedFilter] = useState<QuestionDeletedFilter>("active");
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [deleteQuestion, setDeleteQuestion] = useState<Question | null>(null);
+  const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [formData, setFormData] = useState<QuestionFormData>(EMPTY_QUESTION_FORM);
@@ -53,6 +57,7 @@ export const useQuestionBank = () => {
     page: number,
     topic: string,
     search: string,
+    deleted: QuestionDeletedFilter,
     showLoading = true
   ) => {
     if (showLoading) {
@@ -61,7 +66,13 @@ export const useQuestionBank = () => {
     setErrorMessage(null);
 
     try {
-      const data = await questionBankService.getQuestions(page, PAGE_SIZE, topic, search);
+      const data = await questionBankService.getQuestions(
+        page,
+        PAGE_SIZE,
+        topic,
+        search,
+        deleted
+      );
       setQuestions(data.data);
       setTotalPages(data.totalPages);
     } catch (error) {
@@ -80,8 +91,8 @@ export const useQuestionBank = () => {
     }
 
     setIsSuccessVisible(true);
-    const hideTimer = window.setTimeout(() => setIsSuccessVisible(false), 3600);
-    const removeTimer = window.setTimeout(() => setSuccessMessage(null), 4000);
+    const hideTimer = window.setTimeout(() => setIsSuccessVisible(false), 2000);
+    const removeTimer = window.setTimeout(() => setSuccessMessage(null), 3000);
 
     return () => {
       window.clearTimeout(hideTimer);
@@ -103,8 +114,8 @@ export const useQuestionBank = () => {
   }, []);
 
   useEffect(() => {
-    loadQuestions(currentPage, selectedTopic, searchTerm);
-  }, [currentPage, selectedTopic, searchTerm]);
+    loadQuestions(currentPage, selectedTopic, searchTerm, deletedFilter);
+  }, [currentPage, selectedTopic, searchTerm, deletedFilter]);
 
   const resetForm = () => {
     setFormData(EMPTY_QUESTION_FORM);
@@ -178,6 +189,7 @@ export const useQuestionBank = () => {
           topicName:
             topics.find((topic) => topic.id === Number(formData.topicId))?.topicName ||
             selectedQuestion.topicName,
+          deletedAt: selectedQuestion.deletedAt,
           choices: formData.choices,
         };
 
@@ -189,7 +201,7 @@ export const useQuestionBank = () => {
       closeFormModal();
 
       if (currentPage === 1) {
-        await loadQuestions(1, selectedTopic, searchTerm, false);
+        await loadQuestions(1, selectedTopic, searchTerm, deletedFilter, false);
       } else {
         setCurrentPage(1);
       }
@@ -215,7 +227,38 @@ export const useQuestionBank = () => {
       await questionBankService.deleteQuestion(deleteQuestion.id);
       setQuestions((prev) => prev.filter((question) => question.id !== deleteQuestion.id));
       setDeleteQuestion(null);
+      setSelectedQuestion((current) =>
+        current?.id === deleteQuestion.id ? null : current
+      );
       setSuccessMessage("Question deleted successfully.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmDeleteTopic = async () => {
+    if (!topicToDelete) {
+      return;
+    }
+
+    const deletedId = topicToDelete.id;
+    const wasSelected = selectedTopic === deletedId.toString();
+
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await questionBankService.deleteTopic(deletedId);
+      setTopics((prev) => prev.filter((topic) => topic.id !== deletedId));
+      setTopicToDelete(null);
+      if (wasSelected) {
+        setSelectedTopic("all");
+        setCurrentPage(1);
+      } else {
+        await loadQuestions(currentPage, selectedTopic, searchTerm, deletedFilter, false);
+      }
+      setSuccessMessage("Topic deleted successfully.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -248,6 +291,21 @@ export const useQuestionBank = () => {
     }
   };
 
+  const restoreQuestion = async (question: Question) => {
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await questionBankService.restoreQuestion(question.id);
+      setQuestions((prev) => prev.filter((q) => q.id !== question.id));
+      setSelectedQuestion((current) => (current?.id === question.id ? null : current));
+      setSuccessMessage("Question restored successfully.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const showQuestionDetails = useMemo(
     () => selectedQuestion && !isFormModalOpen,
     [selectedQuestion, isFormModalOpen]
@@ -258,6 +316,8 @@ export const useQuestionBank = () => {
     topics,
     selectedTopic,
     setSelectedTopic,
+    deletedFilter,
+    setDeletedFilter,
     searchTerm,
     setSearchTerm,
     currentPage,
@@ -282,6 +342,9 @@ export const useQuestionBank = () => {
     setSelectedQuestion,
     deleteQuestion,
     setDeleteQuestion,
+    topicToDelete,
+    setTopicToDelete,
+    confirmDeleteTopic,
     showQuestionDetails,
     openAddTopicModal,
     closeAddTopicModal,
@@ -291,5 +354,6 @@ export const useQuestionBank = () => {
     openEditQuestionModal,
     closeFormModal,
     confirmDeleteQuestion,
+    restoreQuestion,
   };
 };

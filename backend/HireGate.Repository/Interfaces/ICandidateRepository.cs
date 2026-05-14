@@ -7,7 +7,7 @@ namespace HireGate.Repository.Interfaces
 
 public interface ICandidateRepository
 {
-    Task<List<Candidate>> GetAll();
+    Task<(List<Candidate> Items, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status);
     Task<bool> ExistsByEmail(string email);
     Task<Candidate?> GetById(int id);
     Task<Candidate?> GetByIdWithExamReview(int id);
@@ -16,5 +16,6 @@ public interface ICandidateRepository
     Task<bool> Delete(int id);
     Task<Candidate?> GetByToken(string token);
     Task AssignExam(int candidateId, int examId);
+    Task<Candidate?> GetCandidateWithExam(int candidateId);
 }
 }

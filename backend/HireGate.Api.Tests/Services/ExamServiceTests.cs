@@ -29,13 +29,16 @@ namespace HireGate.Api.Tests.Services
                 new Exam { Id = 1, PositionTitle = "Developer", DurationMinutes = 60 },
                 new Exam { Id = 2, PositionTitle = "Manager", DurationMinutes = 90 }
             };
-            _examRepositoryMock.Setup(r => r.GetAllExamsAsync()).ReturnsAsync(exams);
+            _examRepositoryMock
+                .Setup(r => r.GetAllExamsAsync(1, 10, null))
+                .ReturnsAsync((exams, exams.Count));
 
             // Act
-            var result = await _examService.GetAllExamsAsync();
+            var (result, totalCount) = await _examService.GetAllExamsAsync(1, 10, null);
 
             // Assert
             result.Should().HaveCount(2);
+            totalCount.Should().Be(2);
             result.First().Id.Should().Be(1);
             result.First().PositionTitle.Should().Be("Developer");
             result.Last().PositionTitle.Should().Be("Manager");

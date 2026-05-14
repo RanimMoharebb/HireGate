@@ -13,35 +13,49 @@ public static class AdminEndpoints
           //             .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // CREATE ADMIN
+                group.MapPost("/", async (
+                    [FromBody] CreateAdminRequestDto dto,
+                    [FromServices] IAdminService service,
+                    [FromServices] IValidator<CreateAdminRequestDto> validator
+                ) =>
+                {
+                    var validation = await validator.ValidateAsync(dto);
 
+                    if (!validation.IsValid)
+                        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-group.MapPost("/", async (
-    [FromBody] CreateAdminRequestDto dto,
-    [FromServices] IAdminService service,
-    [FromServices] IValidator<CreateAdminRequestDto> validator
-) =>
-{
-    var validation = await validator.ValidateAsync(dto);
+                    var response = await service.CreateAdmin(dto);
 
-    if (!validation.IsValid)
-        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                    if (response.Message == "Email already exists")
+                        return Results.BadRequest(response);
 
-    var response = await service.CreateAdmin(dto);
-
-    if (response.Message == "Email already exists")
-        return Results.BadRequest(response);
-
-    return Results.Ok(response);
-})
-.RequireAuthorization(policy => policy.RequireRole("CEO"));
+            return Results.Ok(response);
+        });
+        //RequireAuthorization(policy => policy.RequireRole("CEO"));
+        
         // GET ALL
         group.MapGet("/", async (
-            [FromServices] IAdminService service
+            [FromServices] IAdminService service,
+            int page = 1,
+            int pageSize = 10,
+            string? search = null
         ) =>
         {
-            return Results.Ok(await service.GetAll());
-        })
-        .RequireAuthorization(policy => policy.RequireRole("CEO"));
+            var validPage = Math.Max(1, page);
+            var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+            var (data, totalCount) = await service.GetAll(validPage, validPageSize, search);
+            var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / validPageSize);
+
+            return Results.Ok(new
+            {
+                data,
+                page = validPage,
+                pageSize = validPageSize,
+                totalCount,
+                totalPages
+            });
+        });
+       // .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // GET BY ID
         group.MapGet("/{id}", async (
@@ -55,8 +69,8 @@ group.MapPost("/", async (
                 return Results.NotFound("Admin not found");
 
             return Results.Ok(admin);
-        })
-        .RequireAuthorization(policy => policy.RequireRole("CEO"));
+        });
+        //.RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // DELETE
         group.MapDelete("/{id}", async (
@@ -70,8 +84,8 @@ group.MapPost("/", async (
                 return Results.NotFound(result.Message);
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization(policy => policy.RequireRole("CEO"));
+        });
+       // .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // UPDATE ROLE
         group.MapPatch("/{id}", async (
@@ -84,22 +98,31 @@ group.MapPost("/", async (
             var validation = await validator.ValidateAsync(dto);
 
             if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            {
+                return Results.BadRequest(new
+                {
+                    message = validation.Errors.First().ErrorMessage
+                });
+            }
+
 
             var result = await service.UpdateRole(id, dto);
 
             if (result.Message == "Admin not found")
-                return Results.NotFound(result);
+            {
+                return Results.NotFound(new
+                {
+                    message = result.Message
+                });
+            }
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization(policy => policy.RequireRole("CEO"));
+        });
+       // .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // DEBUG ROLE
         group.MapGet("/debug-role", (HttpContext ctx) =>
         {
-            var id = ctx.User.Claims.FirstOrDefault(c =>
-                c.Type.Contains("nameidentifier") || c.Type == "id")?.Value;
 
             var email = ctx.User.Claims.FirstOrDefault(c =>
                 c.Type.Contains("emailaddress"))?.Value;
@@ -109,12 +132,11 @@ group.MapPost("/", async (
 
             return Results.Ok(new
             {
-                id,
                 email,
                 roleFromToken = role
             });
     
-        });
+        }).RequireAuthorization();
 
 
     }

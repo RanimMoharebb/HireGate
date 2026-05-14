@@ -1,12 +1,3 @@
-// rename to CompleteCandidateProfileRequestDto
-
-
-/*
-INPUT (already have)
-CompleteCandidateProfileRequestDto
-OUTPUT (new)
-CompleteCandidateProfileResponseDto
-*/
 
 namespace HireGate.Service.DTOs;
 

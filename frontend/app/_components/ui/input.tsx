@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes } from "react";
 
+
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   className?: string;
 };

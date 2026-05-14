@@ -5,7 +5,7 @@ namespace HireGate.Service.Interfaces
 
 public interface ICandidateService
 {
-    Task<List<CandidateResponseDto>> GetAll();
+    Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status);
     Task<CandidateResponseDto?> GetById(int id);
     Task<CandidateExamReviewDto?> GetExamReview(int id);
 
@@ -20,6 +20,6 @@ public interface ICandidateService
     Task<ExamPageDto?> GetExamPage(string token);
 
     Task<object> StartExam(string token);
-    
+    Task<ExamReviewDto?> GetExamReview(int candidateId);    
     }
 }

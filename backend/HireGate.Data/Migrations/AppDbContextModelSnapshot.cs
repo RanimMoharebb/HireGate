@@ -215,6 +215,12 @@ namespace HireGate.Data.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("position_title");
 
+                    b.Property<int>("QuestionCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("question_count");
+
                     b.Property<DateTime?>("WindowEndTime")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("window_end_time");

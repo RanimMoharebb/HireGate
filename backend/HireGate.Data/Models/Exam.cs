@@ -11,6 +11,7 @@ public class Exam
 
     [Range(0, 100)]
     public int? DurationMinutes { get; set; }
+    public int QuestionCount { get; set; }
     public DateTime? WindowStartTime { get; set; }
     public DateTime? WindowEndTime { get; set; }
     

@@ -15,21 +15,25 @@ namespace HireGate.Repository.Implementations
             _context = context;
         }
 
-        // Get all Exams with their Qs and Chs
-        public async Task<IEnumerable<Exam>> GetAllExamsAsync()
+        // Get all exams only (without related questions/choices)
+        public async Task<(IEnumerable<Exam> Exams, int TotalCount)> GetAllExamsAsync(int pageNumber, int pageSize, string? search = null)
         {
-            // Exam <-> ExamQuestion <-> Question <-> Choice
-            // Exam and ExamQuestion are many-to-many, so we include ExamQuestions, then include Question through it, and then include Choices through Question. We use AsSplitQuery to optimize the query and avoid cartesian explosion.
-            return await _context.Exams
-                .AsNoTracking()
-                .Include(e => e.ExamQuestions)
-                    .ThenInclude(eq => eq.Question)
-                    .ThenInclude(q => q.Choices)
-                .Include(e => e.ExamQuestions)
-                    .ThenInclude(eq => eq.Question)
-                    .ThenInclude(q => q.Topic)
-                .AsSplitQuery()
+            IQueryable<Exam> query = _context.Exams.AsNoTracking();
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                query = query.Where(e => e.PositionTitle != null && e.PositionTitle.ToLower().Contains(term));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var exams = await query
+                .OrderByDescending(e => e.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return (exams, totalCount);
         }
 
         // Get Exam by id with its Qs and Chs
@@ -126,6 +130,14 @@ namespace HireGate.Repository.Implementations
                 .ToListAsync();
 
             return ids.Except(existingIds).ToList();
+        }
+
+        public async Task SyncExamQuestionCountAsync(int examId)
+        {
+            var count = await _context.ExamQuestions.CountAsync(eq => eq.ExamId == examId);
+            await _context.Exams
+                .Where(e => e.Id == examId)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(e => e.QuestionCount, count));
         }
 
         // Helper methods for validation

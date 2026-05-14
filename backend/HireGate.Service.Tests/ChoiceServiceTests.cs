@@ -21,6 +21,50 @@ namespace HireGate.Service.Tests
             _choiceService = new ChoiceService(_choiceRepositoryMock.Object, _questionRepositoryMock.Object);
         }
 
+        #region GetChoicesForQuestionAsync Tests
+
+        [Fact]
+        public async Task GetChoicesForQuestionAsync_ShouldThrowArgumentException_WhenQuestionIdIsInvalid()
+        {
+            Func<Task> act = async () => await _choiceService.GetChoicesForQuestionAsync(0);
+
+            await act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("Invalid question ID*");
+        }
+
+        [Fact]
+        public async Task GetChoicesForQuestionAsync_ShouldThrowKeyNotFoundException_WhenQuestionDoesNotExist()
+        {
+            _questionRepositoryMock.Setup(r => r.QuestionExistsAsync(1)).ReturnsAsync(false);
+
+            Func<Task> act = async () => await _choiceService.GetChoicesForQuestionAsync(1);
+
+            await act.Should().ThrowAsync<KeyNotFoundException>()
+                .WithMessage("Question with ID 1 not found");
+        }
+
+        [Fact]
+        public async Task GetChoicesForQuestionAsync_ShouldReturnMappedChoiceDtos_FromRepository()
+        {
+            var choicesFromRepo = new List<Choice>
+            {
+                new Choice { Id = 1, QuestionId = 1, ChoiceText = "First", IsCorrect = true },
+                new Choice { Id = 2, QuestionId = 1, ChoiceText = "Second", IsCorrect = false },
+                new Choice { Id = 3, QuestionId = 1, ChoiceText = "Third", IsCorrect = false }
+            };
+            _questionRepositoryMock.Setup(r => r.QuestionExistsAsync(1)).ReturnsAsync(true);
+            _choiceRepositoryMock.Setup(r => r.GetChoicesByQuestionIdAsync(1)).ReturnsAsync(choicesFromRepo);
+
+            var result = await _choiceService.GetChoicesForQuestionAsync(1);
+
+            result.Should().HaveCount(3);
+            result.Select(c => c.Id).Should().ContainInOrder(1, 2, 3);
+            result[0].ChoiceText.Should().Be("First");
+            result[0].IsCorrect.Should().BeTrue();
+        }
+
+        #endregion
+
         #region AddChoiceAsync Tests
 
         [Fact]

@@ -1,4 +1,9 @@
-import { PaginationData, QuestionFormData, Topic } from "@/app/_lib/question-bank.types";
+import {
+  PaginationData,
+  QuestionDeletedFilter,
+  QuestionFormData,
+  Topic,
+} from "@/app/_lib/question-bank.types";
 
 const API_BASE_URL = "http://localhost:5116/api/admin";
 
@@ -20,12 +25,14 @@ export const questionBankService = {
     page: number,
     pageSize: number,
     selectedTopic: string,
-    searchTerm: string
+    searchTerm: string,
+    deletedFilter: QuestionDeletedFilter = "active"
   ): Promise<PaginationData> {
     const topicId = selectedTopic !== "all" ? Number(selectedTopic) : null;
     const params = new URLSearchParams({
       page: page.toString(),
       pageSize: pageSize.toString(),
+      deletedFilter,
       ...(topicId ? { topicId: topicId.toString() } : {}),
       ...(searchTerm.trim() ? { search: searchTerm.trim() } : {}),
     });
@@ -80,6 +87,22 @@ export const questionBankService = {
     }
   },
 
+  async restoreQuestion(questionId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/questions/${questionId}/restore`, {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message =
+        typeof errorData === "object" && errorData && "message" in errorData
+          ? String((errorData as { message?: string }).message)
+          : undefined;
+      throw new Error(message || "Failed to restore question");
+    }
+  },
+
   async addTopic(topicName: string): Promise<Topic> {
     const response = await fetch(`${API_BASE_URL}/topics`, {
       method: "POST",
@@ -93,5 +116,21 @@ export const questionBankService = {
     }
 
     return response.json();
+  },
+
+  async deleteTopic(topicId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/topics/${topicId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message =
+        typeof errorData === "object" && errorData && "message" in errorData
+          ? String((errorData as { message?: string }).message)
+          : undefined;
+      throw new Error(message || "Failed to delete topic");
+    }
   },
 };

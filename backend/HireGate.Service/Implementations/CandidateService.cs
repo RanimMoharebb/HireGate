@@ -46,54 +46,13 @@ public async Task<CandidateResponseDto?> GetById(int id)
     };
 }
 
-public async Task<CandidateExamReviewDto?> GetExamReview(int id)
+public async Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status)
 {
-    var candidate = await _repo.GetByIdWithExamReview(id);
+    var validPage = Math.Max(1, page);
+    var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+    var (candidates, totalCount) = await _repo.GetAll(validPage, validPageSize, search, status);
 
-    if (candidate == null || candidate.Exam == null)
-        return null;
-
-    var answersByQuestionId = candidate.Answers
-        .GroupBy(answer => answer.QuestionId)
-        .ToDictionary(group => group.Key, group => group.Last().ChoiceId);
-
-    return new CandidateExamReviewDto
-    {
-        CandidateId = candidate.Id,
-        CandidateName = $"{candidate.FirstName} {candidate.LastName}".Trim(),
-        CandidateEmail = candidate.Email,
-        ExamId = candidate.ExamId,
-        ExamTitle = candidate.Exam.PositionTitle ?? "Exam",
-        FinalScore = candidate.FinalScore,
-        SubmittedAt = candidate.SubmittedAt,
-        Questions = candidate.Exam.ExamQuestions
-            .Where(eq => eq.Question != null)
-            .OrderBy(eq => eq.QuestionId)
-            .Select(eq => new CandidateExamReviewQuestionDto
-            {
-                QuestionId = eq.QuestionId,
-                QuestionText = eq.Question.QuestionText,
-                Choices = eq.Question.Choices
-                    .OrderBy(choice => choice.Id)
-                    .Select(choice => new CandidateExamReviewChoiceDto
-                    {
-                        ChoiceId = choice.Id,
-                        ChoiceText = choice.ChoiceText ?? string.Empty,
-                        IsCorrect = choice.IsCorrect,
-                        IsSelectedByCandidate = answersByQuestionId.TryGetValue(eq.QuestionId, out var selectedChoiceId)
-                            && selectedChoiceId == choice.Id,
-                    })
-                    .ToList(),
-            })
-            .ToList(),
-    };
-}
-
-public async Task<List<CandidateResponseDto>> GetAll()
-{
-    var candidates = await _repo.GetAll();
-
-    return candidates.Select(c => new CandidateResponseDto
+    var data = candidates.Select(c => new CandidateResponseDto
     {
         Id = c.Id,
         Email = c.Email,
@@ -104,8 +63,10 @@ public async Task<List<CandidateResponseDto>> GetAll()
         StartedAt = c.StartedAt,
         SubmittedAt = c.SubmittedAt,
         FinalScore = c.FinalScore,
-        ExamId = c.ExamId 
+        ExamId = c.ExamId
     }).ToList();
+
+    return (data, totalCount);
 }
 
 public async Task<CreateCandidateResponseDto> CreateCandidate(CreateCandidateDto dto)
@@ -362,5 +323,59 @@ public async Task<object> StartExam(string token)
 }
 
 
+
+public async Task<ExamReviewDto?> GetExamReview(int candidateId)
+{
+    var candidate = await _repo.GetCandidateWithExam(candidateId);
+
+    if (candidate == null || candidate.Exam == null)
+        return null;
+
+    var answers = candidate.Answers ?? new List<CandidateAnswer>();
+
+    var questions = candidate.Exam.ExamQuestions.Select(eq =>
+    {
+        var question = eq.Question;
+
+        var answer = answers.FirstOrDefault(a => a.QuestionId == question.Id);
+
+        var selectedChoiceId = answer?.ChoiceId;
+
+        var correctChoiceId =
+            question.Choices.FirstOrDefault(c => c.IsCorrect)?.Id;
+
+        var isCorrect =
+            selectedChoiceId != null &&
+            correctChoiceId != null &&
+            selectedChoiceId == correctChoiceId;
+
+        return new ExamReviewQuestionDto
+        {
+            QuestionId = question.Id,
+            QuestionText = question.QuestionText,
+
+            SelectedChoiceId = selectedChoiceId,
+
+            IsCorrect = isCorrect,
+
+            Choices = question.Choices.Select(c => new ExamReviewChoiceDto
+            {
+                Id = c.Id,
+                Text = c.ChoiceText,
+                IsCorrect = c.IsCorrect
+            }).ToList()
+        };
+    }).ToList();
+
+    var finalScore = questions.Count(q => q.IsCorrect);
+
+    return new ExamReviewDto
+    {
+        CandidateId = candidate.Id,
+        CandidateName = $"{candidate.FirstName} {candidate.LastName}".Trim(),
+        FinalScore = finalScore,
+        Questions = questions
+    };
+}
 }
 }

@@ -1,3 +1,12 @@
+const BASE_URL = "http://localhost:5116/candidates";
+
+const authHeaders = (): HeadersInit => ({
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+});
+
+// -----------------------------------
+// TYPES
+// -----------------------------------
 export type Candidate = {
   id: number;
   examId: number | null;
@@ -11,80 +20,160 @@ export type Candidate = {
   finalScore: number | null;
 };
 
-export type CandidateExamReviewChoice = {
-  choiceId: number;
-  choiceText: string;
-  isCorrect: boolean;
-  isSelectedByCandidate: boolean;
+export type CandidatesPaginatedResponse = {
+  data: Candidate[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 };
 
-export type CandidateExamReviewQuestion = {
-  questionId: number;
-  questionText: string;
-  choices: CandidateExamReviewChoice[];
-};
-
-export type CandidateExamReview = {
-  candidateId: number;
-  candidateName: string;
-  candidateEmail: string;
-  examId: number | null;
-  examTitle: string;
-  finalScore: number | null;
-  submittedAt: string | null;
-  questions: CandidateExamReviewQuestion[];
-};
-
-export class CandidateApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = "CandidateApiError";
-    this.status = status;
+// -----------------------------------
+// GET (paginated)
+// -----------------------------------
+/** Loads one page. Omit `pageSize` to use the API default (10). */
+export async function getCandidatesPage(
+  page: number,
+  search?: string,
+  status?: string,
+  pageSize?: number
+): Promise<CandidatesPaginatedResponse> {
+  const params = new URLSearchParams({
+    page: String(Math.max(1, page)),
+  });
+  if (pageSize !== undefined) {
+    params.set("pageSize", String(pageSize));
   }
-}
+  const trimmed = search?.trim();
+  if (trimmed) {
+    params.set("search", trimmed);
+  }
+  const trimmedStatus = status?.trim();
+  if (trimmedStatus && trimmedStatus !== "All") {
+    params.set("status", trimmedStatus);
+  }
 
-const DEFAULT_BACKEND_URL = "http://localhost:5116";
-
-function getBackendBaseUrl() {
-  return process.env.BACKEND_API_URL ?? DEFAULT_BACKEND_URL;
-}
-
-async function fetchCandidateApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getBackendBaseUrl()}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
+  const res = await fetch(`${BASE_URL}?${params}`, {
+    headers: authHeaders(),
   });
 
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as
-      | { error?: string; message?: string }
-      | string[]
-      | null;
+  const text = await res.text();
 
-    const message = Array.isArray(payload)
-      ? payload.join(", ")
-      : payload?.error ?? payload?.message ?? `Candidate API request failed with status ${response.status}`;
-
-    throw new CandidateApiError(message, response.status);
+  if (!res.ok) {
+    throw new Error(text || "Failed to fetch candidates");
   }
 
-  if (response.status === 204) {
-    return undefined as T;
+  const parsed: unknown = JSON.parse(text);
+
+  if (
+    parsed !== null &&
+    typeof parsed === "object" &&
+    "data" in parsed &&
+    Array.isArray((parsed as { data: unknown }).data)
+  ) {
+    const body = parsed as CandidatesPaginatedResponse;
+    return {
+      data: body.data,
+      page: body.page,
+      pageSize: body.pageSize,
+      totalCount: body.totalCount,
+      totalPages: body.totalPages,
+    };
   }
 
-  return (await response.json()) as T;
+  if (Array.isArray(parsed)) {
+    return {
+      data: parsed as Candidate[],
+      page: 1,
+      pageSize: pageSize ?? 10,
+      totalCount: parsed.length,
+      totalPages: 1,
+    };
+  }
+
+  return {
+    data: [],
+    page: 1,
+    pageSize: pageSize ?? 10,
+    totalCount: 0,
+    totalPages: 1,
+  };
 }
 
-export async function getCandidates(): Promise<Candidate[]> {
-  return fetchCandidateApi<Candidate[]>("/candidates/");
+/** Loads every candidate (one API page at a time, default page size). For bulk UIs e.g. email picker. */
+export async function getAllCandidates(): Promise<Candidate[]> {
+  let page = 1;
+  const all: Candidate[] = [];
+
+  for (;;) {
+    const batch = await getCandidatesPage(page);
+    all.push(...batch.data);
+    if (page >= batch.totalPages || batch.data.length === 0) {
+      break;
+    }
+    page += 1;
+  }
+
+  return all;
 }
 
-export async function getCandidateExamReview(candidateId: number): Promise<CandidateExamReview> {
-  return fetchCandidateApi<CandidateExamReview>(`/candidates/${candidateId}/exam-review`);
+// -----------------------------------
+// GET BY ID
+// -----------------------------------
+export async function getCandidateById(id: number): Promise<Candidate> {
+  const res = await fetch(`${BASE_URL}/${id}`);
+
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(text || "Candidate not found");
+  }
+
+  return JSON.parse(text);
+}
+
+// -----------------------------------
+// CREATE
+// -----------------------------------
+export async function createCandidate(email: string) {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("http://localhost:5116/candidates", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(text || "Failed to create candidate");
+  }
+
+  return text ? JSON.parse(text) : { message: "Success" };
+}
+
+// -----------------------------------
+// DELETE
+// -----------------------------------
+export async function deleteCandidate(id: number) {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(text || "Delete failed");
+  }
+
+  return text ? JSON.parse(text) : { message: "Deleted" };
 }

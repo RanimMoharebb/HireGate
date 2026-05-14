@@ -1,20 +1,27 @@
 import { Loader, Trash2 } from "lucide-react";
-import { Question } from "@/app/_lib/question-bank.types";
 
-interface DeleteQuestionModalProps {
-  question: Question | null;
+interface DeleteConfirmationModalProps {
+  isOpen: boolean;
   loading: boolean;
+  title: string;
+  description: string;
+  itemLabel?: string;
+  confirmLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
-export function DeleteQuestionModal({
-  question,
+export function DeleteConfirmationModal({
+  isOpen,
   loading,
+  title,
+  description,
+  itemLabel,
+  confirmLabel = "Delete",
   onCancel,
   onConfirm,
-}: DeleteQuestionModalProps) {
-  if (!question) {
+}: DeleteConfirmationModalProps) {
+  if (!isOpen) {
     return null;
   }
 
@@ -25,11 +32,9 @@ export function DeleteQuestionModal({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
             <Trash2 size={20} className="text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Question</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Are you sure you want to delete this question? This action cannot be undone.
-          </p>
-          <p className="text-sm text-gray-700 mb-6 line-clamp-2">{question.questionText}</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+          <p className="text-sm text-gray-600 mb-4">{description}</p>
+          {itemLabel ? <p className="text-sm text-gray-700 mb-6 line-clamp-2">{itemLabel}</p> : null}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={onCancel}
@@ -44,7 +49,7 @@ export function DeleteQuestionModal({
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
             >
               {loading && <Loader size={16} className="animate-spin" />}
-              Delete
+              {confirmLabel}
             </button>
           </div>
         </div>
