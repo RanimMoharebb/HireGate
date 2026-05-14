@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { DEFAULT_PAGE_SIZE } from "@/app/_lib/pagination";
 import {
   EMPTY_QUESTION_FORM,
   Question,
@@ -10,7 +11,7 @@ import {
 } from "@/app/_lib/question-bank.types";
 import { questionBankService } from "@/app/_services/question-bank-service";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 const validateQuestionForm = (formData: QuestionFormData): string | null => {
   if (!formData.topicId) {
@@ -40,6 +41,7 @@ export const useQuestionBank = () => {
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [deleteQuestion, setDeleteQuestion] = useState<Question | null>(null);
+  const [topicToDelete, setTopicToDelete] = useState<Topic | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [formData, setFormData] = useState<QuestionFormData>(EMPTY_QUESTION_FORM);
@@ -236,6 +238,34 @@ export const useQuestionBank = () => {
     }
   };
 
+  const confirmDeleteTopic = async () => {
+    if (!topicToDelete) {
+      return;
+    }
+
+    const deletedId = topicToDelete.id;
+    const wasSelected = selectedTopic === deletedId.toString();
+
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      await questionBankService.deleteTopic(deletedId);
+      setTopics((prev) => prev.filter((topic) => topic.id !== deletedId));
+      setTopicToDelete(null);
+      if (wasSelected) {
+        setSelectedTopic("all");
+        setCurrentPage(1);
+      } else {
+        await loadQuestions(currentPage, selectedTopic, searchTerm, deletedFilter, false);
+      }
+      setSuccessMessage("Topic deleted successfully.");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const submitTopic = async (event: FormEvent) => {
     event.preventDefault();
     const normalizedTopicName = topicName.trim();
@@ -312,6 +342,9 @@ export const useQuestionBank = () => {
     setSelectedQuestion,
     deleteQuestion,
     setDeleteQuestion,
+    topicToDelete,
+    setTopicToDelete,
+    confirmDeleteTopic,
     showQuestionDetails,
     openAddTopicModal,
     closeAddTopicModal,

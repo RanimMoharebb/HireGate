@@ -45,6 +45,9 @@ export default function page() {
     setSelectedQuestion,
     deleteQuestion,
     setDeleteQuestion,
+    topicToDelete,
+    setTopicToDelete,
+    confirmDeleteTopic,
     showQuestionDetails,
     openAddTopicModal,
     closeAddTopicModal,
@@ -79,22 +82,28 @@ export default function page() {
         onAddQuestion={openAddQuestionModal}
       />
 
-      <QuestionSearch
-        value={searchTerm}
-        onChange={(value) => {
-          setSearchTerm(value);
-          setCurrentPage(1);
-        }}
-      />
-
-      <TopicFilter
-        topics={topics}
-        selectedTopic={selectedTopic}
-        onSelect={(topicId) => {
-          setSelectedTopic(topicId);
-          setCurrentPage(1);
-        }}
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <div className="min-w-0 flex-1">
+          <QuestionSearch
+            value={searchTerm}
+            onChange={(value) => {
+              setSearchTerm(value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+        <div className="w-full shrink-0 sm:w-64">
+          <TopicFilter
+            topics={topics}
+            selectedTopic={selectedTopic}
+            onSelect={(topicId) => {
+              setSelectedTopic(topicId);
+              setCurrentPage(1);
+            }}
+            onRequestDeleteTopic={(topic) => setTopicToDelete(topic)}
+          />
+        </div>
+      </div>
 
       <QuestionStatusFilter
         value={deletedFilter}
@@ -165,6 +174,18 @@ export default function page() {
         itemLabel={deleteQuestion?.questionText}
         onCancel={() => setDeleteQuestion(null)}
         onConfirm={confirmDeleteQuestion}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={!!topicToDelete}
+        loading={loading}
+        title="Delete Topic"
+        description="Are you sure you want to delete this topic? Questions that use it may be affected."
+        itemLabel={topicToDelete?.topicName}
+        onCancel={() => setTopicToDelete(null)}
+        onConfirm={() => {
+          void confirmDeleteTopic();
+        }}
       />
     </div>
   );

@@ -204,7 +204,7 @@ namespace HireGate.API.Endpoints;
             group.MapPost("/submit/{token}", async (
                 string token,
                 SubmitExamDto dto,
-                IExamService examService) =>
+                 IExamService examService) =>
             {
                 // take token from the URL and set it on the DTO
                 dto.Token = token;

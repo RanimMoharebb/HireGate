@@ -7,7 +7,7 @@ namespace HireGate.Repository.Interfaces
 
 public interface ICandidateRepository
 {
-    Task<(List<Candidate> Items, int TotalCount)> GetAll(int page, int pageSize, string? search);
+    Task<(List<Candidate> Items, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status);
     Task<bool> ExistsByEmail(string email);
     Task<Candidate?> GetById(int id);
     Task Add(Candidate candidate);

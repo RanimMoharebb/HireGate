@@ -7,8 +7,12 @@ interface QuestionSearchProps {
 
 export function QuestionSearch({ value, onChange }: QuestionSearchProps) {
   return (
-    <div className="max-w-xl">
+    <div className="w-full min-w-0">
+      <label htmlFor="question-bank-search" className="mb-1 block text-sm font-medium text-gray-600">
+        Search
+      </label>
       <Input
+        id="question-bank-search"
         type="text"
         placeholder="Search questions..."
         value={value}

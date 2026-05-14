@@ -117,4 +117,20 @@ export const questionBankService = {
 
     return response.json();
   },
+
+  async deleteTopic(topicId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/topics/${topicId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message =
+        typeof errorData === "object" && errorData && "message" in errorData
+          ? String((errorData as { message?: string }).message)
+          : undefined;
+      throw new Error(message || "Failed to delete topic");
+    }
+  },
 };

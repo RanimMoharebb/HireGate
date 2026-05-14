@@ -94,8 +94,18 @@ export default function ExamReviewModal({
                 >
 
                   {/* QUESTION */}
-                  <div className="text-lg font-semibold text-slate-900 mb-4">
-                    {q.questionText}
+                  <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <div className="min-w-0 flex-1 text-lg font-semibold text-slate-900">
+                      {q.questionText}
+                    </div>
+                    {q.selectedChoiceId == null ? (
+                      <span
+                        className="shrink-0 text-xs font-medium text-amber-700"
+                        title="No choice was selected"
+                      >
+                        No answer
+                      </span>
+                    ) : null}
                   </div>
 
                   {/* CHOICES */}

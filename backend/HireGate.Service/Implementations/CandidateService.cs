@@ -46,11 +46,11 @@ public async Task<CandidateResponseDto?> GetById(int id)
     };
 }
 
-public async Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search)
+public async Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status)
 {
     var validPage = Math.Max(1, page);
     var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
-    var (candidates, totalCount) = await _repo.GetAll(validPage, validPageSize, search);
+    var (candidates, totalCount) = await _repo.GetAll(validPage, validPageSize, search, status);
 
     var data = candidates.Select(c => new CandidateResponseDto
     {

@@ -54,15 +54,16 @@ public static class CandidateEndpoints
         });
 
         // GET ALL (paginated)
-        group.MapGet("/", async (
+        group.MapGet("/", async (   
             [FromServices] ICandidateService service,
             int page = 1,
             int pageSize = 10,
-            string? search = null) =>
+            string? search = null,
+            string? status = null) =>
         {
             var validPage = Math.Max(1, page);
             var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
-            var (data, totalCount) = await service.GetAll(validPage, validPageSize, search);
+            var (data, totalCount) = await service.GetAll(validPage, validPageSize, search, status);
             var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
 
             return Results.Ok(new
@@ -122,8 +123,8 @@ public static class CandidateEndpoints
             var result = await service.SendExamEmail(dto);
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization();
+        });
+        //.RequireAuthorization();
 
         // Send BULK EMAIL
         group.MapPost("/send-bulk-exam-email", async (
