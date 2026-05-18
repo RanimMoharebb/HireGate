@@ -4,7 +4,7 @@ const BASE_URL = "http://localhost:5116";
 // Send email to ONE candidate
 // --------------------
 export async function sendExamEmail(candidateId: number, examId: number) {
-  const token = localStorage.getItem("token"); // admin token
+  const token = localStorage.getItem("token"); 
 
   const res = await fetch(
     `http://localhost:5116/candidates/${candidateId}/send-exam-email`,
@@ -20,7 +20,7 @@ export async function sendExamEmail(candidateId: number, examId: number) {
 
   const text = await res.text();
 
-  if (!res.ok) throw new Error(text || "Failed");
+  if (!res.ok) throw new Error(text || "Failed"); 
 
   return text;
 }

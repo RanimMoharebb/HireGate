@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthCard from "@/app/_components/AuthCard";
 import { resetPassword, resendOtp } from "@/app/_services/auth-service";
 import { validatePassword,validateOTP } from "@/app/_validations/auth-validation";
@@ -9,12 +9,20 @@ import { validatePassword,validateOTP } from "@/app/_validations/auth-validation
 export default function ResetPassword() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
+/*
   //const email = searchParams.get("email") || "";
   const email =
     typeof window !== "undefined"
       ? localStorage.getItem("reset_email") || ""
       : "";
+*/
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+  const storedEmail = localStorage.getItem("reset_email") || "";
+  setEmail(storedEmail);
+  setLoading(false);
+}, []);
 
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
@@ -22,9 +30,9 @@ export default function ResetPassword() {
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
+  /*
   if (!email) {
     return (
       <div className="text-center mt-10">
@@ -32,6 +40,19 @@ export default function ResetPassword() {
       </div>
     );
   }
+*/
+
+if (loading) return null;
+
+if (!email) {
+  return (
+    <AuthCard title="Reset Password">
+      <div className="text-center text-red-500">
+        Invalid access. Please go back to Forgot Password.
+      </div>
+    </AuthCard>
+  );
+}
 
   // RESET PASSWORD
   const handleReset = async () => {
@@ -92,11 +113,17 @@ if (password !== confirmPassword) {
     }
   };
 
+if (loading) {
+  return (
+    <AuthCard title="Reset Password">
+      <div className="text-gray-500 text-center">Loading...</div>
+    </AuthCard>
+  );
+}
+
   return (
     <AuthCard
       title="Reset Password"
-      titleClassName="text-xl"
-      subtitle="Enter OTP and new password"
     >
 
       {error && (
@@ -106,6 +133,7 @@ if (password !== confirmPassword) {
       {message && (
         <div className="text-green-600 mb-3 text-sm">{message}</div>
       )}
+
 
       {/* EMAIL */}
       <div className="mb-3">
@@ -128,26 +156,6 @@ if (password !== confirmPassword) {
           value={otp}
           onChange={(e) => setOtp(e.target.value)}
         />
-      </div>
-
-
-      <div className="flex justify-center gap-6 mb-4">
-        {/* CHANGE EMAIL */}
-        <button
-          onClick={() => router.push("/forgot-password")}
-          className="text-sm text-blue-600 underline"
-        >
-          Change Email
-        </button>
-
-        {/* RESEND OTP */}
-        <button
-          onClick={handleResendOtp}
-          disabled={resendLoading}
-          className="text-sm text-blue-600 underline"
-        >
-          {resendLoading ? "Sending OTP..." : "Resend OTP"}
-        </button>
       </div>
 
 
@@ -178,7 +186,9 @@ if (password !== confirmPassword) {
           onChange={(e) => setConfirmPassword(e.target.value)}  // ✅ FIX
         />
       </div>
-
+    
+    <div className="space-y-2">
+      
       {/* RESET BUTTON */}
       <button
         onClick={handleReset}
@@ -187,6 +197,27 @@ if (password !== confirmPassword) {
       >
         {loading ? "Processing..." : "Reset Password"}
       </button>
+
+      <div className="flex justify-center gap-6 mb-4">
+        {/* CHANGE EMAIL */}
+        <button
+          onClick={() => router.push("/forgot-password")}
+          className="text-sm text-blue-600 underline"
+        >
+          Change Email
+        </button>
+
+        {/* RESEND OTP */}
+        <button
+          onClick={handleResendOtp}
+          disabled={resendLoading}
+          className="text-sm text-blue-600 underline"
+        >
+          {resendLoading ? "Sending OTP..." : "Resend OTP"}
+        </button>
+      </div>
+</div>
+
 
     </AuthCard>
   );

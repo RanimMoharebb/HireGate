@@ -7,6 +7,7 @@ type Props = {
   subtitle?: string;
   children: ReactNode;
   titleClassName?: string;
+  size?: "normal" | "compact";
 };
 
 export default function AuthCard({
@@ -14,11 +15,14 @@ export default function AuthCard({
   subtitle,
   children,
   titleClassName,
-}: Props) {
+  size = "normal",
+}: Props){
   return (
-    <div className="min-h-screen bg-slate-200 flex items-start justify-center pt-16 pb-16">
 
-      <div className="bg-white w-[420px] min-h-[520px] p-10 rounded-2xl shadow-lg flex flex-col">
+<div className="min-h-screen bg-slate-200 flex items-center justify-center p-4">
+      <div
+       className={`bg-white w-[420px] h-auto rounded-2xl shadow-lg flex flex-col
+      ${size === "compact" ? "p-6" : "p-8"}`}>
 
         {/* LOGO */}
         <div className="flex flex-col items-center mb-6 shrink-0">

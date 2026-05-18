@@ -5,7 +5,7 @@ using HireGate.Service.Interfaces;
 using HireGate.Service.DTOs;
 using HireGate.Data.Models;
 using System.Security.Principal;
-
+using HireGate.ResultWrapper;
 namespace HireGate.Service.Implementations
 {
 public class CandidateService : ICandidateService
@@ -153,14 +153,26 @@ public async Task<string>  SendExamEmail(SendExamEmailDto dto)
 }
 
 
-public async Task<string>  SendBulkExamEmail(SendBulkExamEmailDto dto)
+public async Task<BulkEmailResultDto>  SendBulkExamEmail(SendBulkExamEmailDto dto)
 {
     var exam = await _examRepo.GetExamByIdAsync(dto.ExamId);
 
     if (exam == null)
-        return "Exam not found";
+        return new BulkEmailResultDto
+        {
+            Total = 0,
+            Results = new List<BulkEmailItemResultDto>
+            {
+                new BulkEmailItemResultDto
+                {
+                    Status = "Failed",
+                    Error = "Exam not found"
+                }
+            }
+        };
 
-    var notFoundIds = new List<int>();
+    var result = new BulkEmailResultDto();
+    result.Total = dto.CandidateIds.Count;
 
     foreach (var id in dto.CandidateIds)
     {
@@ -168,7 +180,7 @@ public async Task<string>  SendBulkExamEmail(SendBulkExamEmailDto dto)
 
         if (candidate == null)
         {
-            notFoundIds.Add(id);
+            result.NotFoundIds.Add(id);
             continue;
         }
 
@@ -179,26 +191,37 @@ public async Task<string>  SendBulkExamEmail(SendBulkExamEmailDto dto)
             candidate.Token = Guid.NewGuid().ToString();
         }
 
-        // SAVE BEFORE EMAIL
         await _repo.Update(candidate);
 
         var examUrl = $"https://your-frontend.com/exam/{candidate.Token}";
 
-        await _email.SendEmail(
-            candidate.Email,
-            "Your Exam Link",
-            $"Click here:\n{examUrl}"
-        );
+        try
+        {
+            await _email.SendEmail(
+                candidate.Email,
+                "Your Exam Link",
+                $"Click here:\n{examUrl}"
+            );
 
+            result.Results.Add(new BulkEmailItemResultDto
+            {
+                CandidateId = id,
+                Email = candidate.Email,
+                Status = "Sent"
+            });
+        }
+        catch (Exception ex)
+        {
+            result.Results.Add(new BulkEmailItemResultDto
+            {
+                CandidateId = id,
+                Email = candidate.Email,
+                Status = "Failed",
+                Error = ex.Message
+            });
+        }
     }
-    
-    if (notFoundIds.Count > 0)
-    {
-        return $"Bulk completed. Not found IDs: {string.Join(", ", notFoundIds)}";
-    }
-
-    return "Bulk emails processed successfully";
-    
+    return result;
 }
 
 
@@ -270,12 +293,12 @@ if (candidate.StartedAt != null)
 }
 
 
-public async Task<object> StartExam(string token)
+public async Task<ServiceResult<StartExamResponseDto>> StartExam(string token)
 {
     var candidate = await _repo.GetByToken(token);
 
     if (candidate == null || candidate.Exam == null)
-        return "Invalid token";
+        return ServiceResult<StartExamResponseDto>.Fail("Invalid token");
 
     var now = DateTime.UtcNow;
     var exam = candidate.Exam;
@@ -289,14 +312,14 @@ public async Task<object> StartExam(string token)
     var startTime = candidate.StartedAt.Value;
 
     if (exam.DurationMinutes == null || exam.DurationMinutes <= 0)
-        return "Invalid exam duration";
+        return ServiceResult<StartExamResponseDto>.Fail("Invalid exam duration");
 
     var endTime = startTime.AddMinutes(exam.DurationMinutes.Value);
 
     if (now > endTime)
-        return "Your exam time has finished";
+        return ServiceResult<StartExamResponseDto>.Fail("Your exam time has finished");
 
-    return new StartExamResponseDto
+    var dto = new StartExamResponseDto
     {
         StartedAt = startTime,
         ExamId = exam.Id,
@@ -316,8 +339,33 @@ public async Task<object> StartExam(string token)
             }).ToList()
         }).ToList()
     };
-}
 
+    return ServiceResult<StartExamResponseDto>.Ok(dto);
+}
+/*
+    return ServiceResult<StartExamResponseDto>.Ok(new StartExamResponseDto
+    {
+        StartedAt = startTime,
+        ExamId = exam.Id,
+        PositionTitle = exam.PositionTitle,
+        DurationMinutes = exam.DurationMinutes,
+
+        Questions = exam.ExamQuestions.Select(q => new ExamQuestionDto
+        {
+            Id = q.Question.Id,
+            QuestionText = q.Question.QuestionText,
+            QuestionImage = q.Question.QuestionImage,
+
+            Choices = q.Question.Choices.Select(c => new ExamChoiceDto
+            {
+                Id = c.Id,
+                Text = c.ChoiceText
+            }).ToList()
+        }).ToList()
+    };
+    return ServiceResult<StartExamResponseDto>.Fail("Failed to start exam"); 
+}
+*/
 
 
 public async Task<ExamReviewDto?> GetExamReview(int candidateId)

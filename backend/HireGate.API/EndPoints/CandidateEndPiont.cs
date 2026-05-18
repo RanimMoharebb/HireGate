@@ -104,9 +104,17 @@ public static class CandidateEndpoints
             if (!validation.IsValid)
                 return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-            var result = await service.SendExamEmail(dto);
-
-            return Results.Ok(result);
+            try
+            {
+                var result = await service.SendExamEmail(dto);
+                return Results.Ok(new {message = result});
+            }
+            catch (Exception)
+            {
+                return Results.BadRequest(new{
+                    message = "Failed to send email. Please try again later."
+                });
+            }
         })
         .RequireAuthorization();
 
@@ -122,9 +130,17 @@ public static class CandidateEndpoints
             if (!validation.IsValid)
                 return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
-            var result = await service.SendBulkExamEmail(dto);
-
-            return Results.Ok(result);
+            try
+            {
+                var result = await service.SendBulkExamEmail(dto);
+                return Results.Ok(new {message = result});
+            }
+            catch (Exception)
+            {
+                return Results.BadRequest(new{
+                    message = "Failed to send bulk email. Please try again later."
+                });
+            }
         })
         .RequireAuthorization();
 
@@ -136,10 +152,10 @@ public static class CandidateEndpoints
         {
             var result = await service.StartExam(token);
 
-            if (result is string message)
-                return Results.BadRequest(message);
+            if (!result.Success)
+                return Results.BadRequest(result.Error);
 
-            return Results.Ok(result);
+            return Results.Ok(result); // result.Data
         });
 
         // EXAM PAGE

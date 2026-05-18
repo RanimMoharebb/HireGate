@@ -1,5 +1,5 @@
 using HireGate.Service.DTOs;
-
+using HireGate.ResultWrapper;
 namespace HireGate.Service.Interfaces
 {
 
@@ -13,12 +13,12 @@ public interface ICandidateService
     Task<DeleteCandidateResponseDto?> Delete(int id);
 
     Task<string> SendExamEmail(SendExamEmailDto dto);
-    Task<string> SendBulkExamEmail(SendBulkExamEmailDto dto);
+    Task<BulkEmailResultDto> SendBulkExamEmail(SendBulkExamEmailDto dto);
     Task<CompleteCandidateProfileResponseDto?> CompleteProfile(string token, CompleteCandidateProfileDto dto);
 
     Task<ExamPageDto?> GetExamPage(string token);
 
-    Task<object> StartExam(string token);
+    Task<ServiceResult<StartExamResponseDto>> StartExam(string token);
     Task<ExamReviewDto?> GetExamReview(int candidateId);    
     }
 }

@@ -111,7 +111,7 @@ export default function LoginPage() {
           onClick={() => router.push("/complete-register")}
           className="text-sm text-green-600 hover:underline"
         >
-          Create Account
+          Don’t have an account? Sign up
         </button>
 
         <br />
@@ -120,7 +120,7 @@ export default function LoginPage() {
           onClick={() => router.push("/forgot-password")}
           className="text-sm text-blue-600 hover:underline"
         >
-          Forgot Password?
+          Forgot password? Reset
         </button>
 
       </div>

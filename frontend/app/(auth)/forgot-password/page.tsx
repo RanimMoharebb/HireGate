@@ -44,7 +44,10 @@ export default function ForgotPassword() {
   };
 
   return (
-    <AuthCard title="Forgot Password">
+        <AuthCard
+          title="Forgot Password"
+          subtitle="Enter your email to receive an OTP for password reset"
+        >
 
       {error && (
         <div className="text-red-500 text-sm mb-3">

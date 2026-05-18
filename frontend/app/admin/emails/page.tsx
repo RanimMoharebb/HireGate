@@ -146,10 +146,9 @@ useEffect(() => {
                 checked={selectedCandidates.includes(c.id)}
                 onChange={() => toggleCandidate(c.id)}
               />
-
-<span>
-  {`${c.firstName ?? ""} ${c.lastName ?? ""}`.trim()} — {c.email}
-</span>
+              <span>
+                {`${c.firstName ?? ""} ${c.lastName ?? ""}`.trim()} — {c.email}
+              </span>
             </label>
           ))}
 
