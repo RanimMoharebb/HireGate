@@ -1,5 +1,6 @@
 "use client";
 
+import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 import { Loader } from "lucide-react";
 
 type Choice = {
@@ -36,7 +37,7 @@ export default function ExamReviewModal({
   onClose,
 }: Props) {
   if (!data) return null;
-
+  useDisableBodyScroll();
   const getChoiceClass = (choice: Choice, selectedId: number | null) => {
     const isSelected = choice.id === selectedId;
 
@@ -52,9 +53,9 @@ export default function ExamReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { restoreBodyScroll(); onClose(); }}>
       
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl max-h-[85vh] overflow-hidden flex flex-col border border-slate-300">
+      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-xl max-h-[85vh] overflow-hidden flex flex-col border border-slate-300" onClick={(e) => e.stopPropagation()}>
 
         {/* HEADER */}
         <div className="p-6 border-b border-slate-300 flex justify-between items-center bg-slate-50">
@@ -71,10 +72,10 @@ export default function ExamReviewModal({
           </div>
 
           <button
-            onClick={onClose}
-            className="text-slate-500 text-xl hover:text-slate-700"
+            onClick={() => { restoreBodyScroll(); onClose(); }}
+            className="text-slate-500 text-xxl hover:text-slate-700"
           >
-            ×
+            X
           </button>
         </div>
 
@@ -94,8 +95,18 @@ export default function ExamReviewModal({
                 >
 
                   {/* QUESTION */}
-                  <div className="text-lg font-semibold text-slate-900 mb-4">
-                    {q.questionText}
+                  <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <div className="min-w-0 flex-1 text-lg font-semibold text-slate-900">
+                      {q.questionText}
+                    </div>
+                    {q.selectedChoiceId == null ? (
+                      <span
+                        className="shrink-0 text-xs font-medium text-amber-700"
+                        title="No choice was selected"
+                      >
+                        No answer
+                      </span>
+                    ) : null}
                   </div>
 
                   {/* CHOICES */}

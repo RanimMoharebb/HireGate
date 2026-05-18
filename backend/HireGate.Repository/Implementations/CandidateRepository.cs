@@ -12,9 +12,39 @@ public class CandidateRepository : ICandidateRepository
     }
 
 
-    public async Task<List<Candidate>> GetAll()
+    public async Task<(List<Candidate> Items, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status)
     {
-        return await _context.Candidates.ToListAsync();
+        var query = _context.Candidates.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(c =>
+                c.Email.ToLower().Contains(term) ||
+                (c.FirstName != null && c.FirstName.ToLower().Contains(term)) ||
+                (c.LastName != null && c.LastName.ToLower().Contains(term)) ||
+                (c.PhoneNumber != null && c.PhoneNumber.ToLower().Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            var s = status.Trim();
+            if (string.Equals(s, "Pending", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(c => c.SubmittedAt == null && c.StartedAt == null);
+            else if (string.Equals(s, "In Progress", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(c => c.StartedAt != null && c.SubmittedAt == null);
+            else if (string.Equals(s, "Submitted", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(c => c.SubmittedAt != null);
+        }
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderBy(c => c.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 
 

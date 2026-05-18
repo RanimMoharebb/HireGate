@@ -16,8 +16,9 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
         builder.Property(q => q.TopicId).HasColumnName("topic_id");
         builder.Property(q => q.QuestionText)
             .HasColumnName("question_text")
-            .HasMaxLength(200)
             .IsRequired();
+        
+        builder.Property(q => q.DeletedAt).HasColumnName("deleted_at");
 
         builder.Property(q => q.QuestionImage).HasColumnName("question_image");
         builder.HasOne(q => q.Topic)          

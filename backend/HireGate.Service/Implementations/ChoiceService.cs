@@ -19,6 +19,19 @@ namespace HireGate.Service.Implementations
             _questionRepository = questionRepository;
         }
 
+        public async Task<IReadOnlyList<ChoiceDto>> GetChoicesForQuestionAsync(int questionId)
+        {
+            if (questionId <= 0)
+                throw new ArgumentException("Invalid question ID", nameof(questionId));
+
+            var exists = await _questionRepository.QuestionExistsAsync(questionId);
+            if (!exists)
+                throw new KeyNotFoundException($"Question with ID {questionId} not found");
+
+            var choices = await _choiceRepository.GetChoicesByQuestionIdAsync(questionId);
+            return choices.Select(MapToChoiceDto).ToList();
+        }
+
         public async Task<ChoiceDto> AddChoiceAsync(int questionId, CreateChoiceDto createChoiceDto)
         {
             if (questionId <= 0)

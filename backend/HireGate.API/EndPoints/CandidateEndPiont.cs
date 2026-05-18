@@ -53,12 +53,28 @@ public static class CandidateEndpoints
             return Results.Ok(result);
         });
 
-        // GET ALL
-        group.MapGet("/", async ([FromServices] ICandidateService service) =>
+        // GET ALL (paginated)
+        group.MapGet("/", async (   
+            [FromServices] ICandidateService service,
+            int page = 1,
+            int pageSize = 10,
+            string? search = null,
+            string? status = null) =>
         {
-            return Results.Ok(await service.GetAll());
-        })
-        .RequireAuthorization();
+            var validPage = Math.Max(1, page);
+            var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+            var (data, totalCount) = await service.GetAll(validPage, validPageSize, search, status);
+            var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
+
+            return Results.Ok(new
+            {
+                data,
+                page = validPage,
+                pageSize = validPageSize,
+                totalCount,
+                totalPages
+            });
+        });
         
         // GET BY ID
         group.MapGet("/{id:int}", async (

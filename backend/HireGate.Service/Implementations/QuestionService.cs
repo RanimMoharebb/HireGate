@@ -26,19 +26,13 @@ namespace HireGate.Service.Implementations
             return question == null ? null : MapToQuestionDto(question);
         }
 
-        public async Task<(IEnumerable<QuestionDto> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize)
+        public async Task<(IEnumerable<QuestionDto> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize, int? topicId = null, string? search = null, bool? isDeleted = false)
         {
-            var (items, totalCount) = await _repository.GetAllQuestionsAsync(pageNumber, pageSize);
-            return (items.Select(MapToQuestionDto).ToList(), totalCount);
-        }
-
-        public async Task<IEnumerable<QuestionDto>> GetQuestionsByTopicIdAsync(int topicId)
-        {
-            if (topicId <= 0)
+            if (topicId.HasValue && topicId.Value <= 0)
                 throw new ArgumentException("Invalid topic ID", nameof(topicId));
 
-            var questions = await _repository.GetQuestionsByTopicIdAsync(topicId);
-            return questions.Select(MapToQuestionDto).ToList();
+            var (items, totalCount) = await _repository.GetAllQuestionsAsync(pageNumber, pageSize, topicId, search, isDeleted);
+            return (items.Select(MapToQuestionDto).ToList(), totalCount);
         }   
 
         public async Task<QuestionDto> CreateQuestionAsync(CreateQuestionDto createQuestionDto)
@@ -155,7 +149,7 @@ namespace HireGate.Service.Implementations
                 throw new ArgumentNullException(nameof(patchQuestionDto));
 
             var existingQuestion = await _repository.GetQuestionByIdAsync(id);
-            if (existingQuestion == null)
+            if (existingQuestion == null || existingQuestion.DeletedAt != null)
                 throw new KeyNotFoundException($"Question with ID {id} not found");
 
             if (patchQuestionDto.TopicId.HasValue)
@@ -230,6 +224,22 @@ namespace HireGate.Service.Implementations
             return await _repository.DeleteQuestionAsync(id);
         }
 
+        public async Task<bool> RestoreQuestionAsync(int id)
+        {
+            if (id <= 0)
+                throw new ArgumentException("Invalid question ID", nameof(id));
+
+            var exists = await _repository.QuestionExistsAsync(id);
+            if (!exists)
+                throw new KeyNotFoundException($"Question with ID {id} not found");
+
+            var restored = await _repository.RestoreQuestionAsync(id);
+            if (!restored)
+                throw new InvalidOperationException($"Question with ID {id} is not deleted");
+
+            return true;
+        }
+
         private QuestionDto MapToQuestionDto(Question question)
         {
             return new QuestionDto
@@ -237,6 +247,7 @@ namespace HireGate.Service.Implementations
                 Id = question.Id,
                 TopicId = question.TopicId,
                 TopicName = question.Topic?.TopicName ?? string.Empty,
+                DeletedAt = question.DeletedAt,
                 QuestionText = question.QuestionText,
                 QuestionImage = question.QuestionImage,
                 Choices = question.Choices

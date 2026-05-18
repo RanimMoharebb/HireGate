@@ -13,15 +13,18 @@ public class CandidateService : ICandidateService
     private readonly ICandidateRepository _repo;
     private readonly IEmailService _email;
     private readonly IExamRepository _examRepo;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public CandidateService(
         ICandidateRepository repo,
         IEmailService email,
-        IExamRepository examRepo)
+        IExamRepository examRepo,
+        IDateTimeProvider dateTimeProvider)
     {
         _repo = repo;
         _email = email;
         _examRepo = examRepo;
+        _dateTimeProvider = dateTimeProvider;
     }
 
 public async Task<CandidateResponseDto?> GetById(int id)
@@ -46,11 +49,13 @@ public async Task<CandidateResponseDto?> GetById(int id)
     };
 }
 
-public async Task<List<CandidateResponseDto>> GetAll()
+public async Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status)
 {
-    var candidates = await _repo.GetAll();
+    var validPage = Math.Max(1, page);
+    var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+    var (candidates, totalCount) = await _repo.GetAll(validPage, validPageSize, search, status);
 
-    return candidates.Select(c => new CandidateResponseDto
+    var data = candidates.Select(c => new CandidateResponseDto
     {
         Id = c.Id,
         Email = c.Email,
@@ -61,8 +66,10 @@ public async Task<List<CandidateResponseDto>> GetAll()
         StartedAt = c.StartedAt,
         SubmittedAt = c.SubmittedAt,
         FinalScore = c.FinalScore,
-        ExamId = c.ExamId 
+        ExamId = c.ExamId
     }).ToList();
+
+    return (data, totalCount);
 }
 
 public async Task<CreateCandidateResponseDto> CreateCandidate(CreateCandidateDto dto)
@@ -240,7 +247,7 @@ var exam = await _examRepo.GetExamByIdAsync(candidate.ExamId.Value);
     if (exam == null)
         return null;
 
-    var now = DateTime.UtcNow;
+    var now = _dateTimeProvider.Now;
 
     if (exam.WindowStartTime == null || exam.WindowStartTime > now)
         return null;
@@ -300,7 +307,7 @@ public async Task<ServiceResult<StartExamResponseDto>> StartExam(string token)
     if (candidate == null || candidate.Exam == null)
         return ServiceResult<StartExamResponseDto>.Fail("Invalid token");
 
-    var now = DateTime.UtcNow;
+    var now = _dateTimeProvider.Now;
     var exam = candidate.Exam;
 
     if (candidate.StartedAt == null)

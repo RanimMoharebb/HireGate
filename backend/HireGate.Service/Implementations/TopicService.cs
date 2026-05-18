@@ -35,12 +35,12 @@ namespace HireGate.Service.Implementations
                 throw new ArgumentNullException(nameof(createTopicDto));
 
             if (string.IsNullOrWhiteSpace(createTopicDto.TopicName))
-                throw new ArgumentException("Topic name is required", nameof(createTopicDto.TopicName));
+                throw new ArgumentException("Topic name is required");
 
             var normalizedTopicName = createTopicDto.TopicName.Trim();
 
             if (await _repository.TopicNameExistsAsync(normalizedTopicName))
-                throw new ArgumentException("Topic name already exists", nameof(createTopicDto.TopicName));
+                throw new ArgumentException("Topic name already exists");
 
             var topic = new Topic
             {

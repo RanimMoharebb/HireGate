@@ -1,0 +1,591 @@
+{
+  "info": {
+    "_postman_id": "b69b7221-1009-4405-a752-5b6b41ae2cf6",
+    "name": "HireGate",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "36765708"
+  },
+  "item": [
+    {
+      "name": "Exams",
+      "item": [
+        {
+          "name": "Submit Exam",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"answers\": [\r\n        { \"questionId\": 1, \"choiceId\": 2 },\r\n        { \"questionId\": 2, \"choiceId\": 5 },\r\n        { \"questionId\": 3, \"choiceId\": 9 },\r\n        { \"questionId\": 4, \"choiceId\": 13 },\r\n        { \"questionId\": 5, \"choiceId\": 17 },\r\n        { \"questionId\": 6, \"choiceId\": 21 },\r\n        { \"questionId\": 7, \"choiceId\": 25 },\r\n        { \"questionId\": 8, \"choiceId\": 29 },  \r\n        { \"questionId\": 9, \"choiceId\": 34 },     \r\n        { \"questionId\": 10, \"choiceId\": 37}\r\n    ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/exam/submit/token1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "exam",
+                "submit",
+                "token1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invite email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\":\"mohamedmohamed@gmail.com\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/admins",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "admins"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Register",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\": \"mohamedmohamed@gmail.com\",\r\n    \"password\": \"123456789\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/auth",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "auth"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Topics",
+      "item": [
+        {
+          "name": "Get All Topics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/topics/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "topics",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Topic",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"topicName\": \"Database\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/topics/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "topics",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Topic By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/topics/48",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "topics",
+                "48"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Topic",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/topics/555",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "topics",
+                "555"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Topic",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"topicName\": \"Data Structures\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/topics/222",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "topics",
+                "222"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Choices",
+      "item": [
+        {
+          "name": "Add a Single Choice",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"choiceText\": \"O(1)\",\r\n  \"isCorrect\": false\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/228/choices/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "228",
+                "choices",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Single Choice",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"choiceText\": \"O(log n) average case\",\r\n  \"isCorrect\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/5/choices/12",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "5",
+                "choices",
+                "12"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Partial Update Choice",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"choiceText\": \"Updated by patch\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/5/choices/18",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "5",
+                "choices",
+                "18"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Single Choice",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/5/choices/17777777",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "5",
+                "choices",
+                "17777777"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "Get All Questions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtb2hhbWVkbWVkaGF0ODVAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiSFJNYW5hZ2VyIiwiZXhwIjoxNzc3ODkwNDU0fQ.xzeYZM94t-l1Cx--3ItwbUz6noOxCDPb1NDkInJ3Dl8",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "",
+                "value": "",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions?pageNumber=2&pageSize=5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "2"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Question",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"topicId\": 6,\r\n  \"questionText\": \"What is Big O of binary search?\",\r\n  \"questionImage\": \"https://cdn.example.com/questions/binary-search.png\",\r\n  \"choices\": [\r\n    {\r\n      \"choiceText\": \"O(log n)\",\r\n      \"isCorrect\": true\r\n    },\r\n    {\r\n      \"choiceText\": \"O(n)\",\r\n      \"isCorrect\": false\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Question By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/14",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "14"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Question By Topic Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/topic/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "topic",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"topicId\": 4,\r\n  \"questionText\": \"What is the time complexity of binary search?\",\r\n  \"questionImage\": \"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsXWgGDYHAb1g8FDwx_KfAzo01FBKxHF0CBg&s\",\r\n  \"choices\": [\r\n    {\r\n      \"choiceText\": \"O(log n)\",\r\n      \"isCorrect\": true\r\n    },\r\n    {\r\n      \"choiceText\": \"O(n log n)\",\r\n      \"isCorrect\": false\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/455",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "455"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patch Question",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"questionText\": \"Binary search runs in what complexity?\",\r\n    \"choices\": [\r\n    {\r\n      \"choiceText\": \"O(log nNNN)\",\r\n      \"isCorrect\": false\r\n    },\r\n    {\r\n      \"choiceText\": \"O(n)\",\r\n      \"isCorrect\": false\r\n    },\r\n    {\r\n      \"choiceText\": \"O(n)\",\r\n      \"isCorrect\": true\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/4",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "4"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5116/api/admin/questions/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5116",
+              "path": [
+                "api",
+                "admin",
+                "questions",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

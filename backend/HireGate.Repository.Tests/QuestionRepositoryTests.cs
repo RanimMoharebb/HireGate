@@ -68,6 +68,28 @@ namespace HireGate.Repository.Tests
         }
 
         [Fact]
+        public async Task GetQuestionByIdAsync_ShouldReturnQuestion_WhenSoftDeleted()
+        {
+            // Arrange
+            var question = new Question
+            {
+                TopicId = 1,
+                QuestionText = "Deleted Question",
+                DeletedAt = DateTime.UtcNow,
+                Choices = new List<Choice>()
+            };
+            _context.Questions.Add(question);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.GetQuestionByIdAsync(question.Id);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.DeletedAt.Should().NotBeNull();
+        }
+
+        [Fact]
         public async Task GetAllQuestionsAsync_ShouldReturnPagedQuestionsWithIncludes()
         {
             // Arrange
@@ -110,6 +132,75 @@ namespace HireGate.Repository.Tests
         }
 
         [Fact]
+        public async Task GetAllQuestionsAsync_ShouldExcludeSoftDeletedQuestions()
+        {
+            // Arrange
+            _context.Questions.AddRange(
+                new Question { TopicId = 1, QuestionText = "Active Question", Choices = new List<Choice>() },
+                new Question
+                {
+                    TopicId = 1,
+                    QuestionText = "Deleted Question",
+                    DeletedAt = DateTime.UtcNow,
+                    Choices = new List<Choice>()
+                });
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.GetAllQuestionsAsync(1, 10);
+
+            // Assert
+            result.TotalCount.Should().Be(1);
+            result.Items.Should().ContainSingle(q => q.QuestionText == "Active Question");
+        }
+
+        [Fact]
+        public async Task GetAllQuestionsAsync_ShouldReturnOnlyDeleted_WhenDeletedFilterTrue()
+        {
+            // Arrange
+            _context.Questions.AddRange(
+                new Question { TopicId = 1, QuestionText = "Active Question", Choices = new List<Choice>() },
+                new Question
+                {
+                    TopicId = 1,
+                    QuestionText = "Deleted Question",
+                    DeletedAt = DateTime.UtcNow,
+                    Choices = new List<Choice>()
+                });
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.GetAllQuestionsAsync(1, 10, null, null, true);
+
+            // Assert
+            result.TotalCount.Should().Be(1);
+            result.Items.Should().ContainSingle(q => q.QuestionText == "Deleted Question");
+        }
+
+        [Fact]
+        public async Task GetAllQuestionsAsync_ShouldReturnAll_WhenDeletedFilterNull()
+        {
+            // Arrange
+            _context.Questions.AddRange(
+                new Question { TopicId = 1, QuestionText = "Active Question", Choices = new List<Choice>() },
+                new Question
+                {
+                    TopicId = 1,
+                    QuestionText = "Deleted Question",
+                    DeletedAt = DateTime.UtcNow,
+                    Choices = new List<Choice>()
+                });
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.GetAllQuestionsAsync(1, 10, null, null, null);
+
+            // Assert
+            result.TotalCount.Should().Be(2);
+            result.Items.Should().HaveCount(2);
+        }
+
+        [Fact]
         public async Task GetQuestionsByTopicIdAsync_ShouldReturnQuestionsForTopic()
         {
             // Arrange
@@ -133,7 +224,7 @@ namespace HireGate.Repository.Tests
             await _context.SaveChangesAsync();
 
             // Act
-            var result = await _repository.GetQuestionsByTopicIdAsync(1);
+            var (result, _) = await _repository.GetAllQuestionsAsync(1, 100, topicId: 1);
 
             // Assert
             result.Should().HaveCount(1);
@@ -197,7 +288,7 @@ namespace HireGate.Repository.Tests
         }
 
         [Fact]
-        public async Task DeleteQuestionAsync_ShouldRemoveQuestionFromDatabase()
+        public async Task DeleteQuestionAsync_ShouldSetDeletedAt_WhenQuestionExists()
         {
             // Arrange
             var question = new Question
@@ -216,7 +307,8 @@ namespace HireGate.Repository.Tests
             result.Should().BeTrue();
 
             var deletedQuestion = await _context.Questions.FindAsync(question.Id);
-            deletedQuestion.Should().BeNull();
+            deletedQuestion.Should().NotBeNull();
+            deletedQuestion!.DeletedAt.Should().NotBeNull();
         }
 
         [Fact]
@@ -224,6 +316,50 @@ namespace HireGate.Repository.Tests
         {
             // Act
             var result = await _repository.DeleteQuestionAsync(999);
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RestoreQuestionAsync_ShouldClearDeletedAt_WhenQuestionIsSoftDeleted()
+        {
+            // Arrange
+            var question = new Question
+            {
+                TopicId = 1,
+                QuestionText = "Soft Deleted Question",
+                DeletedAt = DateTime.UtcNow,
+                Choices = new List<Choice>()
+            };
+            _context.Questions.Add(question);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.RestoreQuestionAsync(question.Id);
+
+            // Assert
+            result.Should().BeTrue();
+            var restoredQuestion = await _context.Questions.FindAsync(question.Id);
+            restoredQuestion.Should().NotBeNull();
+            restoredQuestion!.DeletedAt.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task RestoreQuestionAsync_ShouldReturnFalse_WhenQuestionNotSoftDeleted()
+        {
+            // Arrange
+            var question = new Question
+            {
+                TopicId = 1,
+                QuestionText = "Active Question",
+                Choices = new List<Choice>()
+            };
+            _context.Questions.Add(question);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _repository.RestoreQuestionAsync(question.Id);
 
             // Assert
             result.Should().BeFalse();

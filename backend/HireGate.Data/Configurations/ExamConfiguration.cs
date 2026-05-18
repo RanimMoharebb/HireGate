@@ -20,6 +20,10 @@ public class ExamConfiguration : IEntityTypeConfiguration<Exam>
         builder.Property(e => e.DurationMinutes)
             .HasColumnName("duration_minutes");
 
+        builder.Property(e => e.QuestionCount)
+            .HasColumnName("question_count")
+            .HasDefaultValue(0);
+
         builder.Property(e => e.WindowStartTime).HasColumnName("window_start_time");
         builder.Property(e => e.WindowEndTime).HasColumnName("window_end_time");
 

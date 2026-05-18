@@ -42,6 +42,7 @@ builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddSingleton<IDateTimeProvider, EgyptDateTimeProvider>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateExamDtoValidator>();
 

@@ -20,25 +20,33 @@ public class AdminService : IAdminService
     private readonly IAdminRepository _repo;
     private readonly IConfiguration _config;
     private readonly IEmailService _email;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
-public AdminService(IAdminRepository repo, IConfiguration config, IEmailService email)
+public AdminService(IAdminRepository repo, IConfiguration config, IEmailService email, IDateTimeProvider dateTimeProvider)
 {
     _repo = repo;
     _config = config;
     _email = email;
+    _dateTimeProvider = dateTimeProvider;
 }
 
     // GET ALL
-    public async Task<List<AdminResponseDto>> GetAll()
+    public async Task<(List<AdminResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search)
     {
-        var admins = await _repo.GetAll();
+        var validPage = Math.Max(1, page);
+        var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+        var (admins, totalCount) = await _repo.GetAll(validPage, validPageSize, search);
 
-        return admins.Select(a => new AdminResponseDto
+        var data = admins.Select(a => new AdminResponseDto
         {
             Id = a.Id,
+            FirstName = a.FirstName,
+            LastName = a.LastName,
             Email = a.Email,
-            Role = a.Role.ToString()
+            Role = a.Role.ToString(),
         }).ToList();
+
+        return (data, totalCount);
     }
 
     // GET BY ID
@@ -110,8 +118,7 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
     // prevent deleting last CEO
     if (admin.Role == UserRole.CEO)
     {
-        var ceoCount = (await _repo.GetAll())
-            .Count(a => a.Role == UserRole.CEO);
+        var ceoCount = await _repo.CountByRole(UserRole.CEO);
 
         if (ceoCount <= 1)
             return new DeleteAdminResponseDto
@@ -191,7 +198,7 @@ public async Task ForgotPassword(ForgotPasswordDto dto)
     Console.WriteLine("=======================================");
     
     admin.ResetOtpHash = BCrypt.Net.BCrypt.HashPassword(otp);
-    admin.ResetOtpExpiry = DateTime.UtcNow.AddMinutes(3);
+    admin.ResetOtpExpiry = _dateTimeProvider.Now.AddMinutes(3);
 
     await _repo.Update(admin);
 
@@ -211,7 +218,7 @@ public async Task<bool> ResetPassword(ResetPasswordDto dto)
         return false;
 
     // check OTP expiry
-    if (admin.ResetOtpExpiry == null || admin.ResetOtpExpiry < DateTime.UtcNow)
+    if (admin.ResetOtpExpiry == null || admin.ResetOtpExpiry < _dateTimeProvider.Now)
         return false;
 
     // check OTP exists

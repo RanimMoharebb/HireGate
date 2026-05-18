@@ -215,6 +215,12 @@ namespace HireGate.Data.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("position_title");
 
+                    b.Property<int>("QuestionCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("question_count");
+
                     b.Property<DateTime?>("WindowEndTime")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("window_end_time");
@@ -255,15 +261,17 @@ namespace HireGate.Data.Migrations
                         .HasColumnType("int")
                         .HasColumnName("question_id");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("deleted_at");
+
                     b.Property<string>("QuestionImage")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)")
+                        .HasColumnType("longtext")
                         .HasColumnName("question_image");
 
                     b.Property<string>("QuestionText")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)")
+                        .HasColumnType("longtext")
                         .HasColumnName("question_text");
 
                     b.Property<int?>("TopicId")

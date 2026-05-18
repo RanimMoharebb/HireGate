@@ -22,25 +22,35 @@ namespace HireGate.Repository.Implementations
                 .FirstOrDefaultAsync(q => q.Id == id);
         }
 
-        public async Task<(IEnumerable<Question> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize)
+        public async Task<(IEnumerable<Question> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize, int? topicId = null, string? search = null, bool? isDeleted = false)
         {
-            var totalCount = await _context.Questions.CountAsync();
-            var items = await _context.Questions
+            IQueryable<Question> query = _context.Questions;
+
+            if (isDeleted.HasValue)
+            {
+                query = isDeleted.Value
+                    ? query.Where(q => q.DeletedAt != null)
+                    : query.Where(q => q.DeletedAt == null);
+            }
+
+            if (topicId.HasValue)
+            {
+                query = query.Where(q => q.TopicId == topicId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(q => q.QuestionText.Contains(search));
+            }
+
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .Include(q => q.Topic)
                 .Include(q => q.Choices)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
             return (items, totalCount);
-        }
-
-        public async Task<IEnumerable<Question>> GetQuestionsByTopicIdAsync(int topicId)
-        {
-            return await _context.Questions
-                .Where(q => q.TopicId == topicId)
-                .Include(q => q.Topic)
-                .Include(q => q.Choices)
-                .ToListAsync();
         }
 
         public async Task<Question> CreateQuestionAsync(Question question)
@@ -59,15 +69,28 @@ namespace HireGate.Repository.Implementations
 
         public async Task<bool> DeleteQuestionAsync(int id)
         {
-            var question = await _context.Questions.FindAsync(id);
+            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Id == id && q.DeletedAt == null);
             if (question == null)
                 return false;
 
-            _context.Questions.Remove(question);
+            question.DeletedAt = DateTime.UtcNow;
+            _context.Questions.Update(question);
             await _context.SaveChangesAsync();
             return true;
         }
-          public async Task<bool> QuestionExistsAsync(int id)
+
+        public async Task<bool> RestoreQuestionAsync(int id)
+        {
+            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Id == id && q.DeletedAt != null);
+            if (question == null)
+                return false;
+
+            question.DeletedAt = null;
+            _context.Questions.Update(question);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> QuestionExistsAsync(int id)
         {
             return await _context.Questions.AnyAsync(q => q.Id == id);
         }

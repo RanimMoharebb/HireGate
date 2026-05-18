@@ -9,9 +9,12 @@ namespace HireGate.API.Endpoints
         public static void MapChoiceEndpoints(this WebApplication app, IServiceProvider serviceProvider)
         {
             var group = app.MapGroup("/api/admin/questions/{questionId}/choices")
-                .WithName("Choices")
-                .RequireAuthorization();
-  
+                .WithName("Choices");
+                //.RequireAuthorization();
+
+            group.MapGet("/", GetChoicesForQuestion)
+                .WithName("GetChoicesForQuestion");
+
             group.MapPost("/", AddChoice)
                 .WithName("AddChoice");
 
@@ -23,6 +26,27 @@ namespace HireGate.API.Endpoints
                 
             group.MapDelete("/{choiceId}", DeleteChoice)
                 .WithName("DeleteChoice");
+        }
+
+        private static async Task<IResult> GetChoicesForQuestion(int questionId, IChoiceService choiceService)
+        {
+            try
+            {
+                var choices = await choiceService.GetChoicesForQuestionAsync(questionId);
+                return Results.Ok(choices);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return Results.NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
         }
 
         private static async Task<IResult> AddChoice(int questionId, CreateChoiceDto choice, IChoiceService choiceService)

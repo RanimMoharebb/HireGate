@@ -15,10 +15,27 @@ namespace HireGate.API.Endpoints;
             // GET all exams
             // ────────────────────────────────────────────────────────
 
-            group.MapGet("/", async (IExamService examService) =>
+            group.MapGet("/", async (
+                IExamService examService, 
+                int page = 1,
+                int pageSize = 10,
+                string? search = null) =>
                 {
-                var exams = await examService.GetAllExamsAsync();
-                return Results.Ok(exams);
+                var validPage = Math.Max(1, page);
+                var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
+                var (exams, totalCount) = await examService.GetAllExamsAsync(validPage, validPageSize, search);
+                var totalPages = validPageSize == 0 ? 0 : (int)Math.Ceiling((double)totalCount / validPageSize);
+
+                var result = new
+                {
+                    data = exams,
+                    page = validPage,
+                    pageSize = validPageSize,
+                    totalCount,
+                    totalPages
+                };
+
+                return Results.Ok(result);
                 });
 
             // ────────────────────────────────────────────────────────
@@ -187,7 +204,7 @@ namespace HireGate.API.Endpoints;
             group.MapPost("/submit/{token}", async (
                 string token,
                 SubmitExamDto dto,
-                IExamService examService) =>
+                 IExamService examService) =>
             {
                 // take token from the URL and set it on the DTO
                 dto.Token = token;

@@ -6,6 +6,19 @@ namespace HireGate.Service.Mappers
     public static class ExamMapper
     {
         // Mapping Exam entity to ExamDto
+        public static ExamListDto ToListDto(Exam e)
+        {
+            return new ExamListDto
+            {
+                Id = e.Id,
+                PositionTitle = e.PositionTitle!,
+                DurationMinutes = e.DurationMinutes,
+                QuestionCount = e.QuestionCount,
+                WindowStartTime = e.WindowStartTime,
+                WindowEndTime = e.WindowEndTime
+            };
+        }
+
         public static ExamDto ToDto(Exam e)
         {
             return new ExamDto
@@ -13,6 +26,7 @@ namespace HireGate.Service.Mappers
                 Id = e.Id,
                 PositionTitle = e.PositionTitle!,
                 DurationMinutes = e.DurationMinutes,
+                QuestionCount = e.QuestionCount,
                 WindowStartTime = e.WindowStartTime,
                 WindowEndTime = e.WindowEndTime,
 
@@ -30,6 +44,7 @@ namespace HireGate.Service.Mappers
                 Id = e.Id,
                 PositionTitle = e.PositionTitle!,
                 DurationMinutes = e.DurationMinutes,
+                QuestionCount = e.QuestionCount,
                 WindowStartTime = e.WindowStartTime,
                 WindowEndTime = e.WindowEndTime,
                 Questions = questions

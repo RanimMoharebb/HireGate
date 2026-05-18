@@ -11,44 +11,79 @@ namespace HireGate.Service.Implementations
     {
         private readonly IExamRepository _examRepository;
         private readonly IQuestionRepository _questionRepository;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
-        public ExamService(IExamRepository examRepository, IQuestionRepository questionRepository)
+        public ExamService(IExamRepository examRepository, IQuestionRepository questionRepository, IDateTimeProvider dateTimeProvider)
         {
             _examRepository = examRepository;
             _questionRepository = questionRepository;
+            _dateTimeProvider = dateTimeProvider;
         }
 
         public async Task SubmitExamAsync(SubmitExamDto dto)
         {
-            DateTime now;
-            try
-            {
-                var egyptTz = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
-                now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, egyptTz);
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                now = DateTime.UtcNow;
-            }
-            catch (InvalidTimeZoneException)
-            {
-                now = DateTime.UtcNow;
-            }
+            var now = _dateTimeProvider.Now;
 
-            if (string.IsNullOrWhiteSpace(dto.Token))
-            {
+            var candidate = await GetCandidateOrThrowAsync(dto.Token);
+            var exam = await ResolveExamAsync(candidate);
+
+            ValidateWindowAndDuration(exam, candidate, now);
+
+            var choiceIds = dto.Answers.Select(a => a.ChoiceId).Distinct();
+            var choices = await _examRepository.GetChoicesByIdsAsync(choiceIds);
+
+            var questionIds = dto.Answers.Select(a => a.QuestionId).Distinct();
+            await ValidateQuestionIdsExistAsync(questionIds);
+
+            if (!candidate.ExamId.HasValue)
+                throw new Exception("Candidate has no exam assigned");
+
+            int examId = candidate.ExamId.Value;
+            var examQuestions = await _examRepository.GetQuestionsAsync(examId);
+            var examQuestionIds = examQuestions.Select(q => q.Id).ToHashSet();
+
+            var (candidateAnswers, score) = BuildCandidateAnswers(dto.Answers, examQuestionIds, choices, candidate.Id, examId);
+
+            _examRepository.AddCandidateAnswers(candidateAnswers);
+
+            candidate.SubmittedAt = now;
+            candidate.FinalScore = score;
+            candidate.Token = null;
+
+            _examRepository.UpdateCandidate(candidate);
+            await _examRepository.SaveAsync();
+        }
+
+        private async Task<Data.Models.Candidate> GetCandidateOrThrowAsync(string? token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
                 throw new InvalidOperationException("Token is required.");
-            }
 
-            var candidate = await _examRepository.GetCandidateByTokenAsync(dto.Token);
+            var candidate = await _examRepository.GetCandidateByTokenAsync(token!);
             if (candidate is null)
-            {
                 throw new InvalidOperationException("Invalid token or candidate not found.");
+
+            return candidate;
+        }
+
+        private async Task<Data.Models.Exam> ResolveExamAsync(Data.Models.Candidate candidate)
+        {
+            var exam = candidate.Exam;
+            if (exam is null)
+            {
+                if (!candidate.ExamId.HasValue)
+                    throw new InvalidOperationException("Candidate has no exam assigned.");
+
+                exam = await _examRepository.GetExamByIdAsync(candidate.ExamId.Value);
+                if (exam is null)
+                    throw new InvalidOperationException("Assigned exam not found.");
             }
 
-            var exam = candidate.Exam;
+            return exam;
+        }
 
-            // Window checks
+        private void ValidateWindowAndDuration(Data.Models.Exam exam, Data.Models.Candidate candidate, DateTime now)
+        {
             if (exam.WindowStartTime.HasValue && now < exam.WindowStartTime.Value)
             {
                 throw new InvalidOperationException("Exam window has not started yet.");
@@ -59,7 +94,6 @@ namespace HireGate.Service.Implementations
                 throw new InvalidOperationException("Exam window has expired.");
             }
 
-            // Duration check
             if (candidate.StartedAt.HasValue && exam.DurationMinutes.HasValue)
             {
                 var elapsed = (now - candidate.StartedAt.Value).TotalMinutes;
@@ -68,35 +102,27 @@ namespace HireGate.Service.Implementations
                     throw new InvalidOperationException("Exam duration exceeded.");
                 }
             }
+        }
 
-            // Validate choices and questions
-            var choiceIds = dto.Answers.Select(a => a.ChoiceId).Distinct();
-            var choices = await _examRepository.GetChoicesByIdsAsync(choiceIds);
-
-            // Ensure the provided question IDs exist in the questions table
-            var questionIds = dto.Answers.Select(a => a.QuestionId).Distinct();
+        private async Task ValidateQuestionIdsExistAsync(IEnumerable<int> questionIds)
+        {
             foreach (var qid in questionIds)
             {
                 if (!await _questionRepository.QuestionExistsAsync(qid))
-                {
                     throw new InvalidOperationException($"Question with id {qid} not found.");
-                }
             }
-            // new by me
-            if (!candidate.ExamId.HasValue)
-                throw new Exception("Candidate has no exam assigned");
-            // new by me
-            int examId = candidate.ExamId.Value;
-            
-            // Ensure questions belong to this exam
-            //var examQuestions = await _examRepository.GetQuestionsAsync(candidate.ExamId);
-            var examQuestions = await _examRepository.GetQuestionsAsync(examId);
-            var examQuestionIds = examQuestions.Select(q => q.Id).ToHashSet();
+        }
 
+        private (List<CandidateAnswer> Answers, int Score) BuildCandidateAnswers(IEnumerable<DTOs.QuestionAnswerDto> answers,
+            HashSet<int> examQuestionIds,
+            IDictionary<int, Data.Models.Choice> choices,
+            int candidateId,
+            int examId)
+        {
             var candidateAnswers = new List<CandidateAnswer>();
             int score = 0;
 
-            foreach (var a in dto.Answers)
+            foreach (var a in answers)
             {
                 if (!examQuestionIds.Contains(a.QuestionId))
                 {
@@ -108,7 +134,6 @@ namespace HireGate.Service.Implementations
                     throw new InvalidOperationException($"Choice with id {a.ChoiceId} not found.");
                 }
 
-                // ensure choice belongs to the provided question
                 if (choice.QuestionId != a.QuestionId)
                 {
                     throw new InvalidOperationException($"Choice with id {a.ChoiceId} does not belong to question {a.QuestionId}.");
@@ -119,31 +144,24 @@ namespace HireGate.Service.Implementations
 
                 candidateAnswers.Add(new CandidateAnswer
                 {
-                    CandidateId = candidate.Id,
-                    //ExamId = candidate.ExamId,
+                    CandidateId = candidateId,
                     ExamId = examId,
                     QuestionId = a.QuestionId,
                     ChoiceId = a.ChoiceId,
                     IsCorrect = isCorrect
                 });
             }
-            _examRepository.AddCandidateAnswers(candidateAnswers);
 
-            candidate.SubmittedAt = now;
-            candidate.FinalScore = score;
-            candidate.Token = null;
-
-            _examRepository.UpdateCandidate(candidate);
-            await _examRepository.SaveAsync();
+            return (candidateAnswers, score);
         }
 
         // ─────────────────────────────
         // GET ALL
         // ─────────────────────────────
-        public async Task<IEnumerable<ExamDto>> GetAllExamsAsync()
+        public async Task<(IEnumerable<ExamListDto> Exams, int TotalCount)> GetAllExamsAsync(int pageNumber, int pageSize, string? search = null)
         {
-            var exams = await _examRepository.GetAllExamsAsync();
-            return exams.Select(ExamMapper.ToDto);
+            var (exams, totalCount) = await _examRepository.GetAllExamsAsync(pageNumber, pageSize, search);
+            return (exams.Select(ExamMapper.ToListDto), totalCount);
         }
 
         // ─────────────────────────────
@@ -160,7 +178,7 @@ namespace HireGate.Service.Implementations
         // ─────────────────────────────
         public async Task<ExamDto> CreateExamAsync(CreateExamDto dto)
         {
-            var questionIds = dto.QuestionIds ?? [];
+            var questionIds = (dto.QuestionIds ?? []).Distinct().ToList();
             var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(questionIds);
             if (invalidIds.Any())
                  throw new InvalidQuestionIdsException(invalidIds);
@@ -171,13 +189,15 @@ namespace HireGate.Service.Implementations
             await _examRepository.SaveAsync(); // exam.Id is now generated
 
             // Attach each question, skip any invalid IDs silently (or you can throw)
-            foreach (var qId in questionIds.Distinct())
+            foreach (var qId in questionIds)
             {
                     await _examRepository.AddQuestionAsync(exam.Id, qId); 
             }
 
             if (questionIds.Any())
                 await _examRepository.SaveAsync();
+
+            await _examRepository.SyncExamQuestionCountAsync(exam.Id);
 
             // Re-fetch so the returned DTO includes the questions with their data
             var created = await _examRepository.GetExamByIdAsync(exam.Id);
@@ -213,8 +233,6 @@ namespace HireGate.Service.Implementations
             if (dto.WindowEndTime.HasValue)
                 exam.WindowEndTime = dto.WindowEndTime;
 
-            _examRepository.UpdateExam(exam);
-
             // ── Sync questions ──────────────────────────────────────
             var existingIds = exam.ExamQuestions.Select(eq => eq.QuestionId).ToHashSet();
 
@@ -231,9 +249,12 @@ namespace HireGate.Service.Implementations
                 foreach (var qId in toAdd)
                     await _examRepository.AddQuestionAsync(id, qId);
             }
+
+            _examRepository.UpdateExam(exam);
             // ────────────────────────────────────────────────────────
 
             await _examRepository.SaveAsync();
+            await _examRepository.SyncExamQuestionCountAsync(id);
 
             // Re-fetch so returned DTO reflects the updated questions
             var updated = await _examRepository.GetExamByIdAsync(id);
@@ -271,6 +292,7 @@ namespace HireGate.Service.Implementations
 
             await _examRepository.AddQuestionAsync(examId, questionId);
             await _examRepository.SaveAsync();
+            await _examRepository.SyncExamQuestionCountAsync(examId);
             return true;
         }
 
@@ -282,6 +304,7 @@ namespace HireGate.Service.Implementations
                 if (!result) return false;
 
                 await _examRepository.SaveAsync();
+                await _examRepository.SyncExamQuestionCountAsync(examId);
                 return true;
                } 
     }

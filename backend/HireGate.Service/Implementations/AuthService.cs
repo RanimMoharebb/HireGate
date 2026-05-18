@@ -17,12 +17,14 @@ public class AuthService : IAuthService
     private readonly IAdminRepository _repo;
     private readonly IConfiguration _config;
     private readonly IEmailService _email; // extra
+    private readonly IDateTimeProvider _dateTimeProvider;
 
-public AuthService(IAdminRepository repo, IConfiguration config, IEmailService email)
+public AuthService(IAdminRepository repo, IConfiguration config, IEmailService email, IDateTimeProvider dateTimeProvider)
 {
     _repo = repo;
     _config = config;
     _email = email; // extra
+    _dateTimeProvider = dateTimeProvider;
 }
 
     public async Task<LoginResponseDto> Login(string email, string password)
@@ -74,7 +76,7 @@ private string GenerateJwt(Admin admin)
 
     var token = new JwtSecurityToken(
         claims: claims,
-        expires: DateTime.UtcNow.AddHours(2), // do not want expiry to token
+        expires: _dateTimeProvider.Now.AddHours(2),
         signingCredentials: creds
     );
 
