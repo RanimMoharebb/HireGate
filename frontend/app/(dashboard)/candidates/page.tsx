@@ -12,7 +12,7 @@ import { CandidateFilter } from "@/app/_components/candidates/candidate-filter";
 import { CandidateTable } from "@/app/_components/candidates/candidate-table";
 import { PaginationControls } from "@/app/_components/pagination-controls";
 import { CandidateDetailsModal } from "@/app/_components/candidates/candidate-details-modal";
-import { DeleteCandidateModal } from "@/app/_components/candidates/delete-candidate-modal";
+import { DeleteConfirmationModal } from "@/app/_components/question-bank/delete-confirmation-modal";
 import { SendEmailModal } from "@/app/_components/candidates/send-email-modal";
 
 import ExamReviewModal from "@/app/_components/candidates/exam-review-modal";
@@ -175,9 +175,13 @@ const handleShowExam = async (candidateId: number) => {
         onClose={() => setSelected(null)}
       />
 
-      <DeleteCandidateModal
-        candidate={deleteCandidate}
+      <DeleteConfirmationModal
+        isOpen={deleteCandidate !== null}
         loading={loading}
+        title="Delete Candidate"
+        description="This action cannot be undone."
+        itemLabel={deleteCandidate?.email}
+        confirmLabel="Delete"
         onCancel={() => setDeleteCandidate(null)}
         onConfirm={confirmDelete}
       />

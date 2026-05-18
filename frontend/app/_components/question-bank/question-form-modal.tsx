@@ -1,7 +1,10 @@
+"use client";
+
 import { FormEvent } from "react";
 import { HelpCircle, Loader, X } from "lucide-react";
 import Input from "@/app/_components/ui/input";
 import { QuestionFormData, Topic } from "@/app/_lib/question-bank.types";
+import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
 interface QuestionFormModalProps {
   isOpen: boolean;
@@ -31,13 +34,13 @@ export function QuestionFormModal({
   if (!isOpen) {
     return null;
   }
-
+  useDisableBodyScroll();
   const inputRing =
     "rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-transparent focus:ring-2 focus:ring-blue-500";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
-      <div className="flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4" onClick={() => { restoreBodyScroll(); onClose(); }}>
+      <div className="flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 bg-gradient-to-b from-slate-50 to-white px-5 py-4 sm:px-6">
           <div>
             <h3 className="text-lg font-bold text-gray-900 sm:text-xl">
@@ -49,7 +52,7 @@ export function QuestionFormModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => { restoreBodyScroll(); onClose(); }}
             className="shrink-0 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
             aria-label="Close form"
           >

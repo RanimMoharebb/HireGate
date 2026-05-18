@@ -9,6 +9,7 @@ import { Candidate, getCandidatesPage } from "@/app/_services/candidate-service"
 import { getExamsPage, type ExamSummary } from "@/app/_services/exam-service";
 import { sendBulkExamEmail, sendExamEmail } from "@/app/_services/email-service";
 import { validateSearch } from "@/app/_validations/candidate-validation";
+import { useDisableBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
 const BULK_CANDIDATES_PAGE_SIZE = 10;
 const EXAMS_PAGE_SIZE = 10;
@@ -145,18 +146,18 @@ function ExamsPickerBlock({
       />
 
       {listError || fetchError ? (
-        <p className="text-xs text-red-600">{listError || fetchError}</p>
+        <p className="text-sm text-red-600">{listError || fetchError}</p>
       ) : null}
 
       {selectedId !== "" && (
         <div className="flex items-center justify-between gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2">
-          <span className="text-xs text-blue-900">
+          <span className="text-sm text-blue-900">
             <strong>{selectedTitle || `Exam #${selectedId}`}</strong>
           </span>
           <button
             type="button"
             onClick={onClear}
-            className="text-xs font-medium text-blue-600 hover:text-blue-800"
+            className="text-sm font-medium text-blue-600 hover:text-blue-800"
           >
             Clear
           </button>
@@ -165,9 +166,9 @@ function ExamsPickerBlock({
 
       <div className={`space-y-1 rounded-md border border-gray-200 p-2 ${compact ? "max-h-48" : "min-h-[10rem]"} overflow-y-auto`}>
         {listLoading ? (
-          <p className="p-2 text-center text-xs text-gray-500">Loading…</p>
+          <p className="p-2 text-center text-sm text-gray-500">Loading…</p>
         ) : exams.length === 0 ? (
-          <p className="p-2 text-center text-xs text-gray-500">No exams found.</p>
+          <p className="p-2 text-center text-sm text-gray-500">No exams found.</p>
         ) : (
           exams.map((exam) => (
             <label
@@ -180,14 +181,11 @@ function ExamsPickerBlock({
                 checked={selectedId === exam.id}
                 onChange={() => onSelect(exam)}
               />
-              <span className="text-xs text-gray-900">{exam.positionTitle}</span>
+              <span className="text-sm text-gray-900">{exam.positionTitle}</span>
             </label>
           ))
         )}
       </div>
-
-      <div className="flex items-center justify-between px-1">
-        <span className="text-xs text-gray-500">{EXAMS_PAGE_SIZE} per page</span>
         <PaginationControls
           currentPage={page}
           totalPages={totalPages}
@@ -195,7 +193,7 @@ function ExamsPickerBlock({
           onPrev={() => setPage((p) => Math.max(1, p - 1))}
           onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
         />
-      </div>
+      
     </div>
   );
 }
@@ -211,21 +209,32 @@ function SingleSendEmailModal({
   const [selectedExamTitle, setSelectedExamTitle] = useState("");
   const [examListBusy, setExamListBusy] = useState(true);
 
+
+
+  // Reset selections when candidate changes
   useEffect(() => {
     setSelectedExamId("");
     setSelectedExamTitle("");
   }, [candidate?.id]);
+
+  useDisableBodyScroll();
 
   if (!candidate) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto lg:overflow-hidden px-4 py-6" onClick={onClose}>
+      {/* BACKDROP */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      />
+
+      {/* MODAL */}
+      <div className="relative z-10 mx-auto w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-lg lg:max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         <div>
           <h2 className="text-base font-bold text-gray-900">Send exam email</h2>
-          <p className="mt-1 text-xs text-gray-600">
+          <p className="mt-1 text-sm text-gray-600">
             to <strong>{candidate.firstName} {candidate.lastName}</strong>
           </p>
         </div>
@@ -246,12 +255,12 @@ function SingleSendEmailModal({
         />
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} size="sm">
+          <Button type="button" variant="secondary" onClick={onClose} size="md">
             Cancel
           </Button>
           <Button
             type="button"
-            size="sm"
+            size="md"
             disabled={loading || examListBusy || selectedExamId === ""}
             onClick={() => onSubmit(candidate.id, Number(selectedExamId))}
           >
@@ -280,6 +289,8 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
   const [message, setMessage] = useState("");
   const [fetchError, setFetchError] = useState("");
   const lastDebouncedSearch = useRef<string | null>(null);
+
+  useDisableBodyScroll();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -393,15 +404,15 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg lg:flex-row">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto lg:overflow-hidden bg-black/40 px-4 py-6 backdrop-blur-sm" onClick={onClose}>
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-0 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg lg:flex-row lg:max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         
         {/* Left panel: Exam selection */}
         <div className="flex flex-col border-b border-gray-200 p-5 lg:w-1/3 lg:border-b-0 lg:border-r">
           <div className="flex items-start justify-between gap-2 pb-4">
             <div>
               <h2 className="text-base font-bold text-gray-900">Email center</h2>
-              <p className="mt-1 text-xs text-gray-600">Choose exam & recipients</p>
+              <p className="mt-1 text-sm text-gray-600">Choose exam & recipients</p>
             </div>
             <button
               type="button"
@@ -410,12 +421,12 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
               aria-label="Close"
             >
               ✕
-            </button>
+            </button> 
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="space-y-1">
-              <span className="block text-xs font-semibold text-gray-700">Exam</span>
+              <span className="block text-sm font-semibold text-gray-700">Exam</span>
               <ExamsPickerBlock
                 selectedId={selectedExamId}
                 selectedTitle={selectedExamTitle}
@@ -438,7 +449,7 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
         <div className="flex flex-1 flex-col overflow-hidden lg:w-2/3">
           <div className="flex-none space-y-3 border-b border-gray-200 p-5">
             <div>
-              <label className="block text-xs font-semibold text-gray-700" htmlFor="bulk-email-search">
+              <label className="block text-sm font-semibold text-gray-700" htmlFor="bulk-email-search">
                 Search candidates
               </label>
               <Input
@@ -450,13 +461,13 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
                 className="mt-2 text-sm"
               />
               {listError || fetchError ? (
-                <p className="mt-1 text-xs text-red-600">{listError || fetchError}</p>
+                <p className="mt-1 text-sm text-red-600">{listError || fetchError}</p>
               ) : null}
             </div>
             
             {selectedCandidates.length > 0 && (
               <div className="rounded-md bg-green-50 px-3 py-2">
-                <p className="text-xs font-medium text-green-800">
+                <p className="text-sm font-medium text-green-800">
                   {selectedCandidates.length} candidate{selectedCandidates.length !== 1 ? "s" : ""} selected
                 </p>
               </div>
@@ -465,12 +476,12 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
 
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
             <div className="space-y-2">
-              <span className="block text-xs font-semibold text-gray-700">Recipients</span>
+              <span className="block text-sm font-semibold text-gray-700">Recipients</span>
               <div className="space-y-1 rounded-md border border-gray-200 p-2">
                 {listLoading ? (
-                  <p className="p-2 text-center text-xs text-gray-500">Loading…</p>
+                  <p className="p-2 text-center text-sm text-gray-500">Loading…</p>
                 ) : candidates.length === 0 ? (
-                  <p className="p-2 text-center text-xs text-gray-500">No candidates.</p>
+                  <p className="p-2 text-center text-sm text-gray-500">No candidates.</p>
                 ) : (
                   candidates.map((c) => (
                     <label
@@ -482,17 +493,14 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
                         checked={selectedCandidates.includes(c.id)}
                         onChange={() => toggleCandidate(c.id)}
                       />
-                      <span className="text-xs text-gray-900">
+                      <span className="text-sm text-gray-900">
                         {`${c.firstName ?? ""} ${c.lastName ?? ""}`.trim() || "—"}
                       </span>
-                      <span className="ml-auto text-xs text-gray-500">{c.email}</span>
+                      <span className="ml-auto text-sm text-gray-500">{c.email}</span>
                     </label>
                   ))
                 )}
               </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-gray-500">{BULK_CANDIDATES_PAGE_SIZE} per page</span>
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -500,23 +508,22 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
                   onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 />
-              </div>
             </div>
           </div>
 
           <div className="flex-none border-t border-gray-200 p-5">
             {message && (
-              <p className={`mb-3 text-xs ${message.includes("select") || message.includes("fail") ? "text-red-600" : "text-green-600"}`}>
+              <p className={`mb-3 text-sm ${message.includes("select") || message.includes("fail") ? "text-red-600" : "text-green-600"}`}>
                 {message}
               </p>
             )}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={onClose} size="sm">
+              <Button type="button" variant="secondary" onClick={onClose} size="md">
                 Close
               </Button>
               <Button
                 type="button"
-                size="sm"
+                size="md"
                 disabled={sending || listLoading || examListBusy || selectedExamId === ""}
                 onClick={() => void handleSend()}
               >

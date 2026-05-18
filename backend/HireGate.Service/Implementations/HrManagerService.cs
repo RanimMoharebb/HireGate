@@ -20,12 +20,14 @@ public class AdminService : IAdminService
     private readonly IAdminRepository _repo;
     private readonly IConfiguration _config;
     private readonly IEmailService _email;
+        private readonly IDateTimeProvider _dateTimeProvider;
 
-public AdminService(IAdminRepository repo, IConfiguration config, IEmailService email)
+public AdminService(IAdminRepository repo, IConfiguration config, IEmailService email, IDateTimeProvider dateTimeProvider)
 {
     _repo = repo;
     _config = config;
     _email = email;
+    _dateTimeProvider = dateTimeProvider;
 }
 
     // GET ALL
@@ -196,7 +198,7 @@ public async Task ForgotPassword(ForgotPasswordDto dto)
     Console.WriteLine("=======================================");
     
     admin.ResetOtpHash = BCrypt.Net.BCrypt.HashPassword(otp);
-    admin.ResetOtpExpiry = DateTime.UtcNow.AddMinutes(3);
+    admin.ResetOtpExpiry = _dateTimeProvider.Now.AddMinutes(3);
 
     await _repo.Update(admin);
 
@@ -216,7 +218,7 @@ public async Task<bool> ResetPassword(ResetPasswordDto dto)
         return false;
 
     // check OTP expiry
-    if (admin.ResetOtpExpiry == null || admin.ResetOtpExpiry < DateTime.UtcNow)
+    if (admin.ResetOtpExpiry == null || admin.ResetOtpExpiry < _dateTimeProvider.Now)
         return false;
 
     // check OTP exists

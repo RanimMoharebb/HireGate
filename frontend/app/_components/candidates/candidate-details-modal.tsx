@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { Candidate } from "@/app/_services/candidate-service";
+import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
 type Props = {
   candidate: Candidate | null;
@@ -54,14 +55,16 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
   const hasName = displayName !== "—";
   const titleText = hasName ? displayName : candidate.email;
   const subtitleEmail = hasName ? candidate.email : null;
+  useDisableBodyScroll();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4" onClick={() => { restoreBodyScroll(); onClose(); }}>
       <div
         className="flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="candidate-details-title"
+        onClick={(e) => e.stopPropagation()}
       >
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-b from-slate-50 to-white px-5 py-4 sm:px-6">
           <div className="min-w-0 flex-1 space-y-2">
@@ -87,7 +90,7 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => { restoreBodyScroll(); onClose(); }}
             className="shrink-0 rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
             aria-label="Close"
           >

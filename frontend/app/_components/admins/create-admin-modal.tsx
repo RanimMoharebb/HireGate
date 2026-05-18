@@ -1,7 +1,9 @@
-import { FormEvent } from "react";
+"use client";
+import { FormEvent } from "react"
 import { X } from "lucide-react";
 import Input from "@/app/_components/ui/input";
 import { UserRole } from "@/app/_lib/admin.types";
+import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
 interface CreateAdminModalProps {
   isOpen: boolean;
@@ -31,14 +33,14 @@ export function CreateAdminModal({
   if (!isOpen) {
     return null;
   }
-
+  useDisableBodyScroll();
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-6 max-w-xl w-full shadow-xl border border-gray-200">
+    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => { restoreBodyScroll(); onClose(); }}>
+      <div className="bg-white rounded-xl p-6 max-w-xl w-full shadow-xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-900">Create Admin</h3>
           <button
-            onClick={onClose}
+            onClick={() => { restoreBodyScroll(); onClose(); }}
             className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close create admin modal"
           >
@@ -82,7 +84,7 @@ export function CreateAdminModal({
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => { restoreBodyScroll(); onClose(); }}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Cancel

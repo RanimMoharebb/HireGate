@@ -1,5 +1,8 @@
+"use client";
+
 import { FormEvent } from "react";
 import { Loader, X } from "lucide-react";
+import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
 interface AddTopicModalProps {
   isOpen: boolean;
@@ -23,14 +26,14 @@ export function AddTopicModal({
   if (!isOpen) {
     return null;
   }
-
+  useDisableBodyScroll();
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200">
+    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => { restoreBodyScroll(); onClose(); }}>
+      <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-900">Add Topic</h3>
           <button
-            onClick={onClose}
+            onClick={() => { restoreBodyScroll(); onClose(); }}
             className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close add topic modal"
           >
@@ -61,7 +64,7 @@ export function AddTopicModal({
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => { restoreBodyScroll(); onClose(); }}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Cancel

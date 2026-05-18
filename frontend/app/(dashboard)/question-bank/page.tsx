@@ -170,12 +170,11 @@ export default function page() {
         isOpen={!!deleteQuestion}
         loading={loading}
         title="Delete Question"
-        description="Are you sure you want to delete this question? This action cannot be undone."
+        description="Are you sure you want to delete this question?"
         itemLabel={deleteQuestion?.questionText}
         onCancel={() => setDeleteQuestion(null)}
         onConfirm={confirmDeleteQuestion}
       />
-
       <DeleteConfirmationModal
         isOpen={!!topicToDelete}
         loading={loading}

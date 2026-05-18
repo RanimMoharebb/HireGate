@@ -131,7 +131,12 @@ export default function CompleteRegister() {
       >
         {loading ? "Creating account..." : "Register"}
       </button>
-
+       <button
+          onClick={() => router.push("/login")}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Already have an account? Login
+        </button>
     </AuthCard>
   );
 }

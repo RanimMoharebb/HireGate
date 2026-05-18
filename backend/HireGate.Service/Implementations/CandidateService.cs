@@ -13,15 +13,18 @@ public class CandidateService : ICandidateService
     private readonly ICandidateRepository _repo;
     private readonly IEmailService _email;
     private readonly IExamRepository _examRepo;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public CandidateService(
         ICandidateRepository repo,
         IEmailService email,
-        IExamRepository examRepo)
+        IExamRepository examRepo,
+        IDateTimeProvider dateTimeProvider)
     {
         _repo = repo;
         _email = email;
         _examRepo = examRepo;
+        _dateTimeProvider = dateTimeProvider;
     }
 
 public async Task<CandidateResponseDto?> GetById(int id)
@@ -221,7 +224,7 @@ var exam = await _examRepo.GetExamByIdAsync(candidate.ExamId.Value);
     if (exam == null)
         return null;
 
-    var now = DateTime.UtcNow;
+    var now = _dateTimeProvider.Now;
 
     if (exam.WindowStartTime == null || exam.WindowStartTime > now)
         return null;
@@ -281,7 +284,7 @@ public async Task<object> StartExam(string token)
     if (candidate == null || candidate.Exam == null)
         return "Invalid token";
 
-    var now = DateTime.UtcNow;
+    var now = _dateTimeProvider.Now;
     var exam = candidate.Exam;
 
     if (candidate.StartedAt == null)
