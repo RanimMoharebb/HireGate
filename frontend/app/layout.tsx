@@ -11,6 +11,7 @@ type RootLayoutProps = {
   children: ReactNode;
 };
 
+
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html className="h-full antialiased">

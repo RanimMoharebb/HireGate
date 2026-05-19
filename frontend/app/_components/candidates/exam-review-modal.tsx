@@ -4,24 +4,23 @@ import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisable
 import { Loader } from "lucide-react";
 
 type Choice = {
-  id: number;
-  text: string;
+  choiceId: number;
+  choiceText: string;
   isCorrect: boolean;
+  isSelectedByCandidate: boolean;
 };
 
 type Question = {
   questionId: number;
   questionText: string;
-  selectedChoiceId: number | null;
-  isCorrect: boolean;
   choices: Choice[];
 };
 
 type ExamReview = {
   candidateId: number;
   candidateName: string;
-  finalScore: number;
-  examName?: string;
+  examTitle: string;
+  finalScore: number | null;
   questions: Question[];
 };
 
@@ -31,11 +30,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ExamReviewModal({
-  data,
-  loading,
-  onClose,
-}: Props) {
+export default function ExamReviewModal({ data, loading, onClose }: Props) {
   if (!data) return null;
   useDisableBodyScroll();
   const getChoiceClass = (choice: Choice, selectedId: number | null) => {
@@ -44,11 +39,11 @@ export default function ExamReviewModal({
     if (choice.isCorrect) {
       return "bg-green-100 border border-green-400 text-green-800";
     }
-
-    if (isSelected && !choice.isCorrect) {
+    if (!choice.isCorrect && choice.isSelectedByCandidate) {
+      // Candidate picked the wrong answer
       return "bg-red-100 border border-red-400 text-red-800";
     }
-
+    // Not selected, not correct
     return "bg-white border border-slate-200 text-slate-700";
   };
 
@@ -59,15 +54,12 @@ export default function ExamReviewModal({
 
         {/* HEADER */}
         <div className="p-6 border-b border-slate-300 flex justify-between items-center bg-slate-50">
-          
           <div>
-            <h2 className="text-2xl font-semibold text-slate-800">
-              Exam Review
-            </h2>
-
+            <h2 className="text-2xl font-semibold text-slate-800">Exam Review</h2>
             <div className="text-sm text-slate-500 space-y-1">
               <div>Candidate Name: {data.candidateName}</div>
-              <div>Score: {data.finalScore}</div>
+              <div>Exam: {data.examTitle}</div>
+              <div>Score: {data.finalScore ?? "—"}</div>
             </div>
           </div>
 
@@ -81,69 +73,68 @@ export default function ExamReviewModal({
 
         {/* BODY */}
         <div className="p-4 overflow-y-auto space-y-6">
-
           {loading ? (
             <div className="flex justify-center py-10">
               <Loader className="animate-spin text-slate-500" />
             </div>
           ) : (
             <div className="space-y-6">
-              {data.questions.map((q) => (
-                <div
-                  key={q.questionId}
-                  className="bg-white border border-slate-200 rounded-xl p-6 space-y-6 shadow-sm"
-                >
+              {data.questions.map((q) => {
+                const selectedChoice = q.choices.find((c) => c.isSelectedByCandidate);
+                const answeredCorrectly = selectedChoice?.isCorrect ?? false;
+                const noAnswer = !selectedChoice;
 
-                  {/* QUESTION */}
-                  <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <div className="min-w-0 flex-1 text-lg font-semibold text-slate-900">
-                      {q.questionText}
+                return (
+                  <div
+                    key={q.questionId}
+                    className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm"
+                  >
+                    {/* QUESTION */}
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <div className="min-w-0 flex-1 text-lg font-semibold text-slate-900">
+                        {q.questionText}
+                      </div>
+                      {noAnswer && (
+                        <span className="shrink-0 text-xs font-medium text-amber-700">
+                          No answer
+                        </span>
+                      )}
                     </div>
-                    {q.selectedChoiceId == null ? (
-                      <span
-                        className="shrink-0 text-xs font-medium text-amber-700"
-                        title="No choice was selected"
-                      >
-                        No answer
-                      </span>
-                    ) : null}
-                  </div>
 
-                  {/* CHOICES */}
-                  <div className="space-y-2">
-                    {q.choices.map((c) => {
-                      const isSelected = c.id === q.selectedChoiceId;
-
-                      return (
+                    {/* CHOICES */}
+                    <div className="space-y-2">
+                      {q.choices.map((c) => (
                         <div
-                          key={c.id}
-                          className={`rounded-lg px-3 py-2 text-sm flex justify-between items-center ${getChoiceClass(
-                            c,
-                            q.selectedChoiceId
-                          )}`}
+                          key={c.choiceId}
+                          className={`rounded-lg px-3 py-2 text-sm flex justify-between items-center ${getChoiceClass(c)}`}
                         >
-                          <span>{c.text}</span>
+                          <span>{c.choiceText}</span>
 
-                          {isSelected && (
+                          {c.isSelectedByCandidate && (
                             <span
                               className={`text-xs font-semibold ${
-                                q.isCorrect ? "text-green-600" : "text-red-600"
+                                answeredCorrectly ? "text-green-600" : "text-red-600"
                               }`}
                             >
-                              {q.isCorrect ? "Correct ✔" : "Incorrect ✖"}
+                              {answeredCorrectly ? "Correct ✔" : "Incorrect ✖"}
+                            </span>
+                          )}
+
+                          {!c.isSelectedByCandidate && c.isCorrect && (
+                            <span className="text-xs font-semibold text-green-600">
+                              Correct answer
                             </span>
                           )}
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-
         </div>
+
       </div>
     </div>
   );

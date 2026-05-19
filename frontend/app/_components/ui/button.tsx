@@ -11,7 +11,7 @@ const variants = {
 const sizes = {
   sm: "px-3 py-2 text-sm",
   md: "px-4 py-2.5 text-sm",
-  lg: "px-6 py-3 text-sm",
+  lg: "px-4 py-2 sm:px-6 sm:py-3 text-base",
   icon: "p-2 text-sm",
 } as const;
 
@@ -40,8 +40,9 @@ type ButtonProps = ButtonAsButtonProps | ButtonAsLinkProps;
 
 function getClassName(variant: ButtonVariant, size: ButtonSize, className: string) {
   return [
-    "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
+    "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors cursor-pointer",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
+    "disabled:opacity-50 disabled:cursor-not-allowed",
     variants[variant],
     sizes[size],
     className,
@@ -62,7 +63,14 @@ export function Button(props: ButtonProps) {
     );
   }
 
-  const { as: _as, variant: _variant, size: _size, ...buttonProps } = props;
+  const {
+    as: _as,
+    variant: _variant,
+    size: _size,
+    className: _className,
+    children: _children,
+    ...buttonProps
+  } = props;
 
   return (
     <button className={sharedClassName} {...buttonProps}>

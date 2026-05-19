@@ -29,15 +29,14 @@ export function DeleteConfirmationModal({
   useDisableBodyScroll();
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => { restoreBodyScroll(); onCancel(); }}>
-      <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200 relative" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => { restoreBodyScroll(); onCancel(); }}
-          aria-label="Close"
-          className="absolute top-3 right-3 p-1 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-        >
-          <X size={18} />
-        </button>
+    <div 
+      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      onClick={onCancel}
+    >
+      <div 
+        className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
             <Trash2 size={20} className="text-red-600" />

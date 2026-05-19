@@ -79,7 +79,7 @@ namespace HireGate.Api.Tests.Services
         {
             // Arrange
             var updateDto = new UpdateExamDto { PositionTitle = "Updated" };
-            _examRepositoryMock.Setup(r => r.GetExamByIdAsync(1)).ReturnsAsync((Exam?)null);
+            _examRepositoryMock.Setup(r => r.GetExamByIdForUpdateAsync(1)).ReturnsAsync((Exam?)null);
 
             // Act
             var result = await _examService.UpdateExamAsync(1, updateDto);

@@ -20,7 +20,7 @@ namespace HireGate.API.Endpoints;
             group.MapGet("/", async (
                 IExamService examService, 
                 int page = 1,
-                int pageSize = 10,
+                int pageSize = 6,
                 string? search = null) =>
                 {
                 var validPage = Math.Max(1, page);

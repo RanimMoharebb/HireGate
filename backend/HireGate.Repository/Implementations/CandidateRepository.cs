@@ -53,6 +53,18 @@ public class CandidateRepository : ICandidateRepository
         return await _context.Candidates.FindAsync(id);
     }
 
+    public async Task<Candidate?> GetByIdWithExamReview(int id)
+    {
+        return await _context.Candidates
+            .AsNoTracking()
+            .Include(c => c.Exam)
+                .ThenInclude(e => e.ExamQuestions)
+                    .ThenInclude(eq => eq.Question)
+                        .ThenInclude(q => q.Choices)
+            .Include(c => c.Answers)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
 
 
     public async Task Add(Candidate candidate)

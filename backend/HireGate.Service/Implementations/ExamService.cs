@@ -10,12 +10,17 @@ namespace HireGate.Service.Implementations
     public class ExamService : IExamService
     {
         private readonly IExamRepository _examRepository;
+        private readonly IExamQuestionRepository _examQuestionRepository;
         private readonly IQuestionRepository _questionRepository;
         private readonly IDateTimeProvider _dateTimeProvider;
 
-        public ExamService(IExamRepository examRepository, IQuestionRepository questionRepository, IDateTimeProvider dateTimeProvider)
+        public ExamService(
+            IExamRepository examRepository,
+            IExamQuestionRepository examQuestionRepository,
+            IQuestionRepository questionRepository)
         {
             _examRepository = examRepository;
+            _examQuestionRepository = examQuestionRepository;
             _questionRepository = questionRepository;
             _dateTimeProvider = dateTimeProvider;
         }
@@ -39,138 +44,100 @@ namespace HireGate.Service.Implementations
         }
 
         // ─────────────────────────────
-        // CREATE EXAM
+        // CREATE
         // ─────────────────────────────
         public async Task<ExamDto> CreateExamAsync(CreateExamDto dto)
         {
             var questionIds = (dto.QuestionIds ?? []).Distinct().ToList();
-            var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(questionIds);
-            if (invalidIds.Any())
-                 throw new InvalidQuestionIdsException(invalidIds);
+            var invalidIds = await _examQuestionRepository.GetNonExistentQuestionIdsAsync(questionIds);
+            if (invalidIds.Any()) throw new InvalidQuestionIdsException(invalidIds);
 
             var exam = ExamMapper.ToEntity(dto);
-
             _examRepository.CreateExam(exam);
-            await _examRepository.SaveAsync(); // exam.Id is now generated
+            await _examRepository.SaveAsync();
 
-            // Attach each question, skip any invalid IDs silently (or you can throw)
             foreach (var qId in questionIds)
-            {
-                    await _examRepository.AddQuestionAsync(exam.Id, qId); 
-            }
+                _examQuestionRepository.AddQuestion(exam.Id, qId);
 
             if (questionIds.Any())
-                await _examRepository.SaveAsync();
+                await _examQuestionRepository.SaveAsync();
 
-            await _examRepository.SyncExamQuestionCountAsync(exam.Id);
+            await _examQuestionRepository.SyncExamQuestionCountAsync(exam.Id);
 
-            // Re-fetch so the returned DTO includes the questions with their data
             var created = await _examRepository.GetExamByIdAsync(exam.Id);
             return ExamMapper.ToDto(created!);
         }
+
         // ─────────────────────────────
-        // UPDATE EXAM
+        // UPDATE
         // ─────────────────────────────
-       public async Task<ExamDto?> UpdateExamAsync(int id, UpdateExamDto dto)
+        public async Task<ExamDto?> UpdateExamAsync(int id, UpdateExamDto dto)
         {
-            var exam = await _examRepository.GetExamByIdAsync(id);
+            var exam = await _examRepository.GetExamByIdForUpdateAsync(id);
+            if (exam is null) return null;
 
-            if (exam is null)
-                return null;
-            
-            var addedQuestionIds = dto.AddedQuestionIds?.Distinct().ToList() ?? new List<int>();
-            var removedQuestionIds = dto.RemovedQuestionIds?.Distinct().ToList() ?? new List<int>();
+            var addedQuestionIds = dto.AddedQuestionIds?.Distinct().ToList() ?? [];
+            var removedQuestionIds = dto.RemovedQuestionIds?.Distinct().ToList() ?? [];
             var idsToValidate = addedQuestionIds.Concat(removedQuestionIds).Distinct().ToList();
-            var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(idsToValidate);
-            if (invalidIds.Any())
-                throw new InvalidQuestionIdsException(invalidIds);
+            var invalidIds = await _examQuestionRepository.GetNonExistentQuestionIdsAsync(idsToValidate);
+            if (invalidIds.Any()) throw new InvalidQuestionIdsException(invalidIds);
 
-            // Only update values that were actually sent.
-            if (dto.PositionTitle is not null)
-                exam.PositionTitle = dto.PositionTitle;
+            if (dto.PositionTitle is not null) exam.PositionTitle = dto.PositionTitle;
+            if (dto.DurationMinutes.HasValue) exam.DurationMinutes = dto.DurationMinutes;
+            if (dto.WindowStartTime.HasValue) exam.WindowStartTime = dto.WindowStartTime;
+            if (dto.WindowEndTime.HasValue) exam.WindowEndTime = dto.WindowEndTime;
 
-            if (dto.DurationMinutes.HasValue)
-                exam.DurationMinutes = dto.DurationMinutes;
-
-            if (dto.WindowStartTime.HasValue)
-                exam.WindowStartTime = dto.WindowStartTime;
-
-            if (dto.WindowEndTime.HasValue)
-                exam.WindowEndTime = dto.WindowEndTime;
-
-            // ── Sync questions ──────────────────────────────────────
             var existingIds = exam.ExamQuestions.Select(eq => eq.QuestionId).ToHashSet();
 
-            if (removedQuestionIds.Count != 0)
-            {
-                var toRemove = removedQuestionIds.Where(existingIds.Contains);
-                foreach (var qId in toRemove)
-                    await _examRepository.RemoveQuestionAsync(id, qId);
-            }
+            foreach (var qId in removedQuestionIds.Where(existingIds.Contains))
+                await _examQuestionRepository.RemoveQuestionAsync(id, qId);
 
-            if (addedQuestionIds.Count != 0)
-            {
-                var toAdd = addedQuestionIds.Where(qId => !existingIds.Contains(qId));
-                foreach (var qId in toAdd)
-                    await _examRepository.AddQuestionAsync(id, qId);
-            }
+            foreach (var qId in addedQuestionIds.Where(qId => !existingIds.Contains(qId)))
+                _examQuestionRepository.AddQuestion(id, qId);
 
             _examRepository.UpdateExam(exam);
-            // ────────────────────────────────────────────────────────
-
             await _examRepository.SaveAsync();
-            await _examRepository.SyncExamQuestionCountAsync(id);
+            await _examQuestionRepository.SyncExamQuestionCountAsync(id);
 
-            // Re-fetch so returned DTO reflects the updated questions
             var updated = await _examRepository.GetExamByIdAsync(id);
             return ExamMapper.ToDto(updated!);
         }
 
         // ─────────────────────────────
-        // DELETE EXAM
+        // DELETE
         // ─────────────────────────────
         public async Task<bool> DeleteExamAsync(int id)
-        {   
-            var exam = await _examRepository.GetExamByIdAsync(id);
-
-            if (exam is null)
-                    return false;
-
-            _examRepository.DeleteExam(exam);
-            await _examRepository.SaveAsync();
-            return true;        
+        {
+            return await _examRepository.DeleteExamByIdAsync(id); // ✅ no loading, no tracking issues
         }
-
         // ─────────────────────────────
         // QUESTIONS MANAGEMENT
-        // ───────────────────────────── 
-
+        // ─────────────────────────────
         public async Task<IEnumerable<Question>> GetExamQuestionsAsync(int examId)
-             => await _examRepository.GetQuestionsAsync(examId);
-
+            => await _examQuestionRepository.GetQuestionsAsync(examId);
 
         public async Task<bool> AddQuestionToExamAsync(int examId, int questionId)
         {
-            if (!await _examRepository.ExamExistsAsync(examId)) return false;
-            if (!await _examRepository.QuestionExistsAsync(questionId)) return false;
-            if (await _examRepository.QuestionAlreadyInExamAsync(examId, questionId)) return false;
+            if (!await _examQuestionRepository.ExamExistsAsync(examId)) return false;
+            if (!await _examQuestionRepository.QuestionExistsAsync(questionId)) return false;
+            if (await _examQuestionRepository.QuestionAlreadyInExamAsync(examId, questionId)) return false;
 
-            await _examRepository.AddQuestionAsync(examId, questionId);
-            await _examRepository.SaveAsync();
-            await _examRepository.SyncExamQuestionCountAsync(examId);
+            _examQuestionRepository.AddQuestion(examId, questionId);
+            await _examQuestionRepository.SaveAsync();
+            await _examQuestionRepository.SyncExamQuestionCountAsync(examId);
             return true;
         }
 
         public async Task<bool> RemoveQuestionFromExamAsync(int examId, int questionId)
-               {
-                if (!await _examRepository.ExamExistsAsync(examId)) return false;
+        {
+            if (!await _examQuestionRepository.ExamExistsAsync(examId)) return false;
 
-                var result = await _examRepository.RemoveQuestionAsync(examId, questionId);
-                if (!result) return false;
+            bool result = await _examQuestionRepository.RemoveQuestionAsync(examId, questionId);
+            if (!result) return false;
 
-                await _examRepository.SaveAsync();
-                await _examRepository.SyncExamQuestionCountAsync(examId);
-                return true;
-               } 
+            await _examQuestionRepository.SaveAsync();
+            await _examQuestionRepository.SyncExamQuestionCountAsync(examId);
+            return true;
+        }
     }
 }
