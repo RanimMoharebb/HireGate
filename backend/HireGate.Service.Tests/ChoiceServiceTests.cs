@@ -13,12 +13,26 @@ namespace HireGate.Service.Tests
         private readonly Mock<IChoiceRepository> _choiceRepositoryMock;
         private readonly Mock<IQuestionRepository> _questionRepositoryMock;
         private readonly ChoiceService _choiceService;
+        private readonly Mock<FluentValidation.IValidator<HireGate.Service.DTOs.CreateChoiceDto>> _createValidatorMock;
+        private readonly Mock<FluentValidation.IValidator<HireGate.Service.DTOs.UpdateChoiceDto>> _updateValidatorMock;
+        private readonly Mock<FluentValidation.IValidator<HireGate.Service.DTOs.PatchChoiceDto>> _patchValidatorMock;
 
         public ChoiceServiceTests()
         {
             _choiceRepositoryMock = new Mock<IChoiceRepository>();
             _questionRepositoryMock = new Mock<IQuestionRepository>();
-            _choiceService = new ChoiceService(_choiceRepositoryMock.Object, _questionRepositoryMock.Object);
+            _createValidatorMock = new Mock<FluentValidation.IValidator<CreateChoiceDto>>();
+            _updateValidatorMock = new Mock<FluentValidation.IValidator<UpdateChoiceDto>>();
+            _patchValidatorMock = new Mock<FluentValidation.IValidator<PatchChoiceDto>>();
+
+            _createValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<CreateChoiceDto>(), It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            _updateValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<UpdateChoiceDto>(), It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            _patchValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<PatchChoiceDto>(), It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+
+            _choiceService = new ChoiceService(_choiceRepositoryMock.Object, _questionRepositoryMock.Object, _createValidatorMock.Object, _updateValidatorMock.Object, _patchValidatorMock.Object);
         }
 
         #region GetChoicesForQuestionAsync Tests

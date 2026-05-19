@@ -34,6 +34,26 @@ export function useCandidates() {
 
   const [createMessage, setCreateMessage] = useState("");
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSuccessVisible, setIsSuccessVisible] = useState(false);
+
+  useEffect(() => {
+    if (!successMessage) {
+      setIsSuccessVisible(false);
+      return;
+    }
+
+    setIsSuccessVisible(true);
+    const hideTimer = window.setTimeout(() => setIsSuccessVisible(false), 2000);
+    const removeTimer = window.setTimeout(() => setSuccessMessage(null), 3000);
+
+    return () => {
+      window.clearTimeout(hideTimer);
+      window.clearTimeout(removeTimer);
+    };
+  }, [successMessage]);
+
   // FILTER
   const [search, setSearch] = useState("");
 
@@ -77,6 +97,7 @@ export function useCandidates() {
         console.error(err);
         setCandidates([]);
         setTotalPages(1);
+        setErrorMessage(err instanceof Error ? err.message : "Failed to load candidates");
       } finally {
         setLoading(false);
       }
@@ -91,6 +112,7 @@ export function useCandidates() {
   // CREATE
   const handleCreate = async () => {
     setCreateMessage("");
+    setErrorMessage(null);
 
     const validationError = validateCandidateEmail(email);
 
@@ -104,6 +126,7 @@ export function useCandidates() {
       const result = await createCandidate(email);
 
       setCreateMessage(result.message);
+      setSuccessMessage(result.message);
 
       setEmail("");
 
@@ -114,6 +137,7 @@ export function useCandidates() {
       }
     } catch (err: any) {
       setCreateMessage(err.message);
+      setErrorMessage(err.message);
     }
   };
 
@@ -128,8 +152,10 @@ export function useCandidates() {
       setDeleteCandidate(null);
 
       await fetchPage(currentPage);
+      setSuccessMessage("Candidate deleted successfully.");
     } catch (err: any) {
       console.error(err.message);
+      setErrorMessage(err.message);
     } finally {
       setLoading(false);
     }
@@ -149,14 +175,17 @@ export function useCandidates() {
       setEmailLoading(true);
 
       setEmailMessage("");
+      setErrorMessage(null);
 
       const res = await sendExamEmail(candidateId, examId);
 
       setEmailMessage(res);
+      setSuccessMessage(res);
 
       setSendEmailCandidate(null);
     } catch (err: any) {
       setEmailMessage(err.message);
+      setErrorMessage(err.message);
     } finally {
       setEmailLoading(false);
     }
@@ -201,5 +230,10 @@ export function useCandidates() {
     handleSendEmail,
 
     getStatus,
+    successMessage,
+    errorMessage,
+    setSuccessMessage,
+    setErrorMessage,
+    isSuccessVisible,
   };
 }

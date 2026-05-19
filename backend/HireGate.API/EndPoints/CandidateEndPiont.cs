@@ -162,7 +162,7 @@ public static class CandidateEndpoints
 
         // START EXAM
         group.MapPost("/start-exam/{token}", async (
-            string token,
+            string token,   
             [FromServices] ICandidateService service
         ) =>
         {

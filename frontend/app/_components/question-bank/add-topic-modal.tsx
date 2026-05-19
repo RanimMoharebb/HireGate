@@ -3,6 +3,7 @@
 import { FormEvent } from "react";
 import { Loader, X } from "lucide-react";
 import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
+import { useTranslations } from 'next-intl';
 
 interface AddTopicModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface AddTopicModalProps {
   onSubmit: (event: FormEvent) => void;
   onTopicNameChange: (value: string) => void;
 }
+
 
 export function AddTopicModal({
   isOpen,

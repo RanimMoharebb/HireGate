@@ -11,8 +11,8 @@ namespace HireGate.API.Endpoints
         public static void MapQuestionEndpoints(this WebApplication app, IServiceProvider serviceProvider)
         {
             var adminGroup = app.MapGroup("/api/admin/questions")
-                .WithName("Questions");
-               // .RequireAuthorization();
+                .WithName("Questions")
+                .RequireAuthorization();
 
             adminGroup.MapGet("/", GetAllQuestions)
                 .WithName("GetAllQuestions");

@@ -25,12 +25,6 @@ namespace HireGate.Repository.Interfaces
         Task SyncExamQuestionCountAsync(int examId);
 
         Task SaveAsync();
-        
-        // Submission helpers
-        Task<Candidate?> GetCandidateByTokenAsync(string token);
-        Task<Dictionary<int, Choice>> GetChoicesByIdsAsync(IEnumerable<int> choiceIds);
-        void AddCandidateAnswers(IEnumerable<CandidateAnswer> answers);
-        void UpdateCandidate(Candidate candidate);
 
     }
 }

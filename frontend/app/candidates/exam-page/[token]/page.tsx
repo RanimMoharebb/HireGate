@@ -33,7 +33,7 @@ export default function ExamPage() {
           if (!examRes.ok) {
             throw new Error("Failed to fetch exam data");
           }
-
+          //console.log("EXAM RESPONSE:", await examRes.json());
           const exam = await examRes.json();
           setExamData(exam);
         }

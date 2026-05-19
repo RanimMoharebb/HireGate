@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { sendExamEmail, sendBulkExamEmail } from "@/app/_services/email-service";
-import { getCandidates } from "@/app/_services/candidate-service";
+import { getAllCandidates } from "@/app/_services/candidate-service";
 import { Candidate } from "@/app/_services/candidate-service";
 
 type Exam = {
@@ -26,7 +26,7 @@ useEffect(() => {
   const fetchData = async () => {
     try {
       const [candRes, examRes] = await Promise.all([
-        getCandidates(),
+        getAllCandidates(),
 
         fetch("http://localhost:5116/api/exam/")
           .then(async (r) => {

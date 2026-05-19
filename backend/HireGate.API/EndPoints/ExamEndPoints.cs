@@ -9,7 +9,9 @@ namespace HireGate.API.Endpoints;
     {
         public static void MapExamEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/api/exam");
+            var group = app.MapGroup("/api/exam")
+                .WithName("Exams")
+                .RequireAuthorization();
 
             // ────────────────────────────────────────────────────────
             // GET all exams
@@ -198,27 +200,6 @@ namespace HireGate.API.Endpoints;
                     : Results.BadRequest($"Failed to remove Question {questionId}.");
             });
 
-            // ────────────────────────────────────────────────────────
-            // Submit exam
-            // ────────────────────────────────────────────────────────
-            group.MapPost("/submit/{token}", async (
-                string token,
-                SubmitExamDto dto,
-                 IExamService examService) =>
-            {
-                // take token from the URL and set it on the DTO
-                dto.Token = token;
-
-                try
-                {
-                    await examService.SubmitExamAsync(dto);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    return Results.BadRequest(new { error = ex.Message });
-                }
-
-                return Results.Ok("Submission successful.");
-            });
+            
             }
     }

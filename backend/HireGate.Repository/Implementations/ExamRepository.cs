@@ -144,23 +144,6 @@ namespace HireGate.Repository.Implementations
             await _context.SaveChangesAsync();
             }
 
-        // Submission helpers
-        public async Task<Candidate?> GetCandidateByTokenAsync(string token)
-            => await _context.Candidates.Include(c => c.Exam).FirstOrDefaultAsync(c => c.Token == token);
-
-
-        public async Task<Dictionary<int, Choice>> GetChoicesByIdsAsync(IEnumerable<int> choiceIds)
-            => await _context.Choices.Where(c => choiceIds.Contains(c.Id)).ToDictionaryAsync(c => c.Id);
-
-        public void AddCandidateAnswers(IEnumerable<CandidateAnswer> answers)
-        {
-            _context.CandidateAnswers.AddRange(answers);
-        }
-
-        public void UpdateCandidate(Candidate candidate)
-        {
-            _context.Candidates.Update(candidate);
-        }
-
-}
+        
+    }
 }

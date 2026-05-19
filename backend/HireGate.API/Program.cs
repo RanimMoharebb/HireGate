@@ -28,7 +28,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Services
 // --------------------
 builder.Services.AddScoped<IExamService, ExamService>();
+builder.Services.AddScoped<ISubmissionService, SubmissionService>();
 builder.Services.AddScoped<IExamRepository, ExamRepository>();
+builder.Services.AddScoped<ISubmissionRepository, SubmissionRepository>();
 builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
@@ -84,15 +86,17 @@ builder.Services.AddAuthorization();
 // =========================
 // CORS
 // =========================
-/*
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", p =>
         p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
-*/
 
-builder.Services.AddCors(options =>
+
+
+
+/*builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
@@ -104,7 +108,7 @@ builder.Services.AddCors(options =>
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Content-Type", "Authorization");
     });
-});
+});*/   
 
 // =========================
 // JSON OPTIONS
@@ -123,8 +127,8 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-// app.UseCors("AllowAll");
-app.UseCors("Frontend");
+app.UseCors("AllowAll");
+
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -135,6 +139,7 @@ app.UseAuthorization();
 // Minimal API endpoints
 // --------------------
 app.MapExamEndpoints();
+app.MapSubmissionEndpoints();
 app.MapTopicEndpoints(app.Services);
 app.MapQuestionEndpoints(app.Services);
 app.MapChoiceEndpoints(app.Services);

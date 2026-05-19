@@ -349,31 +349,6 @@ public async Task<ServiceResult<StartExamResponseDto>> StartExam(string token)
 
     return ServiceResult<StartExamResponseDto>.Ok(dto);
 }
-/*
-    return ServiceResult<StartExamResponseDto>.Ok(new StartExamResponseDto
-    {
-        StartedAt = startTime,
-        ExamId = exam.Id,
-        PositionTitle = exam.PositionTitle,
-        DurationMinutes = exam.DurationMinutes,
-
-        Questions = exam.ExamQuestions.Select(q => new ExamQuestionDto
-        {
-            Id = q.Question.Id,
-            QuestionText = q.Question.QuestionText,
-            QuestionImage = q.Question.QuestionImage,
-
-            Choices = q.Question.Choices.Select(c => new ExamChoiceDto
-            {
-                Id = c.Id,
-                Text = c.ChoiceText
-            }).ToList()
-        }).ToList()
-    };
-    return ServiceResult<StartExamResponseDto>.Fail("Failed to start exam"); 
-}
-*/
-
 
 public async Task<ExamReviewDto?> GetExamReview(int candidateId)
 {

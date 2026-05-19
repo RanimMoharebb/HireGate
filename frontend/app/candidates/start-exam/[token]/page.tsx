@@ -79,7 +79,7 @@ export default function StartExamPage() {
       };
 
       const res = await fetch(
-        `http://localhost:5116/api/exam/submit/${token}`,
+        `http://localhost:5116/api/submission/submit/${token}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -104,8 +104,9 @@ export default function StartExamPage() {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const data = await startExam(token);
-
+        var data = await startExam(token);
+        console.log("START EXAM RESPONSE:", data);
+        data = data.data || data; // handle different response shapes
         const shuffledQuestions = shuffleArray(data.questions).map((q: any) => ({
           ...q,
           choices: shuffleArray(q.choices),
@@ -211,7 +212,6 @@ export default function StartExamPage() {
             {warning}
           </div>
         )}
-
         {exam.questions.map((q: any, index: number) => (
           <div key={q.id} className="mb-8 border border-slate-300 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">
@@ -219,12 +219,22 @@ export default function StartExamPage() {
             </h2>
 
             <div className="space-y-3">
+                  {q.questionImage && (
+                    <div className="mb-4 flex justify-center">
+                      <img
+                        src={q.questionImage}
+                        alt={`Question ${index + 1} image`}
+                        loading="lazy"
+                        className="max-h-64 w-auto rounded-md object-contain"
+                      />
+                    </div>
+                  )}
               {q.choices.map((c: any) => (
                 <button
                   key={c.id}
                   onClick={() => handleSelect(q.id, c.id)}
                   disabled={submitted}
-                  className={`w-full border rounded-lg p-3 text-left transition ${
+                  className={`w-full border rounded-lg p-3 text-left transition cursor-pointer ${
                     answers[q.id] === c.id
                       ? "bg-slate-100 border-slate-300 text-black"
                       : "bg-white hover:bg-slate-50 border border-slate-200"

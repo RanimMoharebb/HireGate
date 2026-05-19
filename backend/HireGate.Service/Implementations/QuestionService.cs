@@ -1,29 +1,40 @@
+using FluentValidation;
 using HireGate.Repository.Interfaces;
 using HireGate.Service.Interfaces;
 using HireGate.Service.DTOs;
 using HireGate.Data.Models;
+using HireGate.Service.Validators;
+using HireGate.Service.Mappers;
 
 namespace HireGate.Service.Implementations
 {
     public class QuestionService : IQuestionService
     {
         private readonly IQuestionRepository _repository;
+        private readonly IValidator<CreateQuestionDto> _createValidator;
+        private readonly IValidator<UpdateQuestionDto> _updateValidator;
+        private readonly IValidator<PatchQuestionDto> _patchValidator;
         private const int MinChoicesPerQuestion = 2;
         private const int MaxChoicesPerQuestion = 4;
 
-        public QuestionService(IQuestionRepository repository)
+        public QuestionService(
+            IQuestionRepository repository,
+            IValidator<CreateQuestionDto> createValidator,
+            IValidator<UpdateQuestionDto> updateValidator,
+            IValidator<PatchQuestionDto> patchValidator)
         {
             _repository = repository;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
+            _patchValidator = patchValidator;
         }
 
 
         public async Task<QuestionDto?> GetQuestionByIdAsync(int id)
         {
-            if (id <= 0)
-                throw new ArgumentException("Invalid question ID", nameof(id));
-
+            ValidateId(id);
             var question = await _repository.GetQuestionByIdAsync(id);
-            return question == null ? null : MapToQuestionDto(question);
+            return question == null ? null : QuestionMapper.ToDto(question);
         }
 
         public async Task<(IEnumerable<QuestionDto> Items, int TotalCount)> GetAllQuestionsAsync(int pageNumber, int pageSize, int? topicId = null, string? search = null, bool? isDeleted = false)
@@ -32,191 +43,67 @@ namespace HireGate.Service.Implementations
                 throw new ArgumentException("Invalid topic ID", nameof(topicId));
 
             var (items, totalCount) = await _repository.GetAllQuestionsAsync(pageNumber, pageSize, topicId, search, isDeleted);
-            return (items.Select(MapToQuestionDto).ToList(), totalCount);
+            return (items.Select(QuestionMapper.ToDto).ToList(), totalCount);
         }   
 
         public async Task<QuestionDto> CreateQuestionAsync(CreateQuestionDto createQuestionDto)
         {
-            if (createQuestionDto == null)
-                throw new ArgumentNullException(nameof(createQuestionDto));
-
-            if (string.IsNullOrWhiteSpace(createQuestionDto.QuestionText))
-                throw new ArgumentException("Question text is required", nameof(createQuestionDto.QuestionText));
-
-            if (createQuestionDto.TopicId.HasValue && createQuestionDto.TopicId.Value <= 0)
-                throw new ArgumentException("Valid topic ID is required", nameof(createQuestionDto.TopicId));
-
-            if (createQuestionDto.Choices == null || !createQuestionDto.Choices.Any())
-                throw new ArgumentException($"At least {MinChoicesPerQuestion} choices are required", nameof(createQuestionDto.Choices));
-
-            var createCount = createQuestionDto.Choices.Count;
-            if (createCount < MinChoicesPerQuestion || createCount > MaxChoicesPerQuestion)
-                throw new ArgumentException($"Number of choices must be between {MinChoicesPerQuestion} and {MaxChoicesPerQuestion}", nameof(createQuestionDto.Choices));
-
-            if (createQuestionDto.Choices.Any(c => string.IsNullOrWhiteSpace(c.ChoiceText)))
-                throw new ArgumentException("Choice text is required for all choices", nameof(createQuestionDto.Choices));
-
-            var correctCreateCount = createQuestionDto.Choices.Count(c => c.IsCorrect);
-            if (correctCreateCount != 1)
-                throw new ArgumentException("Exactly one choice must be marked as correct", nameof(createQuestionDto.Choices));
-
-            if (!string.IsNullOrWhiteSpace(createQuestionDto.QuestionImage) &&
-                !IsValidUrl(createQuestionDto.QuestionImage))
+            var dto = createQuestionDto ?? throw new ArgumentNullException(nameof(createQuestionDto));
+            var validationResult = await _createValidator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
             {
-                throw new ArgumentException("Question image must be a valid URL", nameof(createQuestionDto.QuestionImage));
+                throw new ValidationException(validationResult.Errors);
             }
 
-            var question = new Question
-            {
-                QuestionText = createQuestionDto.QuestionText.Trim(),
-                QuestionImage = string.IsNullOrWhiteSpace(createQuestionDto.QuestionImage) ? null : createQuestionDto.QuestionImage.Trim(),
-                TopicId = createQuestionDto.TopicId,
-                Choices = createQuestionDto.Choices
-                    .Select(c => new Choice
-                    {
-                        ChoiceText = c.ChoiceText.Trim(),
-                        IsCorrect = c.IsCorrect
-                    })
-                    .ToList()
-            };
+            var question = QuestionMapper.FromCreateDto(dto);
 
             var createdQuestion = await _repository.CreateQuestionAsync(question);
-            return MapToQuestionDto(createdQuestion);
+            return QuestionMapper.ToDto(createdQuestion);
         }
 
         public async Task<QuestionDto> UpdateQuestionAsync(int id, UpdateQuestionDto updateQuestionDto)
         {
-            if (id <= 0)
-                throw new ArgumentException("Invalid question ID", nameof(id));
-
+            ValidateId(id);
             if (updateQuestionDto == null)
                 throw new ArgumentNullException(nameof(updateQuestionDto));
 
-            var existingQuestion = await _repository.GetQuestionByIdAsync(id);
-            if (existingQuestion == null)
-                throw new KeyNotFoundException($"Question with ID {id} not found");
+            var existingQuestion = await GetExistingQuestionOrThrowAsync(id);
 
-            if (string.IsNullOrWhiteSpace(updateQuestionDto.QuestionText))
-                throw new ArgumentException("Question text is required", nameof(updateQuestionDto.QuestionText));
-
-            if (updateQuestionDto.TopicId.HasValue && updateQuestionDto.TopicId.Value <= 0)
-                throw new ArgumentException("Valid topic ID is required", nameof(updateQuestionDto.TopicId));
-
-            if (updateQuestionDto.Choices == null || !updateQuestionDto.Choices.Any())
-                throw new ArgumentException($"At least {MinChoicesPerQuestion} choices are required", nameof(updateQuestionDto.Choices));
-
-            var updateCount = updateQuestionDto.Choices.Count;
-            if (updateCount < MinChoicesPerQuestion || updateCount > MaxChoicesPerQuestion)
-                throw new ArgumentException($"Number of choices must be between {MinChoicesPerQuestion} and {MaxChoicesPerQuestion}", nameof(updateQuestionDto.Choices));
-
-            if (updateQuestionDto.Choices.Any(c => string.IsNullOrWhiteSpace(c.ChoiceText)))
-                throw new ArgumentException("Choice text is required for all choices", nameof(updateQuestionDto.Choices));
-
-            var correctUpdateCount = updateQuestionDto.Choices.Count(c => c.IsCorrect);
-            if (correctUpdateCount != 1)
-                throw new ArgumentException("Exactly one choice must be marked as correct", nameof(updateQuestionDto.Choices));
-
-            if (!string.IsNullOrWhiteSpace(updateQuestionDto.QuestionImage) &&
-                !IsValidUrl(updateQuestionDto.QuestionImage))
+            var validationResult = await _updateValidator.ValidateAsync(updateQuestionDto);
+            if (!validationResult.IsValid)
             {
-                throw new ArgumentException("Question image must be a valid URL", nameof(updateQuestionDto.QuestionImage));
+                throw new ValidationException(validationResult.Errors);
             }
 
-            existingQuestion.QuestionText = updateQuestionDto.QuestionText.Trim();
-            existingQuestion.QuestionImage = string.IsNullOrWhiteSpace(updateQuestionDto.QuestionImage) ? null : updateQuestionDto.QuestionImage.Trim();
-            existingQuestion.TopicId = updateQuestionDto.TopicId;
-
-            existingQuestion.Choices.Clear();
-            foreach (var choice in updateQuestionDto.Choices)
-            {
-                existingQuestion.Choices.Add(new Choice
-                {
-                    ChoiceText = choice.ChoiceText.Trim(),
-                    IsCorrect = choice.IsCorrect
-                });
-            }
+            QuestionMapper.ApplyUpdate(existingQuestion, updateQuestionDto);
 
             var updatedQuestion = await _repository.UpdateQuestionAsync(existingQuestion);
-            return MapToQuestionDto(updatedQuestion);
+            return QuestionMapper.ToDto(updatedQuestion);
         }
 
         public async Task<QuestionDto> PatchQuestionAsync(int id, PatchQuestionDto patchQuestionDto)
         {
-            if (id <= 0)
-                throw new ArgumentException("Invalid question ID", nameof(id));
-
+            ValidateId(id);
             if (patchQuestionDto == null)
                 throw new ArgumentNullException(nameof(patchQuestionDto));
 
-            var existingQuestion = await _repository.GetQuestionByIdAsync(id);
-            if (existingQuestion == null || existingQuestion.DeletedAt != null)
-                throw new KeyNotFoundException($"Question with ID {id} not found");
+            var existingQuestion = await GetExistingQuestionOrThrowAsync(id);
 
-            if (patchQuestionDto.TopicId.HasValue)
+            var validationResult = await _patchValidator.ValidateAsync(patchQuestionDto);
+            if (!validationResult.IsValid)
             {
-                if (patchQuestionDto.TopicId.Value <= 0)
-                    throw new ArgumentException("Valid topic ID is required", nameof(patchQuestionDto.TopicId));
-
-                existingQuestion.TopicId = patchQuestionDto.TopicId.Value;
+                throw new ValidationException(validationResult.Errors);
             }
 
-            if (patchQuestionDto.QuestionText != null)
-            {
-                if (string.IsNullOrWhiteSpace(patchQuestionDto.QuestionText))
-                    throw new ArgumentException("Question text cannot be empty", nameof(patchQuestionDto.QuestionText));
+            QuestionMapper.ApplyPatch(existingQuestion, patchQuestionDto);
 
-                existingQuestion.QuestionText = patchQuestionDto.QuestionText.Trim();
-            }
-
-            if (patchQuestionDto.QuestionImage != null)
-            {
-                if (string.IsNullOrWhiteSpace(patchQuestionDto.QuestionImage))
-                    throw new ArgumentException("Question image cannot be empty", nameof(patchQuestionDto.QuestionImage));
-
-                if (!IsValidUrl(patchQuestionDto.QuestionImage))
-                    throw new ArgumentException("Question image must be a valid URL", nameof(patchQuestionDto.QuestionImage));
-
-                existingQuestion.QuestionImage = patchQuestionDto.QuestionImage.Trim();
-            }
-
-            if (patchQuestionDto.Choices != null)
-            {
-                if (!patchQuestionDto.Choices.Any())
-                    throw new ArgumentException($"At least {MinChoicesPerQuestion} choices are required", nameof(patchQuestionDto.Choices));
-
-                var patchCount = patchQuestionDto.Choices.Count;
-                if (patchCount < MinChoicesPerQuestion || patchCount > MaxChoicesPerQuestion)
-                    throw new ArgumentException($"Number of choices must be between {MinChoicesPerQuestion} and {MaxChoicesPerQuestion}", nameof(patchQuestionDto.Choices));
-
-                if (patchQuestionDto.Choices.Any(c => !c.IsCorrect.HasValue))
-                    throw new ArgumentException("IsCorrect is required for all choices", nameof(patchQuestionDto.Choices));
-
-                var correctPatchCount = patchQuestionDto.Choices.Count(c => c.IsCorrect == true);
-                if (correctPatchCount != 1)
-                    throw new ArgumentException("Exactly one choice must be marked as correct", nameof(patchQuestionDto.Choices));
-
-                if (patchQuestionDto.Choices.Any(c => string.IsNullOrWhiteSpace(c.ChoiceText)))
-                    throw new ArgumentException("Choice text is required for all choices", nameof(patchQuestionDto.Choices));
-
-                existingQuestion.Choices.Clear();
-                foreach (var choice in patchQuestionDto.Choices)
-                {
-                    existingQuestion.Choices.Add(new Choice
-                    {
-                        ChoiceText = choice.ChoiceText!.Trim(),
-                        IsCorrect = choice.IsCorrect!.Value
-                    });
-                }
-            }
             var patchedQuestion = await _repository.UpdateQuestionAsync(existingQuestion);
-            return MapToQuestionDto(patchedQuestion);
+            return QuestionMapper.ToDto(patchedQuestion);
         }
 
         public async Task<bool> DeleteQuestionAsync(int id)
         {
-            if (id <= 0)
-                throw new ArgumentException("Invalid question ID", nameof(id));
-
+            ValidateId(id);
             var exists = await _repository.QuestionExistsAsync(id);
             if (!exists)
                 throw new KeyNotFoundException($"Question with ID {id} not found");
@@ -226,9 +113,7 @@ namespace HireGate.Service.Implementations
 
         public async Task<bool> RestoreQuestionAsync(int id)
         {
-            if (id <= 0)
-                throw new ArgumentException("Invalid question ID", nameof(id));
-
+            ValidateId(id);
             var exists = await _repository.QuestionExistsAsync(id);
             if (!exists)
                 throw new KeyNotFoundException($"Question with ID {id} not found");
@@ -240,32 +125,24 @@ namespace HireGate.Service.Implementations
             return true;
         }
 
-        private QuestionDto MapToQuestionDto(Question question)
-        {
-            return new QuestionDto
-            {
-                Id = question.Id,
-                TopicId = question.TopicId,
-                TopicName = question.Topic?.TopicName ?? string.Empty,
-                DeletedAt = question.DeletedAt,
-                QuestionText = question.QuestionText,
-                QuestionImage = question.QuestionImage,
-                Choices = question.Choices
-                    .Select(c => new ChoiceDto
-                    {
-                        Id = c.Id,
-                        QuestionId = c.QuestionId,
-                        ChoiceText = c.ChoiceText,
-                        IsCorrect = c.IsCorrect
-                    })
-                    .ToList()
-            };
-        }
-
         private static bool IsValidUrl(string url)
         {
             return Uri.TryCreate(url, UriKind.Absolute, out var uriResult) &&
                    (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+        }
+
+                private void ValidateId(int id)
+        {
+            if (id <= 0)
+                throw new ArgumentException("Invalid question ID", nameof(id));
+        }
+
+        private async Task<Question> GetExistingQuestionOrThrowAsync(int id)
+        {
+            var existing = await _repository.GetQuestionByIdAsync(id);
+            if (existing == null)
+                throw new KeyNotFoundException($"Question with ID {id} not found");
+            return existing;
         }
 
     }

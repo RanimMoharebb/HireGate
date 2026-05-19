@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 import { DEFAULT_PAGE_SIZE } from "@/app/_lib/pagination";
 import {
   EMPTY_QUESTION_FORM,
@@ -127,6 +128,11 @@ export const useQuestionBank = () => {
     setSelectedQuestion(null);
     setFormError(null);
     resetForm();
+    try {
+      restoreBodyScroll();
+    } catch {
+      // noop
+    }
   };
 
   const openAddQuestionModal = () => {
@@ -149,6 +155,11 @@ export const useQuestionBank = () => {
     setIsTopicModalOpen(false);
     setTopicName("");
     setTopicError(null);
+    try {
+      restoreBodyScroll();
+    } catch {
+      // noop
+    }
   };
 
   const openEditQuestionModal = (question: Question) => {

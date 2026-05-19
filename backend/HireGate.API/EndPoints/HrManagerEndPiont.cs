@@ -9,8 +9,8 @@ public static class AdminEndpoints
 {
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/admins");
-          //             .RequireAuthorization(policy => policy.RequireRole("CEO"));
+        var group = app.MapGroup("/admins")
+          .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // CREATE ADMIN
                 group.MapPost("/", async (

@@ -26,6 +26,8 @@ type BulkProps = {
   variant: "bulk";
   open: boolean;
   onClose: () => void;
+  onSuccess?: (msg: string) => void;
+  onError?: (msg: string) => void;
 };
 
 export type SendEmailModalProps = SingleProps | BulkProps;
@@ -273,7 +275,7 @@ function SingleSendEmailModal({
 }
 
 // Bulk email modal - split into logical columns on desktop
-function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
+function BulkSendEmailModal({ onClose, onSuccess, onError }: { onClose: () => void; onSuccess?: (msg: string) => void; onError?: (msg: string) => void }) {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedExamId, setSelectedExamId] = useState<number | "">("");
   const [selectedExamTitle, setSelectedExamTitle] = useState("");
@@ -286,7 +288,7 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
   const [totalPages, setTotalPages] = useState(1);
   const [listLoading, setListLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [message, setMessage] = useState("");
+  
   const [fetchError, setFetchError] = useState("");
   const lastDebouncedSearch = useRef<string | null>(null);
 
@@ -371,15 +373,16 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
   const handleSend = async () => {
     try {
       setSending(true);
-      setMessage("");
+      onError?.("");
+      onSuccess?.("");
 
       if (selectedExamId === "") {
-        setMessage("Please select an exam.");
+        onError?.("Please select an exam.");
         return;
       }
 
       if (selectedCandidates.length === 0) {
-        setMessage("Please select at least one candidate.");
+        onError?.("Please select at least one candidate.");
         return;
       }
 
@@ -387,7 +390,7 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
 
       if (selectedCandidates.length === 1) {
         const res = await sendExamEmail(selectedCandidates[0], examId);
-        setMessage(res);
+        onSuccess?.(res);
         return;
       }
 
@@ -395,9 +398,9 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
         examId,
         candidateIds: selectedCandidates,
       });
-      setMessage(res);
+      onSuccess?.(res);
     } catch (err: unknown) {
-      setMessage(err instanceof Error ? err.message : "Request failed.");
+      onError?.(err instanceof Error ? err.message : "Request failed.");
     } finally {
       setSending(false);
     }
@@ -512,11 +515,6 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="flex-none border-t border-gray-200 p-5">
-            {message && (
-              <p className={`mb-3 text-sm ${message.includes("select") || message.includes("fail") ? "text-red-600" : "text-green-600"}`}>
-                {message}
-              </p>
-            )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={onClose} size="md">
                 Close

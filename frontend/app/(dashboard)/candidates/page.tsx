@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
 import { useCandidates } from "@/app/_hooks/use-candidates";
-
-import { AlertMessage } from "@/app/_components/candidates/alert-message";
+import { AlertMessage } from "@/app/_components/question-bank/alert-message";
 import { CandidateHeader } from "@/app/_components/candidates/candidate-header";
 import { CreateCandidateCard } from "@/app/_components/candidates/create-candidate-card";
 import { CandidateSearch } from "@/app/_components/candidates/candidate-search";
@@ -14,7 +12,6 @@ import { PaginationControls } from "@/app/_components/pagination-controls";
 import { CandidateDetailsModal } from "@/app/_components/candidates/candidate-details-modal";
 import { DeleteConfirmationModal } from "@/app/_components/question-bank/delete-confirmation-modal";
 import { SendEmailModal } from "@/app/_components/candidates/send-email-modal";
-
 import ExamReviewModal from "@/app/_components/candidates/exam-review-modal";
 
 export default function CandidatesPage() {
@@ -55,6 +52,10 @@ export default function CandidatesPage() {
     emailMessage,
 
     getStatus,
+    successMessage,
+    errorMessage,
+    setSuccessMessage,
+    setErrorMessage,
   } = useCandidates();
 
   const [bulkEmailOpen, setBulkEmailOpen] = useState(false);
@@ -109,13 +110,14 @@ const handleShowExam = async (candidateId: number) => {
       {/* ALERTS */}
       <AlertMessage
         type="success"
-        message={createMessage}
-        onClose={() => setCreateMessage("")}
+        message={successMessage}
+        onClose={() => setSuccessMessage(null)}
       />
 
       <AlertMessage
-        type="success"
-        message={emailMessage}
+        type="error"
+        message={errorMessage}
+        onClose={() => setErrorMessage(null)}
       />
 
       {/* HEADER */}
@@ -186,7 +188,13 @@ const handleShowExam = async (candidateId: number) => {
         onConfirm={confirmDelete}
       />
 
-      <SendEmailModal variant="bulk" open={bulkEmailOpen} onClose={() => setBulkEmailOpen(false)} />
+      <SendEmailModal
+        variant="bulk"
+        open={bulkEmailOpen}
+        onClose={() => setBulkEmailOpen(false)}
+        onSuccess={(msg: string) => setSuccessMessage(msg)}
+        onError={(msg: string) => setErrorMessage(msg)}
+      />
 
       <SendEmailModal
         variant="single"

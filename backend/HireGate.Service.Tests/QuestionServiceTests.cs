@@ -13,10 +13,31 @@ namespace HireGate.Service.Tests
         private readonly Mock<IQuestionRepository> _questionRepositoryMock;
         private readonly QuestionService _questionService;
 
+        // validator mocks
+        private readonly Mock<FluentValidation.IValidator<HireGate.Service.DTOs.CreateQuestionDto>> _createValidatorMock;
+        private readonly Mock<FluentValidation.IValidator<HireGate.Service.DTOs.UpdateQuestionDto>> _updateValidatorMock;
+        private readonly Mock<FluentValidation.IValidator<HireGate.Service.DTOs.PatchQuestionDto>> _patchValidatorMock;
+
         public QuestionServiceTests()
         {
             _questionRepositoryMock = new Mock<IQuestionRepository>();
-            _questionService = new QuestionService(_questionRepositoryMock.Object);
+            _createValidatorMock = new Mock<FluentValidation.IValidator<CreateQuestionDto>>();
+            _updateValidatorMock = new Mock<FluentValidation.IValidator<UpdateQuestionDto>>();
+            _patchValidatorMock = new Mock<FluentValidation.IValidator<PatchQuestionDto>>();
+
+            // default validators return success
+            _createValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<CreateQuestionDto>(), It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            _updateValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<UpdateQuestionDto>(), It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            _patchValidatorMock.Setup(v => v.ValidateAsync(It.IsAny<PatchQuestionDto>(), It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+
+            _questionService = new QuestionService(
+                _questionRepositoryMock.Object,
+                _createValidatorMock.Object,
+                _updateValidatorMock.Object,
+                _patchValidatorMock.Object);
         }
 
         #region GetQuestionByIdAsync Tests

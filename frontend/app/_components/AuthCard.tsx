@@ -42,7 +42,7 @@ export default function AuthCard({
             </p>
           )}
         </div>
-
+        
         {/* CONTENT */}
         <div className="flex-1 flex flex-col justify-center">
           {children}
