@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import { Card, CardContent } from "@/app/_components/ui/card";
-import type { BackendQuestionDto } from "@/app/_services/exam-service";
+import type { BackendQuestionDto } from "@/app/_lib/exams/exam.types";
 
 type ExamQuestionsManagerProps = {
   initialQuestions: BackendQuestionDto[];
@@ -80,11 +80,10 @@ export default function ExamQuestionsManager({
                         {question.choices.map((choice) => (
                           <div
                             key={choice.id}
-                            className={`rounded-lg border px-3 py-2 text-sm ${
-                              choice.isCorrect
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                                : "border-slate-200 bg-white text-slate-700"
-                            }`}
+                            className={`rounded-lg border px-3 py-2 text-sm ${choice.isCorrect
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                              : "border-slate-200 bg-white text-slate-700"
+                              }`}
                           >
                             {choice.choiceText}
                           </div>

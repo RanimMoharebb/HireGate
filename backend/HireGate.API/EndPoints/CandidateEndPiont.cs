@@ -29,8 +29,8 @@ public static class CandidateEndpoints
                 return Results.BadRequest(result);
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization();
+        });
+       // .RequireAuthorization();
 
         // COMPLETE PROFILE
         group.MapPut("/complete-profile/{token}", async (
@@ -88,21 +88,8 @@ public static class CandidateEndpoints
                 return Results.NotFound("Candidate not found");
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization();
-
-        group.MapGet("/{id:int}/exam-review", async (
-            int id,
-            [FromServices] ICandidateService service
-        ) =>
-        {
-            var result = await service.GetExamReview(id);
-
-            if (result == null)
-                return Results.NotFound("Candidate review not found");
-
-            return Results.Ok(result);
         });
+        //.RequireAuthorization();
 
         // DELETE BY ID
         group.MapDelete("/{id:int}", async (
@@ -115,8 +102,8 @@ public static class CandidateEndpoints
             return result is null
                 ? Results.NotFound("Candidate not found")
                 : Results.Ok(result);
-        })
-        .RequireAuthorization();
+        });
+        //.RequireAuthorization();
 
         // SEND EMAIL
         group.MapPost("/{id:int}/send-exam-email", async (
@@ -154,8 +141,8 @@ public static class CandidateEndpoints
             var result = await service.SendBulkExamEmail(dto);
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization();
+        });
+       // .RequireAuthorization();
 
         // START EXAM
         group.MapPost("/start-exam/{token}", async (
@@ -203,8 +190,8 @@ public static class CandidateEndpoints
             }
 
             return Results.Ok(result);
-        })
-        .RequireAuthorization();
+        });
+       // .RequireAuthorization();
 
     }
 }

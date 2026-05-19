@@ -16,7 +16,7 @@ export default async function EditExamPage({ params }: EditExamPageProps) {
     <section className="space-y-6">
       <Header
         title={`Edit ${exam.title}`}
-        description="Update exam settings and sync the attached question IDs."
+        description="Update exam settings and add or remove Questions."
       />
       <UpdateExamForm exam={exam} />
     </section>

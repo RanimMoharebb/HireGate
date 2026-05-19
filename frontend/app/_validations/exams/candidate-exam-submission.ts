@@ -1,9 +1,4 @@
-// app/_validation/exam-validation.ts
-
-export function validateExamSubmission(
-  answers: Record<number, number>,
-  totalQuestions: number
-) {
+export function validateExamSubmission(answers: Record<number, number>, totalQuestions: number) {
   const errors: string[] = [];
 
   if (Object.keys(answers).length === 0) {

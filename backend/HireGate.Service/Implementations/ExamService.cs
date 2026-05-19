@@ -10,145 +10,20 @@ namespace HireGate.Service.Implementations
     public class ExamService : IExamService
     {
         private readonly IExamRepository _examRepository;
+        private readonly IExamQuestionRepository _examQuestionRepository;
         private readonly IQuestionRepository _questionRepository;
 
-        public ExamService(IExamRepository examRepository, IQuestionRepository questionRepository)
+        public ExamService(
+            IExamRepository examRepository,
+            IExamQuestionRepository examQuestionRepository,
+            IQuestionRepository questionRepository)
         {
             _examRepository = examRepository;
+            _examQuestionRepository = examQuestionRepository;
             _questionRepository = questionRepository;
         }
 
-        public async Task SubmitExamAsync(SubmitExamDto dto)
-        {
-            DateTime now;
-            try
-            {
-                var egyptTz = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
-                now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, egyptTz);
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                now = DateTime.UtcNow;
-            }
-            catch (InvalidTimeZoneException)
-            {
-                now = DateTime.UtcNow;
-            }
-
-            if (string.IsNullOrWhiteSpace(dto.Token))
-            {
-                throw new InvalidOperationException("Token is required.");
-            }
-
-            var candidate = await _examRepository.GetCandidateByTokenAsync(dto.Token);
-            if (candidate is null)
-            {
-                throw new InvalidOperationException("Invalid token or candidate not found.");
-            }
-
-            var exam = candidate.Exam;
-            if (exam is null)
-            {
-                if (!candidate.ExamId.HasValue)
-                {
-                    throw new InvalidOperationException("Candidate has no exam assigned.");
-                }
-
-                exam = await _examRepository.GetExamByIdAsync(candidate.ExamId.Value);
-                if (exam is null)
-                {
-                    throw new InvalidOperationException("Assigned exam not found.");
-                }
-            }
-
-            // Window checks
-            if (exam.WindowStartTime.HasValue && now < exam.WindowStartTime.Value)
-            {
-                throw new InvalidOperationException("Exam window has not started yet.");
-            }
-
-            if (exam.WindowEndTime.HasValue && now > exam.WindowEndTime.Value)
-            {
-                throw new InvalidOperationException("Exam window has expired.");
-            }
-
-            // Duration check
-            if (candidate.StartedAt.HasValue && exam.DurationMinutes.HasValue)
-            {
-                var elapsed = (now - candidate.StartedAt.Value).TotalMinutes;
-                if (elapsed > exam.DurationMinutes.Value)
-                {
-                    throw new InvalidOperationException("Exam duration exceeded.");
-                }
-            }
-
-            // Validate choices and questions
-            var choiceIds = dto.Answers.Select(a => a.ChoiceId).Distinct();
-            var choices = await _examRepository.GetChoicesByIdsAsync(choiceIds);
-
-            // Ensure the provided question IDs exist in the questions table
-            var questionIds = dto.Answers.Select(a => a.QuestionId).Distinct();
-            foreach (var qid in questionIds)
-            {
-                if (!await _questionRepository.QuestionExistsAsync(qid))
-                {
-                    throw new InvalidOperationException($"Question with id {qid} not found.");
-                }
-            }
-            // new by me
-            if (!candidate.ExamId.HasValue)
-                throw new Exception("Candidate has no exam assigned");
-            // new by me
-            int examId = candidate.ExamId.Value;
-            
-            // Ensure questions belong to this exam
-            //var examQuestions = await _examRepository.GetQuestionsAsync(candidate.ExamId);
-            var examQuestions = await _examRepository.GetQuestionsAsync(examId);
-            var examQuestionIds = examQuestions.Select(q => q.Id).ToHashSet();
-
-            var candidateAnswers = new List<CandidateAnswer>();
-            int score = 0;
-
-            foreach (var a in dto.Answers)
-            {
-                if (!examQuestionIds.Contains(a.QuestionId))
-                {
-                    throw new InvalidOperationException($"Question with id {a.QuestionId} not found in the exam.");
-                }
-
-                if (!choices.TryGetValue(a.ChoiceId, out var choice))
-                {
-                    throw new InvalidOperationException($"Choice with id {a.ChoiceId} not found.");
-                }
-
-                // ensure choice belongs to the provided question
-                if (choice.QuestionId != a.QuestionId)
-                {
-                    throw new InvalidOperationException($"Choice with id {a.ChoiceId} does not belong to question {a.QuestionId}.");
-                }
-
-                var isCorrect = choice.IsCorrect;
-                if (isCorrect) score++;
-
-                candidateAnswers.Add(new CandidateAnswer
-                {
-                    CandidateId = candidate.Id,
-                    //ExamId = candidate.ExamId,
-                    ExamId = examId,
-                    QuestionId = a.QuestionId,
-                    ChoiceId = a.ChoiceId,
-                    IsCorrect = isCorrect
-                });
-            }
-            _examRepository.AddCandidateAnswers(candidateAnswers);
-
-            candidate.SubmittedAt = now;
-            candidate.FinalScore = score;
-            candidate.Token = null;
-
-            _examRepository.UpdateCandidate(candidate);
-            await _examRepository.SaveAsync();
-        }
+        
 
         // ─────────────────────────────
         // GET ALL
@@ -169,139 +44,100 @@ namespace HireGate.Service.Implementations
         }
 
         // ─────────────────────────────
-        // CREATE EXAM
+        // CREATE
         // ─────────────────────────────
         public async Task<ExamDto> CreateExamAsync(CreateExamDto dto)
         {
             var questionIds = (dto.QuestionIds ?? []).Distinct().ToList();
-            var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(questionIds);
-            if (invalidIds.Any())
-                 throw new InvalidQuestionIdsException(invalidIds);
+            var invalidIds = await _examQuestionRepository.GetNonExistentQuestionIdsAsync(questionIds);
+            if (invalidIds.Any()) throw new InvalidQuestionIdsException(invalidIds);
 
             var exam = ExamMapper.ToEntity(dto);
-
             _examRepository.CreateExam(exam);
-            await _examRepository.SaveAsync(); // exam.Id is now generated
+            await _examRepository.SaveAsync();
 
-            // Attach each question, skip any invalid IDs silently (or you can throw)
             foreach (var qId in questionIds)
-            {
-                    await _examRepository.AddQuestionAsync(exam.Id, qId); 
-            }
+                _examQuestionRepository.AddQuestion(exam.Id, qId);
 
             if (questionIds.Any())
-                await _examRepository.SaveAsync();
+                await _examQuestionRepository.SaveAsync();
 
-            await _examRepository.SyncExamQuestionCountAsync(exam.Id);
+            await _examQuestionRepository.SyncExamQuestionCountAsync(exam.Id);
 
-            // Re-fetch so the returned DTO includes the questions with their data
             var created = await _examRepository.GetExamByIdAsync(exam.Id);
             return ExamMapper.ToDto(created!);
         }
+
         // ─────────────────────────────
-        // UPDATE EXAM
+        // UPDATE
         // ─────────────────────────────
-       public async Task<ExamDto?> UpdateExamAsync(int id, UpdateExamDto dto)
+        public async Task<ExamDto?> UpdateExamAsync(int id, UpdateExamDto dto)
         {
             var exam = await _examRepository.GetExamByIdForUpdateAsync(id);
+            if (exam is null) return null;
 
-            if (exam is null)
-                return null;
-            
             var addedQuestionIds = dto.AddedQuestionIds?.Distinct().ToList() ?? [];
             var removedQuestionIds = dto.RemovedQuestionIds?.Distinct().ToList() ?? [];
             var idsToValidate = addedQuestionIds.Concat(removedQuestionIds).Distinct().ToList();
-            var invalidIds = await _examRepository.GetNonExistentQuestionIdsAsync(idsToValidate);
-            if (invalidIds.Any())
-                throw new InvalidQuestionIdsException(invalidIds);
+            var invalidIds = await _examQuestionRepository.GetNonExistentQuestionIdsAsync(idsToValidate);
+            if (invalidIds.Any()) throw new InvalidQuestionIdsException(invalidIds);
 
-            // Only update values that were actually sent.
-            if (dto.PositionTitle is not null)
-                exam.PositionTitle = dto.PositionTitle;
+            if (dto.PositionTitle is not null) exam.PositionTitle = dto.PositionTitle;
+            if (dto.DurationMinutes.HasValue) exam.DurationMinutes = dto.DurationMinutes;
+            if (dto.WindowStartTime.HasValue) exam.WindowStartTime = dto.WindowStartTime;
+            if (dto.WindowEndTime.HasValue) exam.WindowEndTime = dto.WindowEndTime;
 
-            if (dto.DurationMinutes.HasValue)
-                exam.DurationMinutes = dto.DurationMinutes;
-
-            if (dto.WindowStartTime.HasValue)
-                exam.WindowStartTime = dto.WindowStartTime;
-
-            if (dto.WindowEndTime.HasValue)
-                exam.WindowEndTime = dto.WindowEndTime;
-
-
-            // ── Sync questions ──────────────────────────────────────
             var existingIds = exam.ExamQuestions.Select(eq => eq.QuestionId).ToHashSet();
 
-            if (removedQuestionIds.Count != 0)
-            {
-                var toRemove = removedQuestionIds.Where(existingIds.Contains);
-                foreach (var qId in toRemove)
-                    await _examRepository.RemoveQuestionAsync(id, qId);
-            }
+            foreach (var qId in removedQuestionIds.Where(existingIds.Contains))
+                await _examQuestionRepository.RemoveQuestionAsync(id, qId);
 
-            if (addedQuestionIds.Count != 0)
-            {
-                var toAdd = addedQuestionIds.Where(qId => !existingIds.Contains(qId));
-                foreach (var qId in toAdd)
-                    await _examRepository.AddQuestionAsync(id, qId);
-            }
+            foreach (var qId in addedQuestionIds.Where(qId => !existingIds.Contains(qId)))
+                _examQuestionRepository.AddQuestion(id, qId);
 
             _examRepository.UpdateExam(exam);
-            // ────────────────────────────────────────────────────────
-
             await _examRepository.SaveAsync();
-            await _examRepository.SyncExamQuestionCountAsync(id);
+            await _examQuestionRepository.SyncExamQuestionCountAsync(id);
 
-            // Re-fetch so returned DTO reflects the updated questions
             var updated = await _examRepository.GetExamByIdAsync(id);
             return ExamMapper.ToDto(updated!);
         }
 
         // ─────────────────────────────
-        // DELETE EXAM
+        // DELETE
         // ─────────────────────────────
         public async Task<bool> DeleteExamAsync(int id)
-        {   
-            var exam = await _examRepository.GetExamByIdAsync(id);
-
-            if (exam is null)
-                    return false;
-
-            _examRepository.DeleteExam(exam);
-            await _examRepository.SaveAsync();
-            return true;        
+        {
+            return await _examRepository.DeleteExamByIdAsync(id); // ✅ no loading, no tracking issues
         }
-
         // ─────────────────────────────
         // QUESTIONS MANAGEMENT
-        // ───────────────────────────── 
-
+        // ─────────────────────────────
         public async Task<IEnumerable<Question>> GetExamQuestionsAsync(int examId)
-             => await _examRepository.GetQuestionsAsync(examId);
-
+            => await _examQuestionRepository.GetQuestionsAsync(examId);
 
         public async Task<bool> AddQuestionToExamAsync(int examId, int questionId)
         {
-            if (!await _examRepository.ExamExistsAsync(examId)) return false;
-            if (!await _examRepository.QuestionExistsAsync(questionId)) return false;
-            if (await _examRepository.QuestionAlreadyInExamAsync(examId, questionId)) return false;
+            if (!await _examQuestionRepository.ExamExistsAsync(examId)) return false;
+            if (!await _examQuestionRepository.QuestionExistsAsync(questionId)) return false;
+            if (await _examQuestionRepository.QuestionAlreadyInExamAsync(examId, questionId)) return false;
 
-            await _examRepository.AddQuestionAsync(examId, questionId);
-            await _examRepository.SaveAsync();
-            await _examRepository.SyncExamQuestionCountAsync(examId);
+            _examQuestionRepository.AddQuestion(examId, questionId);
+            await _examQuestionRepository.SaveAsync();
+            await _examQuestionRepository.SyncExamQuestionCountAsync(examId);
             return true;
         }
 
         public async Task<bool> RemoveQuestionFromExamAsync(int examId, int questionId)
-               {
-                if (!await _examRepository.ExamExistsAsync(examId)) return false;
+        {
+            if (!await _examQuestionRepository.ExamExistsAsync(examId)) return false;
 
-                var result = await _examRepository.RemoveQuestionAsync(examId, questionId);
-                if (!result) return false;
+            bool result = await _examQuestionRepository.RemoveQuestionAsync(examId, questionId);
+            if (!result) return false;
 
-                await _examRepository.SaveAsync();
-                await _examRepository.SyncExamQuestionCountAsync(examId);
-                return true;
-               } 
+            await _examQuestionRepository.SaveAsync();
+            await _examQuestionRepository.SyncExamQuestionCountAsync(examId);
+            return true;
+        }
     }
 }

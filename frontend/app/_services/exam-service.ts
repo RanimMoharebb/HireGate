@@ -1,71 +1,28 @@
-// Backend response Shape (DTO - Data Transfer Object)
-export type BackendQuestionDto = {
-  id: number;
-  topicId: number | null;
-  topicName: string;
-  questionText: string;
-  questionImage: string | null;
-  choices: Array<{
-    id: number;
-    choiceText: string;
-    isCorrect: boolean;
-  }>;
-};
+import {
+  BackendExamDto,
+  BackendQuestionDto,
+  CreateExamPayload,
+  Exam,
+  ExamsPaginatedResponse,
+  ExamSummary,
+  UpdateExamPayload,
+} from "../_lib/exams/exam.types";
+import { ExamApiError } from "../_lib/errorHandling";
 
-export type BackendExamDto = {
-  id: number;
-  positionTitle: string;
-  durationMinutes: number | null;
-  windowStartTime: string | null;
-  windowEndTime: string | null;
-  questions: BackendQuestionDto[] | null;
-};
-
-// UI Shape for Exam data
-export type Exam = {
-  id: number;
-  title: string;
-  description: string;
-  duration: string;
-  durationMinutes?: number;
-  questionCount: number;
-  windowStartTime?: string;
-  windowEndTime?: string;
-  questionIds: number[];
-  questions: BackendQuestionDto[];
-};
-
-export type CreateExamPayload = {
-  positionTitle: string;
-  durationMinutes?: number | null;
-  windowStartTime?: string | null;
-  windowEndTime?: string | null;
-  questionIds?: number[];
-};
-
-export type UpdateExamPayload = {
-  positionTitle?: string;
-  durationMinutes?: number | null;
-  windowStartTime?: string | null;
-  windowEndTime?: string | null;
-  addedQuestionIds?: number[];
-  removedQuestionIds?: number[];
-};
-
-export class ExamApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = "ExamApiError";
-    this.status = status;
-  }
-}
 
 const DEFAULT_BACKEND_URL = "http://localhost:5116";
 
 function getBackendBaseUrl() {
   return process.env.BACKEND_API_URL ?? DEFAULT_BACKEND_URL;
+}
+
+function getAuthHeaders(): HeadersInit {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const token = window.localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function buildExamDescription(exam: BackendExamDto) {
@@ -121,14 +78,53 @@ async function fetchExamApi<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+
 export async function getExams(): Promise<Exam[]> {
-  const exams = await fetchExamApi<BackendExamDto[]>("/api/exam/");
-  return exams.map(mapBackendExamToExam);
+    const result = await fetchExamApi<BackendExamDto[] | { data: BackendExamDto[] }>("/api/exam/");
+    const exams = Array.isArray(result) ? result : result.data ?? [];
+    return exams.map(mapBackendExamToExam);
 }
 
 export async function getExamTitles(): Promise<Pick<Exam, 'id' | 'title'>[]> {
-  const exams = await fetchExamApi<BackendExamDto[]>("/api/exam/");
-  return exams.map(exam => ({ id: exam.id, title: exam.positionTitle }));
+    const result = await fetchExamApi<BackendExamDto[] | { data: BackendExamDto[] }>("/api/exam/");
+    const exams = Array.isArray(result) ? result : result.data ?? [];
+    return exams.map(exam => ({ id: exam.id, title: exam.positionTitle }));
+}
+export async function getExamsPage(
+  page: number,
+  search?: string,
+): Promise<ExamsPaginatedResponse> {
+  const params = new URLSearchParams({
+    page: String(Math.max(1, page)),
+  });
+  const trimmed = search?.trim();
+  if (trimmed) {
+    params.set("search", trimmed);
+  }
+
+  const result = await fetchExamApi<{
+    data: BackendExamDto[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  }>(`/api/exam/?${params.toString()}`);
+
+  return {
+    data: (result.data ?? []).map((exam): ExamSummary => ({
+    id: exam.id,
+    positionTitle: exam.positionTitle,
+    durationMinutes: exam.durationMinutes,
+    questionCount: exam.questionCount,
+    windowStartTime: exam.windowStartTime,
+    windowEndTime: exam.windowEndTime,
+      
+    })),
+    page: result.page,
+    pageSize: result.pageSize,
+    totalCount: result.totalCount,
+    totalPages: result.totalPages,
+  };
 }
 
 export async function getExamById(examId: number): Promise<Exam> {
@@ -174,4 +170,45 @@ export async function removeQuestionFromExam(examId: number, questionId: number)
   await fetchExamApi(`/api/exam/${examId}/questions/${questionId}`, {
     method: "DELETE",
   });
+}
+
+export async function sendExamEmail(candidateId: number, examId: number): Promise<string> {
+  const response = await fetch(`${getBackendBaseUrl()}/candidates/${candidateId}/send-exam-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ examId }),
+  });
+
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(text || "Failed to send exam email");
+  }
+
+  return text;
+}
+
+export async function sendBulkExamEmail(data: {
+  examId: number;
+  candidateIds: number[];
+}): Promise<string> {
+  const response = await fetch(`${getBackendBaseUrl()}/candidates/send-bulk-exam-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new Error(text || "Bulk email failed");
+  }
+
+  return text;
 }

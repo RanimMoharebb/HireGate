@@ -14,6 +14,7 @@ import { PaginationControls } from "@/app/_components/pagination-controls";
 import { CandidateDetailsModal } from "@/app/_components/candidates/candidate-details-modal";
 import { DeleteCandidateModal } from "@/app/_components/candidates/delete-candidate-modal";
 import { SendEmailModal } from "@/app/_components/candidates/send-email-modal";
+import { getCandidateExamReview } from "@/app/_services/candidate-service";
 
 import ExamReviewModal from "@/app/_components/candidates/exam-review-modal";
 
@@ -72,30 +73,9 @@ export default function CandidatesPage() {
 const handleShowExam = async (candidateId: number) => {
   try {
     setReviewLoading(true);
-
-    const token = localStorage.getItem("token"); // IMPORTANT
-
-    const res = await fetch(
-      `http://localhost:5116/candidates/${candidateId}/exam-review`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const text = await res.text();
-    console.log("EXAM REVIEW RESPONSE:", text);
-
-    if (!res.ok) {
-      throw new Error(text || "Failed to load exam review");
-    }
-
-    const data = JSON.parse(text);
-
+    const data = await getCandidateExamReview(candidateId);
     setExamReview(data);
   } catch (err: any) {
-    console.error("Exam review error:", err.message);
     alert(err.message);
   } finally {
     setReviewLoading(false);

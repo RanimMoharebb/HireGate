@@ -18,7 +18,7 @@ namespace HireGate.API.Endpoints;
             group.MapGet("/", async (
                 IExamService examService, 
                 int page = 1,
-                int pageSize = 10,
+                int pageSize = 6,
                 string? search = null) =>
                 {
                 var validPage = Math.Max(1, page);
@@ -201,24 +201,6 @@ namespace HireGate.API.Endpoints;
             // ────────────────────────────────────────────────────────
             // Submit exam
             // ────────────────────────────────────────────────────────
-            group.MapPost("/submit/{token}", async (
-                string token,
-                SubmitExamDto dto,
-                 IExamService examService) =>
-            {
-                // take token from the URL and set it on the DTO
-                dto.Token = token;
-
-                try
-                {
-                    await examService.SubmitExamAsync(dto);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    return Results.BadRequest(new { error = ex.Message });
-                }
-
-                return Results.Ok("Submission successful.");
-            });
+            
             }
     }

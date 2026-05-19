@@ -1,12 +1,45 @@
-const BASE_URL = "http://localhost:5116/candidates";
+// =============================================================================
+// CANDIDATE SERVICE
+// Merged from candidate-service.ts + candidate-exam-service.ts
+// =============================================================================
 
-const authHeaders = (): HeadersInit => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-});
+const BASE_URL = "http://localhost:5116";
+const CANDIDATES_URL = `${BASE_URL}/candidates`;
 
 // -----------------------------------
+// AUTH HEADERS (browser-safe)
+// -----------------------------------
+const authHeaders = (): HeadersInit => {
+  if (typeof window === "undefined") return {};
+  const token = window.localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// -----------------------------------
+// SAFE FETCH WRAPPER (no-auth, used by candidate-facing exam pages)
+// -----------------------------------
+async function safeFetch(url: string, options?: RequestInit) {
+  const res = await fetch(url, options);
+  const text = await res.text();
+
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  if (!res.ok) {
+    throw new Error((data && data.message) || data || "Request failed");
+  }
+
+  return data;
+}
+
+// =============================================================================
 // TYPES
-// -----------------------------------
+// =============================================================================
+
 export type Candidate = {
   id: number;
   examId: number | null;
@@ -28,43 +61,55 @@ export type CandidatesPaginatedResponse = {
   totalPages: number;
 };
 
-// -----------------------------------
-// GET (paginated)
-// -----------------------------------
-/** Loads one page. Omit `pageSize` to use the API default (10). */
+export type CandidateExamReviewChoice = {
+  choiceId: number;
+  choiceText: string;
+  isCorrect: boolean;
+  isSelectedByCandidate: boolean;
+};
+
+export type CandidateExamReviewQuestion = {
+  questionId: number;
+  questionText: string;
+  choices: CandidateExamReviewChoice[];
+};
+
+export type CandidateExamReview = {
+  candidateId: number;
+  candidateName: string;
+  examTitle: string;
+  finalScore: number | null;
+  questions: CandidateExamReviewQuestion[];
+};
+
+// =============================================================================
+// CANDIDATE CRUD
+// =============================================================================
+
+/** Loads one page of candidates. */
 export async function getCandidatesPage(
   page: number,
   search?: string,
   status?: string,
-  pageSize?: number
+  pageSize?: number,
 ): Promise<CandidatesPaginatedResponse> {
-  const params = new URLSearchParams({
-    page: String(Math.max(1, page)),
-  });
-  if (pageSize !== undefined) {
-    params.set("pageSize", String(pageSize));
-  }
+  const params = new URLSearchParams({ page: String(Math.max(1, page)) });
+  if (pageSize !== undefined) params.set("pageSize", String(pageSize));
+
   const trimmed = search?.trim();
-  if (trimmed) {
-    params.set("search", trimmed);
-  }
+  if (trimmed) params.set("search", trimmed);
+
   const trimmedStatus = status?.trim();
-  if (trimmedStatus && trimmedStatus !== "All") {
-    params.set("status", trimmedStatus);
-  }
+  if (trimmedStatus && trimmedStatus !== "All") params.set("status", trimmedStatus);
 
-  const res = await fetch(`${BASE_URL}?${params}`, {
-    headers: authHeaders(),
-  });
-
+  const res = await fetch(`${CANDIDATES_URL}?${params}`, { headers: authHeaders() });
   const text = await res.text();
 
-  if (!res.ok) {
-    throw new Error(text || "Failed to fetch candidates");
-  }
+  if (!res.ok) throw new Error(text || "Failed to fetch candidates");
 
   const parsed: unknown = JSON.parse(text);
 
+  // Paginated response shape
   if (
     parsed !== null &&
     typeof parsed === "object" &&
@@ -81,6 +126,7 @@ export async function getCandidatesPage(
     };
   }
 
+  // Plain array fallback
   if (Array.isArray(parsed)) {
     return {
       data: parsed as Candidate[],
@@ -91,16 +137,10 @@ export async function getCandidatesPage(
     };
   }
 
-  return {
-    data: [],
-    page: 1,
-    pageSize: pageSize ?? 10,
-    totalCount: 0,
-    totalPages: 1,
-  };
+  return { data: [], page: 1, pageSize: pageSize ?? 10, totalCount: 0, totalPages: 1 };
 }
 
-/** Loads every candidate (one API page at a time, default page size). For bulk UIs e.g. email picker. */
+/** Loads every candidate across all pages. Used by bulk UIs (e.g. email picker). */
 export async function getAllCandidates(): Promise<Candidate[]> {
   let page = 1;
   const all: Candidate[] = [];
@@ -108,72 +148,130 @@ export async function getAllCandidates(): Promise<Candidate[]> {
   for (;;) {
     const batch = await getCandidatesPage(page);
     all.push(...batch.data);
-    if (page >= batch.totalPages || batch.data.length === 0) {
-      break;
-    }
+    if (page >= batch.totalPages || batch.data.length === 0) break;
     page += 1;
   }
 
   return all;
 }
 
-// -----------------------------------
-// GET BY ID
-// -----------------------------------
+/** Alias for getAllCandidates — keeps existing call sites working. */
+export async function getCandidates(): Promise<Candidate[]> {
+  return getAllCandidates();
+}
+
 export async function getCandidateById(id: number): Promise<Candidate> {
-  const res = await fetch(`${BASE_URL}/${id}`);
-
+  const res = await fetch(`${CANDIDATES_URL}/${id}`, { headers: authHeaders() });
   const text = await res.text();
-
-  if (!res.ok) {
-    throw new Error(text || "Candidate not found");
-  }
-
+  if (!res.ok) throw new Error(text || "Candidate not found");
   return JSON.parse(text);
 }
 
-// -----------------------------------
-// CREATE
-// -----------------------------------
 export async function createCandidate(email: string) {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch("http://localhost:5116/candidates", {
+  const res = await fetch(CANDIDATES_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ email }),
   });
 
   const text = await res.text();
-
-  if (!res.ok) {
-    throw new Error(text || "Failed to create candidate");
-  }
-
+  if (!res.ok) throw new Error(text || "Failed to create candidate");
   return text ? JSON.parse(text) : { message: "Success" };
 }
 
-// -----------------------------------
-// DELETE
-// -----------------------------------
 export async function deleteCandidate(id: number) {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(`${BASE_URL}/${id}`, {
+  const res = await fetch(`${CANDIDATES_URL}/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: authHeaders(),
   });
 
   const text = await res.text();
-
-  if (!res.ok) {
-    throw new Error(text || "Delete failed");
-  }
-
+  if (!res.ok) throw new Error(text || "Delete failed");
   return text ? JSON.parse(text) : { message: "Deleted" };
+}
+
+// =============================================================================
+// EXAM REVIEW (admin — requires auth)
+// =============================================================================
+
+export async function getCandidateExamReview(id: number): Promise<CandidateExamReview> {
+  const res = await fetch(`${CANDIDATES_URL}/${id}/exam-review`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || "Failed to load exam review");
+
+  const raw = JSON.parse(text) as {
+    candidateId?: number;
+    candidateName?: string;
+    examTitle?: string;
+    finalScore?: number | null;
+    questions?: Array<{
+      questionId?: number;
+      questionText?: string;
+      selectedChoiceId?: number | null;
+      choices?: Array<{
+        id?: number;
+        text?: string;
+        isCorrect?: boolean;
+        choiceId?: number;
+        choiceText?: string;
+        isSelectedByCandidate?: boolean;
+      }>;
+    }>;
+  };
+
+  return {
+    candidateId: raw.candidateId ?? id,
+    candidateName: raw.candidateName ?? "",
+    examTitle: raw.examTitle ?? "Exam review",
+    finalScore: raw.finalScore ?? null,
+    questions: (raw.questions ?? []).map((question) => ({
+      questionId: question.questionId ?? 0,
+      questionText: question.questionText ?? "",
+      choices: (question.choices ?? []).map((choice) => {
+        const choiceId = choice.choiceId ?? choice.id ?? 0;
+        return {
+          choiceId,
+          choiceText: choice.choiceText ?? choice.text ?? "",
+          isCorrect: Boolean(choice.isCorrect),
+          isSelectedByCandidate:
+            choice.isSelectedByCandidate ??
+            choiceId === (question.selectedChoiceId ?? null),
+        };
+      }),
+    })),
+  };
+}
+
+// =============================================================================
+// CANDIDATE-FACING EXAM FLOW (no auth — token-based)
+// =============================================================================
+
+/** Completes a candidate's profile using their invite token. */
+export async function completeCandidateProfile(token: string, body: any) {
+  try {
+    const res = await fetch(`${BASE_URL}/candidates/complete-profile/${token}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const text = await res.text();
+    return { ok: res.ok, status: res.status, raw: text };
+  } catch (err) {
+    return { ok: false, status: 0, raw: "NETWORK ERROR (backend not reachable or blocked)" };
+  }
+}
+
+/** Fetches the exam page data for a candidate using their invite token. */
+export async function getExamPageData(token: string) {
+  return safeFetch(`${BASE_URL}/candidates/exam-page/${token}`, { method: "GET" });
+}
+
+/** Starts the exam for a candidate using their invite token. */
+export async function startExam(token: string) {
+  return safeFetch(`${BASE_URL}/candidates/start-exam/${token}`, { method: "POST" });
 }

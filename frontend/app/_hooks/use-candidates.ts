@@ -9,7 +9,7 @@ import {
   getCandidatesPage,
 } from "@/app/_services/candidate-service";
 
-import { sendExamEmail } from "@/app/_services/email-service";
+import { sendExamEmail } from "@/app/_services/exam-service";
 
 import {
   validateCandidateEmail,

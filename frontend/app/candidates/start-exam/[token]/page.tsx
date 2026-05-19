@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { startExam } from "@/app/_services/candidate-exam-service";
-import { validateExamSubmission } from "@/app/_validations/exam-validation";
+import { validateExamSubmission } from "@/app/_validations/exams/candidate-exam-submission";
 
 export default function StartExamPage() {
   const shuffleArray = <T,>(array: T[]): T[] => {

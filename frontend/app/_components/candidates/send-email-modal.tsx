@@ -6,8 +6,12 @@ import { Button } from "@/app/_components/ui/button";
 import Input from "@/app/_components/ui/input";
 import { PaginationControls } from "@/app/_components/pagination-controls";
 import { Candidate, getCandidatesPage } from "@/app/_services/candidate-service";
-import { getExamsPage, type ExamSummary } from "@/app/_services/exam-service";
-import { sendBulkExamEmail, sendExamEmail } from "@/app/_services/email-service";
+import {
+  getExamsPage,
+  sendBulkExamEmail,
+  sendExamEmail,
+  type ExamSummary,
+} from "@/app/_services/exam-service";
 import { validateSearch } from "@/app/_validations/candidate-validation";
 
 const BULK_CANDIDATES_PAGE_SIZE = 10;
@@ -246,12 +250,11 @@ function SingleSendEmailModal({
         />
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} size="sm">
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button
             type="button"
-            size="sm"
             disabled={loading || examListBusy || selectedExamId === ""}
             onClick={() => onSubmit(candidate.id, Number(selectedExamId))}
           >
@@ -511,12 +514,11 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
               </p>
             )}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="secondary" onClick={onClose} size="sm">
+              <Button type="button" variant="secondary" onClick={onClose}>
                 Close
               </Button>
               <Button
                 type="button"
-                size="sm"
                 disabled={sending || listLoading || examListBusy || selectedExamId === ""}
                 onClick={() => void handleSend()}
               >

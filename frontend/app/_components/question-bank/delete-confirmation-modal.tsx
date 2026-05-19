@@ -26,8 +26,14 @@ export function DeleteConfirmationModal({
   }
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200">
+    <div 
+      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      onClick={onCancel}
+    >
+      <div 
+        className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
             <Trash2 size={20} className="text-red-600" />

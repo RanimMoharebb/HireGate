@@ -5,6 +5,7 @@ import DeleteExamButton from "@/app/_components/exams/delete-exam-button";
 import ExamQuestionsManager from "@/app/_components/exams/exam-questions-manager";
 import { getExamById } from "@/app/_services/exam-service";
 import { formatExamWindowTime } from "@/app/_lib/utils";
+import { notFound } from "next/navigation";
 
 type ExamDetailsPageProps = {
   params: Promise<{
@@ -12,9 +13,17 @@ type ExamDetailsPageProps = {
   }>;
 };
 
+
+
 export default async function ExamDetailsPage({ params }: ExamDetailsPageProps) {
   const { examId } = await params;
-  const exam = await getExamById(Number(examId));
+  const numericExamId = Number(examId);
+
+  if (Number.isNaN(numericExamId)) {
+    notFound();
+  }
+
+  const exam = await getExamById(numericExamId);
 
   return (
     <section className="space-y-6">
@@ -23,10 +32,10 @@ export default async function ExamDetailsPage({ params }: ExamDetailsPageProps) 
         description={exam.description}
         action={
           <div className="flex gap-3">
-            <Button as="link" href={`/exams/${exam.id}/edit`} variant="soft">
+            <Button as="link" href={`/exams/${examId}/edit`} variant="soft">
               Edit Exam
             </Button>
-            <DeleteExamButton examId={exam.id} redirectTo="/exams" />
+            <DeleteExamButton examId={numericExamId} redirectTo="/exams" />
           </div>
         }
       />
