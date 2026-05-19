@@ -47,10 +47,6 @@ export function useDisableBodyScroll() {
   }, []);
 }
 
-/**
- * Forcefully restore body scroll. Use when a modal close path might have
- * skipped the hook cleanup (defensive).
- */
 export function restoreBodyScroll() {
   try {
     lockCount = 0;

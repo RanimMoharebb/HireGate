@@ -13,7 +13,6 @@ import { CandidateDetailsModal } from "@/app/_components/candidates/candidate-de
 import { DeleteConfirmationModal } from "@/app/_components/question-bank/delete-confirmation-modal";
 import { SendEmailModal } from "@/app/_components/candidates/send-email-modal";
 import { getCandidateExamReview } from "@/app/_services/candidate-service";
-
 import ExamReviewModal from "@/app/_components/candidates/exam-review-modal";
 
 export default function CandidatesPage() {
