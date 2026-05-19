@@ -11,6 +11,7 @@ namespace HireGate.API.Endpoints;
         {
             var group = app.MapGroup("/api/exam")
                .RequireAuthorization();
+            //var group = app.MapGroup("/api/exam").RequireAuthorization();
 
             // ────────────────────────────────────────────────────────
             // GET all exams
