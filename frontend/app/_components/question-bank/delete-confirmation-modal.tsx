@@ -3,6 +3,7 @@
 import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 import { Loader, Trash2, X } from "lucide-react";
 
+
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
   loading: boolean;
@@ -23,11 +24,13 @@ export function DeleteConfirmationModal({
   onCancel,
   onConfirm,
 }: DeleteConfirmationModalProps) {
+ 
   if (!isOpen) {
     return null;
   }
-  useDisableBodyScroll();
 
+  useDisableBodyScroll();
+  
   return (
     <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => { restoreBodyScroll(); onCancel(); }}>
       <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200 relative" onClick={(e) => e.stopPropagation()}>

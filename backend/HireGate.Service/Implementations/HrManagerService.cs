@@ -1,10 +1,8 @@
-
-
 using HireGate.Repository.Interfaces;
 using HireGate.Service.Interfaces;
 using HireGate.Service.DTOs;
 using HireGate.Data.Models;
-
+using HireGate.ResultWrapper; 
 using Microsoft.Extensions.Configuration;
 
 using System.IdentityModel.Tokens.Jwt;
@@ -12,7 +10,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BCrypt.Net;
-
+  
 namespace HireGate.Service.Implementations
 {
 public class AdminService : IAdminService
@@ -31,7 +29,7 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
 }
 
     // GET ALL
-    public async Task<(List<AdminResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search)
+    public async Task<ServiceResult<PagedResult<AdminResponseDto>>> GetAll(int page, int pageSize, string? search)
     {
         var validPage = Math.Max(1, page);
         var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
@@ -46,39 +44,37 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
             Role = a.Role.ToString(),
         }).ToList();
 
-        return (data, totalCount);
+        return ServiceResult<PagedResult<AdminResponseDto>>.Ok(new PagedResult<AdminResponseDto>
+        {
+            Items = data,
+            TotalCount = totalCount
+        });
     }
 
     // GET BY ID
-    public async Task<AdminResponseDto?> GetById(int id)
+    public async Task<ServiceResult<AdminResponseDto?>> GetById(int id)
     {
         var admin = await _repo.GetById(id);
 
         if (admin == null)
-            return null;
+            return ServiceResult<AdminResponseDto?>.Fail("Admin not found");
 
-        return new AdminResponseDto
+        return ServiceResult<AdminResponseDto?>.Ok(new AdminResponseDto
         {
             Id = admin.Id,
             Email = admin.Email,
             Role = admin.Role.ToString()
-        };
+        });
     }
 
     // CREATE ADMIN
-    public async Task<CreateAdminResponseDto> CreateAdmin(CreateAdminRequestDto dto)
+    public async Task<ServiceResult<CreateAdminResponseDto>> CreateAdmin(CreateAdminRequestDto dto)
     {
             var existing = await _repo.GetByEmail(dto.Email);
 
         if (existing != null)
     {
-        return new CreateAdminResponseDto
-        {
-            Id = 0,
-            Email = dto.Email,
-            Role = "",
-            Message = "Email already exists"
-        };
+        return ServiceResult<CreateAdminResponseDto>.Fail("Email already exists");
     }
 
         var admin = new Admin
@@ -92,87 +88,65 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
 
         await _repo.Add(admin);
 
-        return new CreateAdminResponseDto
+        return ServiceResult<CreateAdminResponseDto>.Ok(new CreateAdminResponseDto
         {
             Id = admin.Id,
             Email = admin.Email,
             Role = admin.Role.ToString(),
             Message = "Admin created successfully"
-        };
+        });
     }
 
     // DELETE ADMIN
-    public async Task<DeleteAdminResponseDto> Delete(int id)
+    public async Task<ServiceResult<bool>> Delete(int id)
     {
         var admin = await _repo.GetById(id);
 
         if (admin == null)
         {
-            return new DeleteAdminResponseDto
-            {
-                Success = false,
-                Message = "Admin not found"
-            };
+            return ServiceResult<bool>.Fail("Admin not found");
         }
-
+        
     // prevent deleting last CEO
     if (admin.Role == UserRole.CEO)
     {
         var ceoCount = await _repo.CountByRole(UserRole.CEO);
 
         if (ceoCount <= 1)
-            return new DeleteAdminResponseDto
-            {
-                Success = false,
-                Message = "Cannot delete last CEO"
-            };
+            return ServiceResult<bool>.Fail("Cannot delete last CEO");
     }
     
         await _repo.Delete(admin);
 
-        return new DeleteAdminResponseDto
-        {
-            Success = true,
-            Message = "Admin deleted successfully"
-        };
+        return ServiceResult<bool>.Ok(true);
     }
 
-    // UPDATE ROLE
-public async Task<UpdateAdminRoleResponseDto> UpdateRole(int id, UpdateAdminRoleDto dto)
+// UPDATE ROLE
+public async Task<ServiceResult<UpdateAdminRoleResponseDto>> UpdateRole(int id, UpdateAdminRoleDto dto)
 {
     var admin = await _repo.GetById(id);
 
     if (admin == null)
     {
-        return new UpdateAdminRoleResponseDto
-        {
-            Id = id,
-            Role = "",
-            Message = "Admin not found"
-        };
-    }
+        return ServiceResult<UpdateAdminRoleResponseDto>.Fail("Admin not found");
+    };
 
     // safe enum conversion
     if (!Enum.TryParse<UserRole>(dto.Role, true, out var role))
     {
-        return new UpdateAdminRoleResponseDto
-        {
-            Id = id,
-            Role = "",
-            Message = "Invalid role"
-        };
+        return ServiceResult<UpdateAdminRoleResponseDto>.Fail("Invalid role");
     }
 
     admin.Role = role;
 
     await _repo.Update(admin);
 
-    return new UpdateAdminRoleResponseDto
+    return ServiceResult<UpdateAdminRoleResponseDto>.Ok(new UpdateAdminRoleResponseDto
     {
         Id = admin.Id,
         Role = admin.Role.ToString(),
         Message = "Role updated successfully"
-    };
+    });
 }
 
 
@@ -184,18 +158,19 @@ private string GenerateOtp()
     return number.ToString();
 }
 
-public async Task ForgotPassword(ForgotPasswordDto dto)
+public async Task<ServiceResult<string>> ForgotPassword(ForgotPasswordDto dto)
 {
     var admin = await _repo.GetByEmail(dto.Email);
 
     if (admin == null)
-        return;
+        return ServiceResult<string>.Fail("Admin not found");
 
     var otp = GenerateOtp();
-    Console.WriteLine("============== OTP DEBUG ==============");
-    Console.WriteLine($"Email: {admin.Email}");
-    Console.WriteLine($"OTP: {otp}");
-    Console.WriteLine("=======================================");
+
+    //Console.WriteLine("============== OTP DEBUG ==============");
+    //Console.WriteLine($"Email: {admin.Email}");
+    //Console.WriteLine($"OTP: {otp}");
+    //Console.WriteLine("=======================================");
     
     admin.ResetOtpHash = BCrypt.Net.BCrypt.HashPassword(otp);
     admin.ResetOtpExpiry = _dateTimeProvider.Now.AddMinutes(3);
@@ -207,33 +182,34 @@ public async Task ForgotPassword(ForgotPasswordDto dto)
         "Your OTP Code",
         $"Your OTP is: {otp}\nExpires in 3 minutes."
     );
+    return ServiceResult<string>.Ok(otp);
 }
 
 
-public async Task<bool> ResetPassword(ResetPasswordDto dto)
+public async Task<ServiceResult<bool>> ResetPassword(ResetPasswordDto dto)
 {
     var admin = await _repo.GetByEmail(dto.Email);
 
     if (admin == null)
-        return false;
+        return ServiceResult<bool>.Fail("Admin not found");
 
     // check OTP expiry
     if (admin.ResetOtpExpiry == null || admin.ResetOtpExpiry < _dateTimeProvider.Now)
-        return false;
+        return ServiceResult<bool>.Fail("OTP has expired");
 
     // check OTP exists
     if (string.IsNullOrEmpty(admin.ResetOtpHash))
-        return false;
+        return ServiceResult<bool>.Fail("Invalid OTP");
 
     // validate OTP HERE (only place)
     bool isValid = BCrypt.Net.BCrypt.Verify(dto.Otp, admin.ResetOtpHash);
 
     if (!isValid)
-        return false;
+        return ServiceResult<bool>.Fail("Invalid OTP");
 
     // check password match
     if (dto.NewPassword != dto.ConfirmPassword)
-        return false;
+        return ServiceResult<bool>.Fail("Passwords do not match");
 
     // update password
     admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
@@ -244,7 +220,7 @@ public async Task<bool> ResetPassword(ResetPasswordDto dto)
 
     await _repo.Update(admin);
 
-    return true;
+    return ServiceResult<bool>.Ok(true);
 }
 
 

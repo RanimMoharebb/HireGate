@@ -1,8 +1,10 @@
+
 using HireGate.Service.Interfaces;
-using HireGate.Repository.Interfaces;
 using HireGate.Service.DTOs;
-using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+using HireGate.API.Mapping;
+using HireGate.ResultWrapper;
 
 namespace HireGate.API.Endpoints;
 
@@ -22,15 +24,15 @@ public static class AuthEndpoints
             var validation = await validator.ValidateAsync(dto);
 
             if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return ApiResponseMapper.ToHttpResult(
+                    ServiceResult<object>.Fail(validation.Errors.First().ErrorMessage)
+                );
 
             var result = await service.Login(dto.Email, dto.Password);
 
-            if (result.Message == "Invalid credentials")
-                return Results.BadRequest(result);
-
-            return Results.Ok(result);
+            return ApiResponseMapper.ToHttpResult(result);
         });
+
 
         // COMPLETE REGISTRATION
         group.MapPost("/complete-registration", async (
@@ -39,47 +41,18 @@ public static class AuthEndpoints
             [FromServices] IValidator<CompleteRegisterAdminDto> validator
         ) =>
         {
-            // 1. Validate request
             var validation = await validator.ValidateAsync(dto);
 
             if (!validation.IsValid)
-            {
-                return Results.BadRequest(new
-                {
-                    success = false,
-                    message = validation.Errors.First().ErrorMessage
-                });
-            }
+                return ApiResponseMapper.ToHttpResult(
+                    ServiceResult<object>.Fail(validation.Errors.First().ErrorMessage)
+                );
 
-            // 2. Call service
             var result = await service.CompleteRegistration(dto);
 
-            // 3. Handle known business cases
-            if (result.Message == "Admin not found")
-            {
-                return Results.BadRequest(new
-                {
-                    success = false,
-                    message = result.Message
-                });
-            }
-
-            if (result.Message == "Already registered")
-            {
-                return Results.BadRequest(new
-                {
-                    success = false,
-                    message = result.Message
-                });
-            }
-
-            // 4. Success response
-            return Results.Ok(new
-            {
-                success = true,
-                message = result.Message
-            });
+            return ApiResponseMapper.ToHttpResult(result);
         });
+
 
         // FORGOT PASSWORD
         group.MapPost("/forgot-password", async (
@@ -91,11 +64,15 @@ public static class AuthEndpoints
             var validation = await validator.ValidateAsync(dto);
 
             if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return ApiResponseMapper.ToHttpResult(
+                    ServiceResult<object>.Fail(validation.Errors.First().ErrorMessage)
+                );
 
-            await service.ForgotPassword(dto);
-            return Results.Ok("If email exists, reset link sent");
+            var result = await service.ForgotPassword(dto);
+
+            return ApiResponseMapper.ToHttpResult(result);
         });
+
 
         // RESET PASSWORD
         group.MapPost("/reset-password", async (
@@ -107,13 +84,13 @@ public static class AuthEndpoints
             var validation = await validator.ValidateAsync(dto);
 
             if (!validation.IsValid)
-                return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+                return ApiResponseMapper.ToHttpResult(
+                    ServiceResult<object>.Fail(validation.Errors.First().ErrorMessage)
+                );
 
             var result = await service.ResetPassword(dto);
 
-            return result
-                ? Results.Ok("Password reset successful")
-                : Results.BadRequest("Invalid or expired token");
+            return ApiResponseMapper.ToHttpResult(result);
         });
     }
 }

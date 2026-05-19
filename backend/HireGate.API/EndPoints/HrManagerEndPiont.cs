@@ -2,37 +2,37 @@ using HireGate.Service.Interfaces;
 using HireGate.Service.DTOs;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using HireGate.API.Mapping;
+using HireGate.ResultWrapper;
 
 namespace HireGate.API.Endpoints;
+
 public static class AdminEndpoints
 {
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admins");
-          //             .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
         // CREATE ADMIN
-                group.MapPost("/", async (
-                    [FromBody] CreateAdminRequestDto dto,
-                    [FromServices] IAdminService service,
-                    [FromServices] IValidator<CreateAdminRequestDto> validator
-                ) =>
-                {
-                    var validation = await validator.ValidateAsync(dto);
+        group.MapPost("/", async (
+            [FromBody] CreateAdminRequestDto dto,
+            [FromServices] IAdminService service,
+            [FromServices] IValidator<CreateAdminRequestDto> validator
+        ) =>
+        {
+            var validation = await validator.ValidateAsync(dto);
 
-                    if (!validation.IsValid)
-                        return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            if (!validation.IsValid)
+                return ApiResponseMapper.ToHttpResult(
+                    ServiceResult<object>.Fail(validation.Errors.First().ErrorMessage)
+                );
 
-                    var response = await service.CreateAdmin(dto);
+            var response = await service.CreateAdmin(dto);
 
-                    if (response.Message == "Email already exists")
-                        return Results.BadRequest(response);
-
-            return Results.Ok(response);
+            return ApiResponseMapper.ToHttpResult(response);
         });
-        //RequireAuthorization(policy => policy.RequireRole("CEO"));
-        
+
+
         // GET ALL
         group.MapGet("/", async (
             [FromServices] IAdminService service,
@@ -41,54 +41,38 @@ public static class AdminEndpoints
             string? search = null
         ) =>
         {
-            var validPage = Math.Max(1, page);
-            var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
-            var (data, totalCount) = await service.GetAll(validPage, validPageSize, search);
-            var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling((double)totalCount / validPageSize);
+            var result = await service.GetAll(page, pageSize, search);
 
-            return Results.Ok(new
-            {
-                data,
-                page = validPage,
-                pageSize = validPageSize,
-                totalCount,
-                totalPages
-            });
+            return ApiResponseMapper.ToHttpResult(result);
         });
-       // .RequireAuthorization(policy => policy.RequireRole("CEO"));
+
 
         // GET BY ID
-        group.MapGet("/{id}", async (
+        group.MapGet("/{id:int}", async (
             int id,
             [FromServices] IAdminService service
         ) =>
         {
-            var admin = await service.GetById(id);
+            var result = await service.GetById(id);
 
-            if (admin == null)
-                return Results.NotFound("Admin not found");
-
-            return Results.Ok(admin);
+            return ApiResponseMapper.ToHttpResult(result);
         });
-        //.RequireAuthorization(policy => policy.RequireRole("CEO"));
+
 
         // DELETE
-        group.MapDelete("/{id}", async (
+        group.MapDelete("/{id:int}", async (
             int id,
             [FromServices] IAdminService service
         ) =>
         {
             var result = await service.Delete(id);
 
-            if (!result.Success)
-                return Results.NotFound(result.Message);
-
-            return Results.Ok(result);
+            return ApiResponseMapper.ToHttpResult(result);
         });
-       // .RequireAuthorization(policy => policy.RequireRole("CEO"));
+
 
         // UPDATE ROLE
-        group.MapPatch("/{id}", async (
+        group.MapPatch("/{id:int}", async (
             int id,
             [FromBody] UpdateAdminRoleDto dto,
             [FromServices] IAdminService service,
@@ -98,32 +82,19 @@ public static class AdminEndpoints
             var validation = await validator.ValidateAsync(dto);
 
             if (!validation.IsValid)
-            {
-                return Results.BadRequest(new
-                {
-                    message = validation.Errors.First().ErrorMessage
-                });
-            }
-
+                return ApiResponseMapper.ToHttpResult(
+                    ServiceResult<object>.Fail(validation.Errors.First().ErrorMessage)
+                );
 
             var result = await service.UpdateRole(id, dto);
 
-            if (result.Message == "Admin not found")
-            {
-                return Results.NotFound(new
-                {
-                    message = result.Message
-                });
-            }
-
-            return Results.Ok(result);
+            return ApiResponseMapper.ToHttpResult(result);
         });
-       // .RequireAuthorization(policy => policy.RequireRole("CEO"));
 
-        // DEBUG ROLE
+
+        // DEBUG ROLE (keep raw only if internal tool)
         group.MapGet("/debug-role", (HttpContext ctx) =>
         {
-
             var email = ctx.User.Claims.FirstOrDefault(c =>
                 c.Type.Contains("emailaddress"))?.Value;
 
@@ -135,9 +106,7 @@ public static class AdminEndpoints
                 email,
                 roleFromToken = role
             });
-    
-        }).RequireAuthorization();
-
-
+        })
+        .RequireAuthorization();
     }
 }

@@ -12,6 +12,8 @@ using HireGate.API.Endpoints;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using HireGate.Service.Validators;
+using HireGate.API.Middlewares;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,14 +86,6 @@ builder.Services.AddAuthorization();
 // =========================
 // CORS
 // =========================
-/*
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", p =>
-        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-});
-*/
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
@@ -123,8 +117,9 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-// app.UseCors("AllowAll");
 app.UseCors("Frontend");
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

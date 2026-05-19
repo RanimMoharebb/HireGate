@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using HireGate.Service.DTOs;
 using BCrypt.Net;
 using HireGate.Data.Models;
+using HireGate.ResultWrapper;
 
 namespace HireGate.Service.Implementations
 {
@@ -27,36 +28,29 @@ public AuthService(IAdminRepository repo, IConfiguration config, IEmailService e
     _dateTimeProvider = dateTimeProvider;
 }
 
-    public async Task<LoginResponseDto> Login(string email, string password)
+    public async Task<ServiceResult<LoginResponseDto>> Login(string email, string password)
 {
     var admin = await _repo.GetByEmail(email);
 
     if (admin == null)
     {
-        return new LoginResponseDto
-        {
-            Token = "",
-            Message = "Invalid credentials"
-        };
+        return ServiceResult<LoginResponseDto>.Fail("Invalid credentials");
     }
 
     var isValid = BCrypt.Net.BCrypt.Verify(password, admin.PasswordHash);
 
      if (!isValid)
     {
-        return new LoginResponseDto
-        {
-            Token = "",
-            Message = "Invalid credentials"
-        };
+        return ServiceResult<LoginResponseDto>.Fail("Invalid credentials");
     }
+    
     var token = GenerateJwt(admin);
 
-    return new LoginResponseDto
+    return ServiceResult<LoginResponseDto>.Ok(new LoginResponseDto
     {
         Token = token,
         Message = "Login successful"
-    };
+    });
 }
 
 private string GenerateJwt(Admin admin)
@@ -83,24 +77,18 @@ private string GenerateJwt(Admin admin)
     return new JwtSecurityTokenHandler().WriteToken(token);
 }
 
-public async Task<CompleteRegisterAdminResponseDto> CompleteRegistration(CompleteRegisterAdminDto dto)
+public async Task<ServiceResult<bool>> CompleteRegistration(CompleteRegisterAdminDto dto)
 {
     var admin = await _repo.GetByEmail(dto.Email);
 
         if (admin == null)
     {
-        return new CompleteRegisterAdminResponseDto
-        {
-            Message = "Admin not found"
-        };
+        return ServiceResult<bool>.Fail("Admin not found");
     }
 
         if (admin.PasswordHash != null)
     {
-        return new CompleteRegisterAdminResponseDto
-        {
-            Message = "Already registered"
-        };
+        return ServiceResult<bool>.Fail("Already registered");
     }
 
     // update fields
@@ -113,10 +101,7 @@ public async Task<CompleteRegisterAdminResponseDto> CompleteRegistration(Complet
     // save changes
     await _repo.Update(admin);
 
-    return new CompleteRegisterAdminResponseDto
-    {
-        Message = "Registration completed successfully"
-    };
+    return ServiceResult<bool>.Ok(true);
 }
 
 

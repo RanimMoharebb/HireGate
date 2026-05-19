@@ -169,11 +169,17 @@ const handleShowExam = async (candidateId: number) => {
         onNext={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
       />
 
+// we are NOT controlling whether it should render or not
+//So React always keeps it in the tree with changing props (selected changes every click).
       {/* MODALS */}
+      {selected && ( //sTOP rendering modals with null props}}
       <CandidateDetailsModal
         candidate={selected}
         onClose={() => setSelected(null)}
       />
+      )}   
+
+      {deleteCandidate && (
 
       <DeleteConfirmationModal
         isOpen={deleteCandidate !== null}
@@ -185,6 +191,7 @@ const handleShowExam = async (candidateId: number) => {
         onCancel={() => setDeleteCandidate(null)}
         onConfirm={confirmDelete}
       />
+      )}
 
       <SendEmailModal variant="bulk" open={bulkEmailOpen} onClose={() => setBulkEmailOpen(false)} />
 
@@ -197,12 +204,14 @@ const handleShowExam = async (candidateId: number) => {
       />
 
       {/* EXAM REVIEW MODAL */}
+      {examReview && (
       <ExamReviewModal
         data={examReview}
         loading={reviewLoading}
         onClose={() => setExamReview(null)}
       />
-
+      
+            )}
     </div>
   );
 }

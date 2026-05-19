@@ -1,5 +1,3 @@
-
-
 using HireGate.Repository.Interfaces;
 using HireGate.Service.Interfaces;
 using HireGate.Service.DTOs;
@@ -27,14 +25,15 @@ public class CandidateService : ICandidateService
         _dateTimeProvider = dateTimeProvider;
     }
 
-public async Task<CandidateResponseDto?> GetById(int id)
+//get by id
+public async Task<ServiceResult<CandidateResponseDto?>> GetById(int id)
 {
     var candidate = await _repo.GetById(id);
 
     if (candidate == null)
-        return null;
+        return ServiceResult<CandidateResponseDto?>.Fail("Candidate not found");
 
-    return new CandidateResponseDto
+    return ServiceResult<CandidateResponseDto?>.Ok(new CandidateResponseDto
     {
         Id = candidate.Id,
         Email = candidate.Email,
@@ -46,10 +45,11 @@ public async Task<CandidateResponseDto?> GetById(int id)
         SubmittedAt = candidate.SubmittedAt,
         FinalScore = candidate.FinalScore,
         ExamId = candidate.ExamId 
-    };
+    });
 }
 
-public async Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status)
+// get all
+public async Task<ServiceResult<PagedResult<CandidateResponseDto>>> GetAll(int page, int pageSize, string? search, string? status)
 {
     var validPage = Math.Max(1, page);
     var validPageSize = Math.Min(Math.Max(1, pageSize), 100);
@@ -69,22 +69,22 @@ public async Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int 
         ExamId = c.ExamId
     }).ToList();
 
-    return (data, totalCount);
+    return ServiceResult<PagedResult<CandidateResponseDto>>.Ok(new PagedResult<CandidateResponseDto>
+    {
+        Items = data,
+        TotalCount = totalCount
+    });
 }
 
-public async Task<CreateCandidateResponseDto> CreateCandidate(CreateCandidateDto dto)
+public async Task<ServiceResult<CreateCandidateResponseDto>> CreateCandidate(CreateCandidateDto dto)
 {
     var exists = await _repo.ExistsByEmail(dto.Email);
 
         if (exists)
     {
-        return new CreateCandidateResponseDto
-        {
-            Id = 0,
-            Email = dto.Email,
-            Message = "Email already exists"
-        };
+        return ServiceResult<CreateCandidateResponseDto>.Fail("Email already exists");
     }
+
     var candidate = new Candidate
     {
         Email = dto.Email,
@@ -96,42 +96,38 @@ public async Task<CreateCandidateResponseDto> CreateCandidate(CreateCandidateDto
 
     await _repo.Add(candidate);
 
-    return new CreateCandidateResponseDto
+    return ServiceResult<CreateCandidateResponseDto>.Ok(new CreateCandidateResponseDto
     {
         Id = candidate.Id,
         Email = candidate.Email,
-        Message = "Candidate created"
-    };
+        // Message = "Candidate created"
+    });
 }
 
-public async Task<DeleteCandidateResponseDto?> Delete(int id)
+public async Task<ServiceResult<bool>> Delete(int id)
 {
     var candidate = await _repo.GetById(id);
 
     if (candidate == null)
-        return null;
+        return ServiceResult<bool>.Fail("Candidate not found");
 
     await _repo.Delete(id);
 
-    return new DeleteCandidateResponseDto
-    {
-        Id = id,
-        Success = true,
-        Message = "Candidate deleted"
-    };
+    return ServiceResult<bool>.Ok(true);
 }
 
-public async Task<string>  SendExamEmail(SendExamEmailDto dto)
+
+public async Task<ServiceResult<bool>> SendExamEmail(SendExamEmailDto dto)
 {
     var exam = await _examRepo.GetExamByIdAsync(dto.ExamId);
 
     if (exam == null)
-        return "Exam not found";
+        return ServiceResult<bool>.Fail("Exam not found");
 
     var candidate = await _repo.GetById(dto.CandidateId);
 
     if (candidate == null)
-        return "Candidate not found";
+        return ServiceResult<bool>.Fail("Candidate not found");
 
     // 1. Assign exam
     candidate.ExamId = dto.ExamId;
@@ -155,32 +151,23 @@ public async Task<string>  SendExamEmail(SendExamEmailDto dto)
         $"Click here:\n{examUrl}"
     );
     
-    return "Email sent successfully";
+    return ServiceResult<bool>.Ok(true);
 
 }
 
 
-public async Task<BulkEmailResultDto>  SendBulkExamEmail(SendBulkExamEmailDto dto)
+public async Task<ServiceResult<BulkEmailResultDto>>  SendBulkExamEmail(SendBulkExamEmailDto dto)
 {
     var exam = await _examRepo.GetExamByIdAsync(dto.ExamId);
 
     if (exam == null)
-        return new BulkEmailResultDto
-        {
-            Total = 0,
-            Results = new List<BulkEmailItemResultDto>
-            {
-                new BulkEmailItemResultDto
-                {
-                    Status = "Failed",
-                    Error = "Exam not found"
-                }
-            }
-        };
+        return ServiceResult<BulkEmailResultDto>.Fail("Exam not found");
 
-    var result = new BulkEmailResultDto();
-    result.Total = dto.CandidateIds.Count;
-
+    var result = new BulkEmailResultDto
+    {
+        Total = dto.CandidateIds.Count  
+    };
+    
     foreach (var id in dto.CandidateIds)
     {
         var candidate = await _repo.GetById(id);
@@ -228,45 +215,45 @@ public async Task<BulkEmailResultDto>  SendBulkExamEmail(SendBulkExamEmailDto dt
             });
         }
     }
-    return result;
+    return ServiceResult<BulkEmailResultDto>.Ok(result);
+
 }
 
 
-
-public async Task<ExamPageDto?> GetExamPage(string token)
+public async Task<ServiceResult<ExamPageDto?>> GetExamPage(string token)
 {
     var candidate = await _repo.GetByToken(token);
 
     if (candidate == null)
-        return null;
+        return ServiceResult<ExamPageDto?>.Fail("Candidate not found");
 if (candidate.ExamId is null)
-    return null;
+    return ServiceResult<ExamPageDto?>.Fail("Exam not found");
 
 var exam = await _examRepo.GetExamByIdAsync(candidate.ExamId.Value);
 
     if (exam == null)
-        return null;
+        return ServiceResult<ExamPageDto?>.Fail("Exam not found");
 
     var now = _dateTimeProvider.Now;
 
     if (exam.WindowStartTime == null || exam.WindowStartTime > now)
-        return null;
+        return ServiceResult<ExamPageDto?>.Fail("Exam not found");
 
     if (exam.WindowEndTime == null || exam.WindowEndTime < now)
-        return null;
+        return ServiceResult<ExamPageDto?>.Fail("Exam not found");
 
-    return new ExamPageDto
+    return ServiceResult<ExamPageDto?>.Ok(new ExamPageDto
     {
         FirstName = candidate.FirstName,
         LastName = candidate.LastName,
         Email = candidate.Email,
         PhoneNumber = candidate.PhoneNumber,
         ExamId = candidate.ExamId
-    };
+    });
 }
 
 
-public async Task<CompleteCandidateProfileResponseDto?> CompleteProfile(string token, CompleteCandidateProfileDto dto)
+public async Task<ServiceResult<CompleteCandidateProfileResponseDto?>> CompleteProfile(string token, CompleteCandidateProfileDto dto)
 {
     var candidate = await _repo.GetByToken(token);
 
@@ -276,15 +263,11 @@ public async Task<CompleteCandidateProfileResponseDto?> CompleteProfile(string t
 
 
     if (candidate == null)
-        return null;
+        return ServiceResult<CompleteCandidateProfileResponseDto?>.Fail("Candidate not found");
 
 if (candidate.StartedAt != null)
 {
-    return new CompleteCandidateProfileResponseDto
-    {
-        Success = false,
-        Message = "Profile cannot be edited after exam started"
-    };
+    return ServiceResult<CompleteCandidateProfileResponseDto?>.Fail("Profile cannot be edited after exam started");
 }
     candidate.FirstName = dto.FirstName;
     candidate.LastName = dto.LastName;
@@ -292,11 +275,11 @@ if (candidate.StartedAt != null)
 
     await _repo.Update(candidate);
 
-    return new CompleteCandidateProfileResponseDto
+    return ServiceResult<CompleteCandidateProfileResponseDto?>.Ok(new CompleteCandidateProfileResponseDto
     {
         Success = true,
         Message = "Profile completed"
-    };
+    });
 }
 
 
@@ -349,38 +332,14 @@ public async Task<ServiceResult<StartExamResponseDto>> StartExam(string token)
 
     return ServiceResult<StartExamResponseDto>.Ok(dto);
 }
-/*
-    return ServiceResult<StartExamResponseDto>.Ok(new StartExamResponseDto
-    {
-        StartedAt = startTime,
-        ExamId = exam.Id,
-        PositionTitle = exam.PositionTitle,
-        DurationMinutes = exam.DurationMinutes,
-
-        Questions = exam.ExamQuestions.Select(q => new ExamQuestionDto
-        {
-            Id = q.Question.Id,
-            QuestionText = q.Question.QuestionText,
-            QuestionImage = q.Question.QuestionImage,
-
-            Choices = q.Question.Choices.Select(c => new ExamChoiceDto
-            {
-                Id = c.Id,
-                Text = c.ChoiceText
-            }).ToList()
-        }).ToList()
-    };
-    return ServiceResult<StartExamResponseDto>.Fail("Failed to start exam"); 
-}
-*/
 
 
-public async Task<ExamReviewDto?> GetExamReview(int candidateId)
+public async Task<ServiceResult<ExamReviewDto?>> GetExamReview(int candidateId)
 {
     var candidate = await _repo.GetCandidateWithExam(candidateId);
 
     if (candidate == null || candidate.Exam == null)
-        return null;
+        return ServiceResult<ExamReviewDto?>.Fail("Exam not found");
 
     var answers = candidate.Answers ?? new List<CandidateAnswer>();
 
@@ -420,13 +379,13 @@ public async Task<ExamReviewDto?> GetExamReview(int candidateId)
 
     var finalScore = questions.Count(q => q.IsCorrect);
 
-    return new ExamReviewDto
+    return ServiceResult<ExamReviewDto?>.Ok(new ExamReviewDto
     {
         CandidateId = candidate.Id,
         CandidateName = $"{candidate.FirstName} {candidate.LastName}".Trim(),
         FinalScore = finalScore,
         Questions = questions
-    };
+    });
 }
 }
 }

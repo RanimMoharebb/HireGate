@@ -1,24 +1,27 @@
 using HireGate.Service.DTOs;
 using HireGate.ResultWrapper;
+using HireGate.ResultWrapper; 
+
 namespace HireGate.Service.Interfaces
+
 {
 
 public interface ICandidateService
 {
-    Task<(List<CandidateResponseDto> Data, int TotalCount)> GetAll(int page, int pageSize, string? search, string? status);
-    Task<CandidateResponseDto?> GetById(int id);
+    Task<ServiceResult<PagedResult<CandidateResponseDto>>> GetAll(int page, int pageSize, string? search, string? status);
+    Task<ServiceResult<CandidateResponseDto?>> GetById(int id);
 
-    Task<CreateCandidateResponseDto> CreateCandidate(CreateCandidateDto dto);
+    Task<ServiceResult<CreateCandidateResponseDto>> CreateCandidate(CreateCandidateDto dto);
 
-    Task<DeleteCandidateResponseDto?> Delete(int id);
+    Task<ServiceResult<bool>> Delete(int id);
 
-    Task<string> SendExamEmail(SendExamEmailDto dto);
-    Task<BulkEmailResultDto> SendBulkExamEmail(SendBulkExamEmailDto dto);
-    Task<CompleteCandidateProfileResponseDto?> CompleteProfile(string token, CompleteCandidateProfileDto dto);
+    Task<ServiceResult<bool>> SendExamEmail(SendExamEmailDto dto);
+    Task<ServiceResult<BulkEmailResultDto>> SendBulkExamEmail(SendBulkExamEmailDto dto);
+    Task<ServiceResult<CompleteCandidateProfileResponseDto?>> CompleteProfile(string token, CompleteCandidateProfileDto dto);
 
-    Task<ExamPageDto?> GetExamPage(string token);
+    Task<ServiceResult<ExamPageDto?>> GetExamPage(string token);
 
     Task<ServiceResult<StartExamResponseDto>> StartExam(string token);
-    Task<ExamReviewDto?> GetExamReview(int candidateId);    
+    Task<ServiceResult<ExamReviewDto?>> GetExamReview(int candidateId);    
     }
 }
