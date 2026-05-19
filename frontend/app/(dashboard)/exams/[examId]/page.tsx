@@ -1,43 +1,74 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Header from "@/app/_components/layout/header";
 import { Card, CardContent } from "@/app/_components/ui/card";
-import { Button } from "@/app/_components/ui/button";
-import DeleteExamButton from "@/app/_components/exams/delete-exam-button";
 import ExamQuestionsManager from "@/app/_components/exams/exam-questions-manager";
 import { getExamById } from "@/app/_services/exam-service";
 import { formatExamWindowTime } from "@/app/_lib/utils";
-import { notFound } from "next/navigation";
+import ExamDetailsActions from "@/app/_components/exams/exam-details-actions";
+import type { Exam } from "@/app/_lib/exams/exam.types";
 
-type ExamDetailsPageProps = {
-  params: Promise<{
-    examId: string;
-  }>;
-};
+export default function ExamDetailsPage() {
+  const params = useParams<{ examId: string }>();
+  const examId = Number(params.examId);
 
+  const [exam, setExam] = useState<Exam | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function fetchExam() {
+      if (Number.isNaN(examId)) {
+        setErrorMessage("Invalid exam id.");
+        setLoading(false);
+        return;
+      }
 
-export default async function ExamDetailsPage({ params }: ExamDetailsPageProps) {
-  const { examId } = await params;
-  const numericExamId = Number(examId);
+      setLoading(true);
+      setErrorMessage(null);
 
-  if (Number.isNaN(numericExamId)) {
-    notFound();
+      try {
+        const result = await getExamById(examId);
+        setExam(result);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error ? error.message : "Unable to load this exam right now.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchExam();
+  }, [examId]);
+
+  if (loading) {
+    return (
+      <section className="space-y-6">
+        <Header title="Exam Details" description="Loading exam details..." />
+      </section>
+    );
   }
 
-  const exam = await getExamById(numericExamId);
+  if (errorMessage || !exam) {
+    return (
+      <section className="space-y-6">
+        <Header title="Exam Details" description="We could not load this exam." />
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {errorMessage ?? "Exam not found."}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">
       <Header
         title={exam.title}
         description={exam.description}
-        action={
-          <div className="flex gap-3">
-            <Button as="link" href={`/exams/${examId}/edit`} variant="soft">
-              Edit Exam
-            </Button>
-            <DeleteExamButton examId={numericExamId} redirectTo="/exams" />
-          </div>
-        }
+        action={<ExamDetailsActions examId={examId} />}
       />
 
       <Card>

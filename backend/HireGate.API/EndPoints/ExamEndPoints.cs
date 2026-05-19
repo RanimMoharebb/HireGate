@@ -9,7 +9,7 @@ namespace HireGate.API.Endpoints;
     {
         public static void MapExamEndpoints(this WebApplication app)
         {
-            var group = app.MapGroup("/api/exam");
+            var group = app.MapGroup("/api/exam").RequireAuthorization();
 
             // ────────────────────────────────────────────────────────
             // GET all exams

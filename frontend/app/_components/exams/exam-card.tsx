@@ -1,8 +1,11 @@
+"use client";
+
 import { Card, CardContent } from "@/app/_components/ui/card";
 import { Button } from "@/app/_components/ui/button";
 import DeleteExamButton from "@/app/_components/exams/delete-exam-button";
 import { formatExamWindowTime } from "@/app/_lib/utils";
 import type { ExamSummary } from "@/app/_lib/exams/exam.types";
+import { useRouter } from "next/navigation";
 
 type ExamCardProps = {
   exam: ExamSummary;
@@ -10,6 +13,7 @@ type ExamCardProps = {
 };
 
 export default function ExamCard({ exam, onDeleted }: ExamCardProps) {
+  const router = useRouter();
   const windowStartTime = formatExamWindowTime(exam.windowStartTime);
   const windowEndTime = formatExamWindowTime(exam.windowEndTime);
 
@@ -35,7 +39,12 @@ export default function ExamCard({ exam, onDeleted }: ExamCardProps) {
           <Button as="link" href={`/exams/${exam.id}`} variant="secondary" className="flex-1">
             View
           </Button>
-          <Button as="link" href={`/exams/${exam.id}/edit`} variant="soft" className="flex-1">
+          <Button
+            type="button"
+            variant="soft"
+            className="flex-1"
+            onClick={() => router.push(`/exams/${exam.id}/edit`)}
+          >
             Edit
           </Button>
           <DeleteExamButton examId={exam.id} className="flex-1" onDeleted={onDeleted} />
