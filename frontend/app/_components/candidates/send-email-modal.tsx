@@ -10,8 +10,8 @@ import {
   getExamsPage,
   sendBulkExamEmail,
   sendExamEmail,
-  type ExamSummary,
 } from "@/app/_services/exam-service";
+import { type ExamSummary} from "@/app/_lib/exams/exam.types";
 import { validateSearch } from "@/app/_validations/candidate-validation";
 import { useDisableBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
@@ -105,7 +105,6 @@ function ExamsPickerBlock({
         const result = await getExamsPage(
           pageToFetch,
           debouncedSearch || undefined,
-          EXAMS_PAGE_SIZE
         );
         if (!cancelled) {
           setExams(result.data);

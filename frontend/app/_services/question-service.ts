@@ -1,4 +1,4 @@
-import type { BackendQuestionDto } from "@/app/_services/exam-service";
+/*import type { BackendQuestionDto } from "@/app/_services/exam-service";
 
 type BackendQuestionsResponse = {
   data: BackendQuestionDto[];
@@ -35,3 +35,4 @@ export async function getQuestions(): Promise<BackendQuestionDto[]> {
   const response = await fetchQuestionApi<BackendQuestionsResponse>("/api/admin/questions?page=1&pageSize=100");
   return response.data;
 }
+*/

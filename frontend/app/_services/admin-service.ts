@@ -8,7 +8,7 @@ const API_BASE_URL = "http://localhost:5116/admins";
 
 const getAuthHeaders = (includeJson = false): HeadersInit => ({
   ...(includeJson ? { "Content-Type": "application/json" } : {}),
-  Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
 });
 
 async function parseErrorMessage(response: Response, fallback: string): Promise<string> {

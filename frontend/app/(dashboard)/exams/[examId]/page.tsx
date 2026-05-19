@@ -1,11 +1,11 @@
 import Header from "@/app/_components/layout/header";
 import { Card, CardContent } from "@/app/_components/ui/card";
-import { Button } from "@/app/_components/ui/button";
 import DeleteExamButton from "@/app/_components/exams/delete-exam-button";
 import ExamQuestionsManager from "@/app/_components/exams/exam-questions-manager";
 import { getExamById } from "@/app/_services/exam-service";
 import { formatExamWindowTime } from "@/app/_lib/utils";
 import { notFound } from "next/navigation";
+import ExamDetailsActions from "@/app/_components/exams/exam-details-actions";
 
 type ExamDetailsPageProps = {
   params: Promise<{
@@ -31,12 +31,7 @@ export default async function ExamDetailsPage({ params }: ExamDetailsPageProps) 
         title={exam.title}
         description={exam.description}
         action={
-          <div className="flex gap-3">
-            <Button as="link" href={`/exams/${examId}/edit`} variant="soft">
-              Edit Exam
-            </Button>
-            <DeleteExamButton examId={numericExamId} redirectTo="/exams" />
-          </div>
+          <ExamDetailsActions examId={numericExamId} />
         }
       />
 

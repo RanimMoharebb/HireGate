@@ -4,7 +4,7 @@ import { Clock } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { startExam } from "@/app/_services/candidate-exam-service";
+import { startExam } from "@/app/_services/candidate-service";
 import { validateExamSubmission } from "@/app/_validations/exams/candidate-exam-submission";
 
 export default function StartExamPage() {

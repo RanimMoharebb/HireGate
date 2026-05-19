@@ -12,7 +12,7 @@ namespace HireGate.Service.Implementations
         private readonly IExamRepository _examRepository;
         private readonly IExamQuestionRepository _examQuestionRepository;
         private readonly IQuestionRepository _questionRepository;
-        private readonly IDateTimeProvider _dateTimeProvider;
+       // private readonly IDateTimeProvider _dateTimeProvider;
 
         public ExamService(
             IExamRepository examRepository,
@@ -22,7 +22,7 @@ namespace HireGate.Service.Implementations
             _examRepository = examRepository;
             _examQuestionRepository = examQuestionRepository;
             _questionRepository = questionRepository;
-            _dateTimeProvider = dateTimeProvider;
+            //_dateTimeProvider = dateTimeProvider;
         }
 
         // ─────────────────────────────
