@@ -5,8 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { startExam, submitExam } from "@/app/_services/candidate-exam-service";
-import { validateExamSubmission } from "@/app/_validations/exam-validation";
-
 export default function StartExamPage() {
   const shuffleArray = <T,>(array: T[]): T[] => {
     return [...array].sort(() => Math.random() - 0.5);
@@ -65,17 +63,7 @@ export default function StartExamPage() {
   // ⭐ UPDATED BEST PRACTICE FIX
   const handleSubmit = async (isAuto = false) => {
     if (submitted || submitting) return;
-
     setWarning("");
-
-    if (!isAuto) {
-      const validation = validateExamSubmission(answers, totalQuestions);
-      if (!validation.isValid) {
-        setWarning(validation.errors.join(" "));
-        return;
-      }
-    }
-
     try {
       setSubmitting(true);
 
@@ -260,7 +248,7 @@ useEffect(() => {
                   key={c.id}
                   onClick={() => handleSelect(q.id, c.id)}
                   disabled={submitted}
-                  className={`w-full border rounded-lg p-3 text-left transition cursor-pointer ${
+                  className={`w-full border rounded-lg p-3 text-left transition ${
                     answers[q.id] === c.id
                       ? "bg-slate-100 border-slate-300 text-black"
                       : "bg-white hover:bg-slate-50 border border-slate-200"

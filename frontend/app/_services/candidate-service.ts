@@ -3,8 +3,8 @@
 // Merged from candidate-service.ts + candidate-exam-service.ts
 // =============================================================================
 
-const BASE_URL = "http://localhost:5116";
-const CANDIDATES_URL = `${BASE_URL}/candidates`;
+//const BASE_URL = "http://localhost:5116";
+const CANDIDATES_URL = 'http://localhost:5116/candidates';
 
 // -----------------------------------
 // AUTH HEADERS (browser-safe)
@@ -52,6 +52,23 @@ export type Candidate = {
   submittedAt: string | null;
   finalScore: number | null;
 };
+
+export type CandidateExamReview = {
+  candidateId: number;
+  candidateName: string;
+  examTitle: string;
+  finalScore: number | null;
+  questions: Array<{
+    questionId: number;
+    questionText: string;
+    choices: Array<{
+      choiceId: number;
+      choiceText: string;
+      isCorrect: boolean;
+      isSelectedByCandidate: boolean;
+    }>;
+  }>;
+};
 /*
 export type CandidatesPaginatedResponse = {
   data: Candidate[];
@@ -73,11 +90,55 @@ export type CandidatesPaginatedResponse = {
   totalPages: number;
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+function getApiError(payload: unknown, fallback: string) {
+  if (isRecord(payload)) {
+    const error = payload.error ?? payload.message;
+    if (typeof error === "string" && error.trim()) {
+      return error;
+    }
+  }
+
+  return fallback;
+}
+
+function unwrapApiData<T>(payload: unknown): T {
+  if (isRecord(payload) && "data" in payload) {
+    return payload.data as T;
+  }
+
+  return payload as T;
+}
+
+async function readJsonResponse<T>(res: Response, fallbackError: string): Promise<T> {
+  const text = await res.text();
+  let payload: unknown = null;
+
+  try {
+    payload = text ? JSON.parse(text) : null;
+  } catch {
+    if (!res.ok) {
+      throw new Error(text || fallbackError);
+    }
+
+    throw new Error("Invalid JSON response");
+  }
+
+  if (!res.ok || (isRecord(payload) && payload.success === false)) {
+    throw new Error(getApiError(payload, fallbackError));
+  }
+
+  return unwrapApiData<T>(payload);
+}
+
 // -----------------------------------
 // GET (paginated)
 // -----------------------------------
 //Loads one page. Omit `pageSize` to use the API default (10). */
-/*
+
 export async function getCandidatesPage(
   page: number,
   search?: string,
@@ -94,33 +155,29 @@ export async function getCandidatesPage(
   if (trimmedStatus && trimmedStatus !== "All") params.set("status", trimmedStatus);
 
   const res = await fetch(`${CANDIDATES_URL}?${params}`, { headers: authHeaders() });
-  const text = await res.text();
+  const parsed = await readJsonResponse<unknown>(res, "Failed to fetch candidates");
+  const requestedPage = Math.max(1, page);
+  const requestedPageSize = pageSize ?? 10;
 
-  if (!res.ok) throw new Error(text || "Failed to fetch candidates");
+  if (isRecord(parsed) && Array.isArray(parsed.items)) {
+    const items = parsed.items as Candidate[];
+    const totalCount = typeof parsed.totalCount === "number" ? parsed.totalCount : items.length;
 
-  const parsed: unknown = JSON.parse(text);
-
-  // Paginated response shape
-  if (
-    parsed !== null &&
-    typeof parsed === "object" &&
-    "data" in parsed &&
-    Array.isArray((parsed as { data: unknown }).data)
-  ) {
-    const body = parsed as CandidatesPaginatedResponse;
     return {
       data: {
-        items: body.data.items,
-        totalCount: body.data.totalCount,
+        items,
+        totalCount,
       },
-      page: body.page,
-      pageSize: body.pageSize,
-      totalCount: body.totalCount,
-      totalPages: body.totalPages,
+      page: typeof parsed.page === "number" ? parsed.page : requestedPage,
+      pageSize: typeof parsed.pageSize === "number" ? parsed.pageSize : requestedPageSize,
+      totalCount,
+      totalPages:
+        typeof parsed.totalPages === "number"
+          ? parsed.totalPages
+          : Math.max(1, Math.ceil(totalCount / requestedPageSize)),
     };
   }
 
-  // Plain array fallback
   if (Array.isArray(parsed)) {
     return {
       data: {
@@ -128,7 +185,7 @@ export async function getCandidatesPage(
         totalCount: parsed.length,
       },
       page: 1,
-      pageSize: pageSize ?? 10,
+      pageSize: requestedPageSize,
       totalCount: parsed.length,
       totalPages: 1,
     };
@@ -139,57 +196,10 @@ export async function getCandidatesPage(
       items: [],
       totalCount: 0,
     },
-    page: 1,
-    pageSize: pageSize ?? 10,
+    page: requestedPage,
+    pageSize: requestedPageSize,
     totalCount: 0,
     totalPages: 1,
-  };
-}
-*/
-export async function getCandidatesPage(
-  page: number,
-  search?: string,
-  status?: string,
-  pageSize?: number
-): Promise<CandidatesPaginatedResponse> {
-  const params = new URLSearchParams({
-    page: String(Math.max(1, page)),
-  });
-
-  if (pageSize !== undefined) {
-    params.set("pageSize", String(pageSize));
-  }
-
-  const trimmed = search?.trim();
-  if (trimmed) params.set("search", trimmed);
-
-  const trimmedStatus = status?.trim();
-  if (trimmedStatus && trimmedStatus !== "All") {
-    params.set("status", trimmedStatus);
-  }
-
-  const res = await fetch(`${BASE_URL}?${params}`, {
-    headers: authHeaders(),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data?.error || data?.message || "Failed to fetch candidates");
-  }
-
-  const items = data?.data?.items ?? [];
-  const totalCount = data?.data?.totalCount ?? 0;
-
-  return {
-    data: {
-      items,
-      totalCount,
-    },
-    page: page,
-    pageSize: pageSize ?? 10,
-    totalCount,
-    totalPages: Math.ceil(totalCount / (pageSize ?? 10)),
   };
 }
 
@@ -217,13 +227,11 @@ export async function getCandidates(): Promise<Candidate[]> {
 
 export async function getCandidateById(id: number): Promise<Candidate> {
   const res = await fetch(`${CANDIDATES_URL}/${id}`, { headers: authHeaders() });
-  const text = await res.text();
-  if (!res.ok) throw new Error(text || "Candidate not found");
-  return JSON.parse(text);
+  return readJsonResponse<Candidate>(res, "Candidate not found");
 }
 
 export async function createCandidate(email: string) {
-  const res = await fetch(`${BASE_URL}`, {
+  const res = await fetch(CANDIDATES_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -232,15 +240,10 @@ export async function createCandidate(email: string) {
     body: JSON.stringify({ email: email.trim() }),
   });
 
-  const data = await res.json();
-
-  console.log("CREATE RESPONSE:", data);
-
-  if (!res.ok) {
-    throw new Error(data.error || data.message || "Failed to create candidate");
-  }
-
-  return data.data;
+  return readJsonResponse<{ id: number; email: string; message: string }>(
+    res,
+    "Failed to create candidate"
+  );
 }
 
 
@@ -253,9 +256,7 @@ export async function deleteCandidate(id: number) {
     headers: authHeaders(),
   });
 
-  const text = await res.text();
-  if (!res.ok) throw new Error(text || "Delete failed");
-  return text ? JSON.parse(text) : { message: "Deleted" };
+  return readJsonResponse<boolean>(res, "Delete failed");
 }
 
 // =============================================================================
@@ -268,10 +269,7 @@ export async function getCandidateExamReview(id: number): Promise<CandidateExamR
     cache: "no-store",
   });
 
-  const text = await res.text();
-  if (!res.ok) throw new Error(text || "Failed to load exam review");
-
-  const raw = JSON.parse(text) as {
+  const raw = await readJsonResponse<{
     candidateId?: number;
     candidateName?: string;
     examTitle?: string;
@@ -289,7 +287,7 @@ export async function getCandidateExamReview(id: number): Promise<CandidateExamR
         isSelectedByCandidate?: boolean;
       }>;
     }>;
-  };
+  }>(res, "Failed to load exam review");
 
   return {
     candidateId: raw.candidateId ?? id,
@@ -321,7 +319,7 @@ export async function getCandidateExamReview(id: number): Promise<CandidateExamR
 /** Completes a candidate's profile using their invite token. */
 export async function completeCandidateProfile(token: string, body: any) {
   try {
-    const res = await fetch(`${BASE_URL}/candidates/complete-profile/${token}`, {
+    const res = await fetch(`${CANDIDATES_URL}/complete-profile/${token}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -336,10 +334,10 @@ export async function completeCandidateProfile(token: string, body: any) {
 
 /** Fetches the exam page data for a candidate using their invite token. */
 export async function getExamPageData(token: string) {
-  return safeFetch(`${BASE_URL}/candidates/exam-page/${token}`, { method: "GET" });
+  return safeFetch(`${CANDIDATES_URL}/exam-page/${token}`, { method: "GET" });
 }
 
 /** Starts the exam for a candidate using their invite token. */
 export async function startExam(token: string) {
-  return safeFetch(`${BASE_URL}/candidates/start-exam/${token}`, { method: "POST" });
+  return safeFetch(`${CANDIDATES_URL}/start-exam/${token}`, { method: "POST" });
 }

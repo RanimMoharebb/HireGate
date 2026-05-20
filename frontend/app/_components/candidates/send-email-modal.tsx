@@ -6,12 +6,9 @@ import { Button } from "@/app/_components/ui/button";
 import Input from "@/app/_components/ui/input";
 import { PaginationControls } from "@/app/_components/pagination-controls";
 import { Candidate, getCandidatesPage } from "@/app/_services/candidate-service";
-import {
-  getExamsPage,
-  sendBulkExamEmail,
-  sendExamEmail,
-} from "@/app/_services/exam-service";
-import { type ExamSummary} from "@/app/_lib/exams/exam.types";
+import { getExamsPage,} from "@/app/_services/exam-service";
+import {type ExamSummary } from "@/app/_lib/exams/exam.types";
+import { sendBulkExamEmail, sendExamEmail } from "@/app/_services/email-service";
 import { validateSearch } from "@/app/_validations/candidate-validation";
 import { useDisableBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
@@ -30,8 +27,8 @@ type BulkProps = {
   variant: "bulk";
   open: boolean;
   onClose: () => void;
-  onSuccess?: (msg: string) => void;
-  onError?: (msg: string) => void;
+  onSuccess: (message: string) => void;
+  onError: (message: string) => void;
 };
 
 export type SendEmailModalProps = SingleProps | BulkProps;
@@ -105,6 +102,7 @@ function ExamsPickerBlock({
         const result = await getExamsPage(
           pageToFetch,
           debouncedSearch || undefined,
+          //EXAMS_PAGE_SIZE
         );
         if (!cancelled) {
           setExams(result.data);
@@ -278,7 +276,11 @@ function SingleSendEmailModal({
 }
 
 // Bulk email modal - split into logical columns on desktop
-function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
+function BulkSendEmailModal({
+  onClose,
+  onSuccess,
+  onError,
+}: Omit<BulkProps, "variant" | "open">) {
   //const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [candidates, setCandidates] = useState<{
   items: Candidate[];
@@ -298,7 +300,7 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
   const [totalPages, setTotalPages] = useState(1);
   const [listLoading, setListLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  
+  const [message, setMessage] = useState("");
   const [fetchError, setFetchError] = useState("");
   const lastDebouncedSearch = useRef<string | null>(null);
 
@@ -388,16 +390,19 @@ setCandidates(emptyCandidatesState);
   const handleSend = async () => {
     try {
       setSending(true);
-      onError?.("");
-      onSuccess?.("");
+      setMessage("");
 
       if (selectedExamId === "") {
-        onError?.("Please select an exam.");
+        const validationMessage = "Please select an exam.";
+        setMessage(validationMessage);
+        onError(validationMessage);
         return;
       }
 
       if (selectedCandidates.length === 0) {
-        onError?.("Please select at least one candidate.");
+        const validationMessage = "Please select at least one candidate.";
+        setMessage(validationMessage);
+        onError(validationMessage);
         return;
       }
 
@@ -405,7 +410,8 @@ setCandidates(emptyCandidatesState);
 
       if (selectedCandidates.length === 1) {
         const res = await sendExamEmail(selectedCandidates[0], examId);
-        onSuccess?.(res);
+        setMessage(res);
+        onSuccess(res);
         return;
       }
 
@@ -413,9 +419,12 @@ setCandidates(emptyCandidatesState);
         examId,
         candidateIds: selectedCandidates,
       });
-      onSuccess?.(res);
+      setMessage(res);
+      onSuccess(res);
     } catch (err: unknown) {
-      onError?.(err instanceof Error ? err.message : "Request failed.");
+      const errorMessage = err instanceof Error ? err.message : "Request failed.";
+      setMessage(errorMessage);
+      onError(errorMessage);
     } finally {
       setSending(false);
     }
@@ -530,6 +539,11 @@ setCandidates(emptyCandidatesState);
           </div>
 
           <div className="flex-none border-t border-gray-200 p-5">
+            {message && (
+              <p className={`mb-3 text-sm ${message.includes("select") || message.includes("fail") ? "text-red-600" : "text-green-600"}`}>
+                {message}
+              </p>
+            )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={onClose} size="md">
                 Close
@@ -555,7 +569,13 @@ export function SendEmailModal(props: SendEmailModalProps) {
     if (!props.open) {
       return null;
     }
-    return <BulkSendEmailModal onClose={props.onClose} />;
+    return (
+      <BulkSendEmailModal
+        onClose={props.onClose}
+        onSuccess={props.onSuccess}
+        onError={props.onError}
+      />
+    );
   }
 
   if (!props.candidate) {

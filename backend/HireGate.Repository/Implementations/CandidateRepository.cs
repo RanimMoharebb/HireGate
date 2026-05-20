@@ -96,7 +96,6 @@ public class CandidateRepository : ICandidateRepository
         return true;
     }
 
-
     public async Task<Candidate?> GetByToken(string token)
     {
         return await _context.Candidates

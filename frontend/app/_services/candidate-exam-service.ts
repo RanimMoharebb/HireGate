@@ -98,7 +98,7 @@ export async function startExam(token: string) {
 // ---------------------------
 export async function submitExam(token: string, payload: any) {
   return safeFetch(
-    `${BASE_URL}/api/exam/submit/${token}`,
+    `${BASE_URL}/api/submission/submit/${token}`,
     {
       method: "POST",
       headers: {

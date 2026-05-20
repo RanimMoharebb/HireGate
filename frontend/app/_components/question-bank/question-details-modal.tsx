@@ -19,10 +19,12 @@ export function QuestionDetailsModal({
   loading = false,
   onRestore,
 }: QuestionDetailsModalProps) {
+  useDisableBodyScroll(question !== null);
+
   if (!question) {
     return null;
   }
-  useDisableBodyScroll();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4" onClick={() => { restoreBodyScroll(); onClose(); }}>
       <div className="flex max-h-[min(90vh,880px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>

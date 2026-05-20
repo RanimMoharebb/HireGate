@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { Loader, Trash2 } from "lucide-react";
 import {useDisableBodyScroll} from "../../_hooks/useDisableBodyScroll";
 interface DeleteConfirmationModalProps {
@@ -24,22 +22,13 @@ export function DeleteConfirmationModal({
   onCancel,
   onConfirm,
 }: DeleteConfirmationModalProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+  useDisableBodyScroll(isOpen);
 
   if (!isOpen) {
     return null;
   }
 
-  if (!mounted) {
-    return null;
-  }
-  useDisableBodyScroll();
-  return createPortal(
+  return (
     <div 
       className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
      // onClick={onCancel}
@@ -76,7 +65,6 @@ export function DeleteConfirmationModal({
           </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

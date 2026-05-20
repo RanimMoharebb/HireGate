@@ -91,17 +91,25 @@ builder.Services.AddAuthorization();
 // =========================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Frontend", policy =>
-    {
-        var frontendUrl = builder.Configuration["AllowedOrigins:Frontend"]
-            ?? throw new Exception("AllowedOrigins:Frontend is missing");
+    // options.AddPolicy("Frontend", policy =>
+    // {
+    //     var frontendUrl = builder.Configuration["AllowedOrigins:Frontend"]
+    //         ?? throw new Exception("AllowedOrigins:Frontend is missing");
+    //
+    //     policy
+    //         .WithOrigins(frontendUrl)
+    //         .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH")
+    //         .WithHeaders("Content-Type", "Authorization");
+    // });
 
+    options.AddPolicy("AllowAll", policy =>
+    {
         policy
-            .WithOrigins(frontendUrl)
-            .WithMethods("GET", "POST", "PUT", "DELETE", "PATCH")
-            .WithHeaders("Content-Type", "Authorization");
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
-});*/   
+});
 
 // =========================
 // JSON OPTIONS
@@ -120,7 +128,7 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-app.UseCors("Frontend");
+app.UseCors("AllowAll");
 
 app.UseMiddleware<ExceptionMiddleware>();
 

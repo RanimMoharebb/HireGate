@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { completeCandidateProfile } from "@/app/_services/candidate-service";
+import { completeCandidateProfile } from "@/app/_services/candidate-exam-service";
 
 
 export default function CompleteProfilePage() {

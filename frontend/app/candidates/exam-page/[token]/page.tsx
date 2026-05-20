@@ -3,7 +3,7 @@
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getExamPageData } from "@/app/_services/candidate-service";
+import { getExamPageData } from "@/app/_services/candidate-exam-service";
 
 export default function ExamPage() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function ExamPage() {
           if (!examRes.ok) {
             throw new Error("Failed to fetch exam data");
           }
-          //console.log("EXAM RESPONSE:", await examRes.json());
+
           const exam = await examRes.json();
           setExamData(exam);
         }
