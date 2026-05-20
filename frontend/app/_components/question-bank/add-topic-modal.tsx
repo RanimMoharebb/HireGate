@@ -3,7 +3,6 @@
 import { FormEvent } from "react";
 import { Loader, X } from "lucide-react";
 import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
-import { useTranslations } from 'next-intl';
 
 interface AddTopicModalProps {
   isOpen: boolean;
@@ -25,10 +24,12 @@ export function AddTopicModal({
   onSubmit,
   onTopicNameChange,
 }: AddTopicModalProps) {
+  useDisableBodyScroll(isOpen);
+
   if (!isOpen) {
     return null;
   }
-  useDisableBodyScroll();
+
   return (
     <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => { restoreBodyScroll(); onClose(); }}>
       <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200" onClick={(e) => e.stopPropagation()}>

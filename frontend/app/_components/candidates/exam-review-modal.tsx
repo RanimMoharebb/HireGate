@@ -31,8 +31,9 @@ interface Props {
 }
 
 export default function ExamReviewModal({ data, loading, onClose }: Props) {
+  useDisableBodyScroll(Boolean(data));
+
   if (!data) return null;
-  useDisableBodyScroll();
   const getChoiceClass = (choice: Choice, selectedId: number | null) => {
     const isSelected = choice.id === selectedId;
 

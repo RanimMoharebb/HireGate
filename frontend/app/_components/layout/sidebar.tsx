@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getUserFromToken } from "@/app/_lib/auth";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type NavItem = {
   href: string;
@@ -23,17 +23,12 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const router = useRouter();
+  const user = getUserFromToken();
 
-const logout = () => {
-  localStorage.removeItem("token");
-  router.push("/login");
-};
-
-const [user, setUser] = useState<any>(null);
-
-useEffect(() => {
-  setUser(getUserFromToken());
-}, []);
+  const logout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
 
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);

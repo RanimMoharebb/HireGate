@@ -9,8 +9,9 @@ let savedOverflow: string | undefined;
  * Disable body scroll while mounted. Restores the previous overflow
  * value when the last caller unmounts. Safe for SSR (no-op server-side).
  */
-export function useDisableBodyScroll() {
+export function useDisableBodyScroll(enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     if (typeof document === 'undefined') return;
 
     if (lockCount === 0) {
@@ -44,7 +45,7 @@ export function useDisableBodyScroll() {
           }
         }, 0);
     };
-  }, []);
+  }, [enabled]);
 }
 
 export function restoreBodyScroll() {

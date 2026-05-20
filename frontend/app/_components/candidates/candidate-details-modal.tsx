@@ -45,6 +45,8 @@ function formatDateTime(iso: string | null) {
 }
 
 export function CandidateDetailsModal({ candidate, onClose }: Props) {
+  useDisableBodyScroll(Boolean(candidate));
+
   if (!candidate) {
     return null;
   }
@@ -55,7 +57,6 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
   const hasName = displayName !== "—";
   const titleText = hasName ? displayName : candidate.email;
   const subtitleEmail = hasName ? candidate.email : null;
-  useDisableBodyScroll();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4" onClick={() => { restoreBodyScroll(); onClose(); }}>
