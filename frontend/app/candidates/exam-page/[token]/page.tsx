@@ -3,7 +3,7 @@
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getExamPageData } from "@/app/_services/candidate-exam-service";
+import { getExamPageData } from "@/app/_services/candidate-service";
 
 export default function ExamPage() {
   const router = useRouter();
