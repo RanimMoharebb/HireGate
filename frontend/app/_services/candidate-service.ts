@@ -19,9 +19,21 @@ export type Candidate = {
   submittedAt: string | null;
   finalScore: number | null;
 };
-
+/*
 export type CandidatesPaginatedResponse = {
   data: Candidate[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
+*/
+
+export type CandidatesPaginatedResponse = {
+  data: {
+    items: Candidate[];
+    totalCount: number;
+  };
   page: number;
   pageSize: number;
   totalCount: number;
@@ -31,7 +43,8 @@ export type CandidatesPaginatedResponse = {
 // -----------------------------------
 // GET (paginated)
 // -----------------------------------
-/** Loads one page. Omit `pageSize` to use the API default (10). */
+//Loads one page. Omit `pageSize` to use the API default (10). */
+/*
 export async function getCandidatesPage(
   page: number,
   search?: string,
@@ -73,7 +86,10 @@ export async function getCandidatesPage(
   ) {
     const body = parsed as CandidatesPaginatedResponse;
     return {
-      data: body.data,
+      data: {
+        items: body.data.items,
+        totalCount: body.data.totalCount,
+      },
       page: body.page,
       pageSize: body.pageSize,
       totalCount: body.totalCount,
@@ -83,7 +99,10 @@ export async function getCandidatesPage(
 
   if (Array.isArray(parsed)) {
     return {
-      data: parsed as Candidate[],
+      data: {
+        items: parsed as Candidate[],
+        totalCount: parsed.length,
+      },
       page: 1,
       pageSize: pageSize ?? 10,
       totalCount: parsed.length,
@@ -92,11 +111,61 @@ export async function getCandidatesPage(
   }
 
   return {
-    data: [],
+    data: {
+      items: [],
+      totalCount: 0,
+    },
     page: 1,
     pageSize: pageSize ?? 10,
     totalCount: 0,
     totalPages: 1,
+  };
+}
+*/
+export async function getCandidatesPage(
+  page: number,
+  search?: string,
+  status?: string,
+  pageSize?: number
+): Promise<CandidatesPaginatedResponse> {
+  const params = new URLSearchParams({
+    page: String(Math.max(1, page)),
+  });
+
+  if (pageSize !== undefined) {
+    params.set("pageSize", String(pageSize));
+  }
+
+  const trimmed = search?.trim();
+  if (trimmed) params.set("search", trimmed);
+
+  const trimmedStatus = status?.trim();
+  if (trimmedStatus && trimmedStatus !== "All") {
+    params.set("status", trimmedStatus);
+  }
+
+  const res = await fetch(`${BASE_URL}?${params}`, {
+    headers: authHeaders(),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data?.error || data?.message || "Failed to fetch candidates");
+  }
+
+  const items = data?.data?.items ?? [];
+  const totalCount = data?.data?.totalCount ?? 0;
+
+  return {
+    data: {
+      items,
+      totalCount,
+    },
+    page: page,
+    pageSize: pageSize ?? 10,
+    totalCount,
+    totalPages: Math.ceil(totalCount / (pageSize ?? 10)),
   };
 }
 
@@ -107,8 +176,8 @@ export async function getAllCandidates(): Promise<Candidate[]> {
 
   for (;;) {
     const batch = await getCandidatesPage(page);
-    all.push(...batch.data);
-    if (page >= batch.totalPages || batch.data.length === 0) {
+    all.push(...batch.data.items);
+    if (page >= batch.totalPages || batch.data.items.length === 0) {
       break;
     }
     page += 1;
@@ -136,25 +205,26 @@ export async function getCandidateById(id: number): Promise<Candidate> {
 // CREATE
 // -----------------------------------
 export async function createCandidate(email: string) {
-  const token = localStorage.getItem("token");
-
-  const res = await fetch("http://localhost:5116/candidates", {
+  const res = await fetch(`${BASE_URL}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...authHeaders(),
     },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email: email.trim() }),
   });
 
-  const text = await res.text();
+  const data = await res.json();
+
+  console.log("CREATE RESPONSE:", data);
 
   if (!res.ok) {
-    throw new Error(text || "Failed to create candidate");
+    throw new Error(data.error || data.message || "Failed to create candidate");
   }
 
-  return text ? JSON.parse(text) : { message: "Success" };
+  return data.data;
 }
+
 
 // -----------------------------------
 // DELETE

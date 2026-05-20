@@ -93,7 +93,7 @@ const handleShowExam = async (candidateId: number) => {
 
     const data = JSON.parse(text);
 
-    setExamReview(data);
+    setExamReview(data.data);
   } catch (err: any) {
     console.error("Exam review error:", err.message);
     alert(err.message);
@@ -169,10 +169,10 @@ const handleShowExam = async (candidateId: number) => {
         onNext={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
       />
 
-// we are NOT controlling whether it should render or not
-//So React always keeps it in the tree with changing props (selected changes every click).
+      {/*we are NOT controlling whether it should render or not
+      So React always keeps it in the tree with changing props (selected changes every click).*/}
       {/* MODALS */}
-      {selected && ( //sTOP rendering modals with null props}}
+      {selected && ( //stop rendering modals with null props}}
       <CandidateDetailsModal
         candidate={selected}
         onClose={() => setSelected(null)}

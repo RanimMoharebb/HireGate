@@ -82,10 +82,28 @@ export async function getExamPageData(token: string) {
 // START EXAM
 // ---------------------------
 export async function startExam(token: string) {
-  return safeFetch(
+  const res = await safeFetch(
     `${BASE_URL}/candidates/start-exam/${token}`,
+    { method: "POST" }
+  );
+
+  return (res && typeof res === "object" && "data" in res)
+    ? (res as any).data
+    : res;
+}
+
+// ---------------------------
+// SUBMIT EXAM
+// ---------------------------
+export async function submitExam(token: string, payload: any) {
+  return safeFetch(
+    `${BASE_URL}/api/exam/submit/${token}`,
     {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     }
   );
 }

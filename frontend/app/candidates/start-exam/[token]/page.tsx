@@ -4,7 +4,7 @@ import { Clock } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { startExam } from "@/app/_services/candidate-exam-service";
+import { startExam, submitExam } from "@/app/_services/candidate-exam-service";
 import { validateExamSubmission } from "@/app/_validations/exam-validation";
 
 export default function StartExamPage() {
@@ -68,6 +68,14 @@ export default function StartExamPage() {
 
     setWarning("");
 
+    if (!isAuto) {
+      const validation = validateExamSubmission(answers, totalQuestions);
+      if (!validation.isValid) {
+        setWarning(validation.errors.join(" "));
+        return;
+      }
+    }
+
     try {
       setSubmitting(true);
 
@@ -78,33 +86,26 @@ export default function StartExamPage() {
         })),
       };
 
-      const res = await fetch(
-        `http://localhost:5116/api/exam/submit/${token}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!res.ok) throw new Error("Submit failed");
+      await submitExam(token, payload);
 
       setSubmitted(true);
       localStorage.removeItem(STORAGE_KEY);
 
       router.push("/candidates/thank-you");
     } catch (err: any) {
-      setWarning(err.message);
+      setWarning(err.message ?? "Submit failed");
     } finally {
       setSubmitting(false);
     }
   };
 
   // ---------------- FETCH EXAM ----------------
+  /*
   useEffect(() => {
     const fetchExam = async () => {
       try {
         const data = await startExam(token);
+        //const data = res.data;
 
         const shuffledQuestions = shuffleArray(data.questions).map((q: any) => ({
           ...q,
@@ -135,6 +136,34 @@ export default function StartExamPage() {
 
     fetchExam();
   }, [token]);
+*/
+useEffect(() => {
+  const fetchExam = async () => {
+    try {
+      const data = await startExam(token);
+
+      if (!data) throw new Error("No exam data received");
+
+      const shuffledQuestions = shuffleArray(data.questions || []).map(
+        (q: any) => ({
+          ...q,
+          choices: shuffleArray(q.choices || []),
+        })
+      );
+
+      setExam({
+        ...data,
+        questions: shuffledQuestions,
+      });
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchExam();
+}, [token]);
 
   // ---------------- TIMER + AUTO SUBMIT ----------------
   useEffect(() => {
@@ -177,7 +206,12 @@ export default function StartExamPage() {
 
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-3xl font-bold">{exam.positionTitle}</h1>
+            {/*<h1 className="text-3xl font-bold">{exam.positionTitle}</h1>*/}
+            <h1 className="text-3xl font-bold">
+              {typeof exam?.positionTitle === "string"
+                ? exam.positionTitle
+                : "Exam"}
+            </h1>
             <div className="text-slate-600 text-base space-y-1">
               <p>Duration: {exam.durationMinutes} minutes</p>
               <p>{exam.questions?.length || 0} Questions</p>
@@ -212,14 +246,16 @@ export default function StartExamPage() {
           </div>
         )}
 
-        {exam.questions.map((q: any, index: number) => (
+        {Array.isArray(exam?.questions) &&
+        exam.questions.map((q: any, index: number) => (
           <div key={q.id} className="mb-8 border border-slate-300 rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4">
-              Q{index + 1}. {q.questionText}
+              Q{index + 1}. {typeof q.questionText === "string" ? q.questionText : ""}
             </h2>
 
             <div className="space-y-3">
-              {q.choices.map((c: any) => (
+              {Array.isArray(q.choices) &&
+              q.choices.map((c: any) => (
                 <button
                   key={c.id}
                   onClick={() => handleSelect(q.id, c.id)}
@@ -230,7 +266,7 @@ export default function StartExamPage() {
                       : "bg-white hover:bg-slate-50 border border-slate-200"
                   }`}
                 >
-                  {c.text}
+                  {typeof c.text === "string" ? c.text : ""}
                 </button>
               ))}
             </div>

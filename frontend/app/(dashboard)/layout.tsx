@@ -24,6 +24,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // You are doing two different auth systems at the same time:
   
+ /*
   useEffect(() => {
     const user = getUserFromToken();
 
@@ -33,6 +34,28 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       setLoading(false);
     }
   }, []);
+*/
+useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (!token || token === "undefined") {
+    router.replace("/login");
+    return;
+  }
+
+  try {
+    const user = getUserFromToken();
+
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    setLoading(false);
+  } catch {
+    router.replace("/login");
+  }
+}, []);
 
   // useAuthGuard();
 

@@ -8,11 +8,13 @@ export async function login(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await res.json();
+  const result = await res.json();
 
-  if (!res.ok) throw new Error(data.message || "Login failed");
+    if (!res.ok || !result.success) {
+    throw new Error(result.error || "Login failed");
+  }
 
-  return data;
+  return result;
 }
 
 
@@ -31,8 +33,9 @@ export async function completeRegistration(data: {
 
   const result = await res.json();
 
-  if (!res.ok) throw new Error(result.message || "Registration failed");
-
+  if (!res.ok || !result.success) {
+    throw new Error(result.error || "Registration failed");
+  }
   return result;
 }
 
@@ -44,10 +47,11 @@ export async function forgotPassword(email: string) {
     body: JSON.stringify({ email }),
   });
 
-  const result = await res.text();
+  const result = await res.json();
 
-  if (!res.ok) throw new Error(result || "Failed request");
-
+  if (!res.ok || !result.success) {
+    throw new Error(result.error || "Failed to send OTP");
+  }
   return result;
 }
 
@@ -64,9 +68,11 @@ export async function resetPassword(data: {
     body: JSON.stringify(data),
   });
 
-  const result = await res.text();
+  const result = await res.json();
 
-  if (!res.ok) throw new Error(result || "Reset failed");
+  if (!res.ok || !result.success) {
+    throw new Error(result.error || "Reset failed");
+  }
 
   return result;
 }
@@ -81,10 +87,10 @@ export async function resendOtp(email: string) {
     body: JSON.stringify({ email }),
   });
 
-  const result = await res.text();
+  const result = await res.json();
 
-  if (!res.ok) {
-    throw new Error(result || "Failed to resend OTP");
+  if (!res.ok || !result.success) {
+    throw new Error(result.error || "Failed to resend OTP");
   }
 
   return result;

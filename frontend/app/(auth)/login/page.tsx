@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  
     useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) router.push("/dashboard");
@@ -45,18 +46,17 @@ export default function LoginPage() {
 
 
       const res = await login(email, password);
-      /*
-      // (rare case, but safe):-
-            const decoded: any = jwtDecode(res.token);
-      if (decoded.exp * 1000 < Date.now()) {
-        throw new Error("Token expired");
+      const token = res?.data?.token;
+
+      if (!token) {
+        throw new Error("Token missing from backend response");
       }
-        */
-      localStorage.setItem("token", res.token);
+
+      localStorage.setItem("token", token);
 
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      setError(err?.message || "Login failed");
     } finally {
       setLoading(false);
     }

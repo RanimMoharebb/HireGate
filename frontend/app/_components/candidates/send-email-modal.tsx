@@ -274,7 +274,14 @@ function SingleSendEmailModal({
 
 // Bulk email modal - split into logical columns on desktop
 function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  //const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [candidates, setCandidates] = useState<{
+  items: Candidate[];
+  totalCount: number;
+}>({
+  items: [],
+  totalCount: 0,
+});
   const [selectedExamId, setSelectedExamId] = useState<number | "">("");
   const [selectedExamTitle, setSelectedExamTitle] = useState("");
   const [examListBusy, setExamListBusy] = useState(true);
@@ -301,12 +308,17 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     let cancelled = false;
-
+const emptyCandidatesState = {
+  items: [],
+  totalCount: 0,
+};
+setCandidates(emptyCandidatesState);
+    
     const loadCandidates = async () => {
       const validationError = validateSearch(debouncedSearch);
       if (validationError) {
         setListError(validationError);
-        setCandidates([]);
+        setCandidates(emptyCandidatesState);
         setTotalPages(1);
         setFetchError("");
         setListLoading(false);
@@ -334,7 +346,7 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
           BULK_CANDIDATES_PAGE_SIZE
         );
         if (!cancelled) {
-          setCandidates(result.data);
+          setCandidates(result.data); // items or data ?
           const tp = result.totalPages <= 0 ? 1 : result.totalPages;
           setTotalPages(tp);
           setFetchError("");
@@ -345,7 +357,7 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
       } catch (err) {
         console.error("Fetch error:", err);
         if (!cancelled) {
-          setCandidates([]);
+          setCandidates(emptyCandidatesState);
           setTotalPages(1);
           setFetchError("Failed to load candidates.");
         }
@@ -480,10 +492,10 @@ function BulkSendEmailModal({ onClose }: { onClose: () => void }) {
               <div className="space-y-1 rounded-md border border-gray-200 p-2">
                 {listLoading ? (
                   <p className="p-2 text-center text-sm text-gray-500">Loading…</p>
-                ) : candidates.length === 0 ? (
+                ) : candidates.items.length === 0 ? (
                   <p className="p-2 text-center text-sm text-gray-500">No candidates.</p>
                 ) : (
-                  candidates.map((c) => (
+                  candidates.items.map((c) => (
                     <label
                       key={c.id}
                       className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-50"

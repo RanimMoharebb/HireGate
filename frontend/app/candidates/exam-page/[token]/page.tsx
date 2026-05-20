@@ -27,7 +27,7 @@ export default function ExamPage() {
         // Exam data (from examId)
         if (candidate?.examId) {
           const examRes = await fetch(
-            `http://localhost:5116/api/exam/${candidate.examId}`
+            `http://localhost:5116/exam-page/${token}`
           );
 
           if (!examRes.ok) {

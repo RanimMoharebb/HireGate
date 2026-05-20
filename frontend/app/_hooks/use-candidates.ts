@@ -65,7 +65,7 @@ export function useCandidates() {
           statusFilter === "All" ? undefined : statusFilter
         );
 
-        setCandidates(result.data);
+        setCandidates(result.data.items);
 
         const tp = result.totalPages <= 0 ? 1 : result.totalPages;
         setTotalPages(tp);

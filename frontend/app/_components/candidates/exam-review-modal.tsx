@@ -88,7 +88,7 @@ export default function ExamReviewModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {data.questions.map((q) => (
+              {(data.questions ?? []).map((q) => (
                 <div
                   key={q.questionId}
                   className="bg-white border border-slate-200 rounded-xl p-6 space-y-6 shadow-sm"
