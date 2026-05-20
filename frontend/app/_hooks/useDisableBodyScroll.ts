@@ -28,9 +28,6 @@ export function useDisableBodyScroll() {
           return;
         }
 
-        // Safety: if for some reason the modal DOM roots are gone but lockCount
-        // is not zero (imbalanced), restore overflow after a tick.
-        // We look for common modal root selectors used across the app.
         setTimeout(() => {
           try {
             const modalRoots = document.querySelectorAll('div.fixed.inset-0, [role="dialog"], .modal-root');
