@@ -84,55 +84,57 @@ export default function ExamQuestionPicker({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-      <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-        <div>
+      <div className="flex max-h-[68vh] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-4">
+        <div className="flex-shrink-0">
           <p className="text-sm font-semibold text-slate-900">Topics</p>
           <p className="text-xs text-slate-500">Select a topic to show available questions.</p>
         </div>
 
         {isLoadingTopics ? (
-          <div className="flex items-center gap-2 text-slate-500">
+          <div className="mt-4 flex items-center gap-2 text-slate-500">
             <Loader className="animate-spin" size={16} /> Loading topics...
           </div>
         ) : topicsError ? (
-          <p className="text-sm text-red-600">{topicsError}</p>
+          <p className="mt-4 text-sm text-red-600">{topicsError}</p>
         ) : topics.length === 0 ? (
-          <p className="text-sm text-slate-600">No topics are available.</p>
+          <p className="mt-4 text-sm text-slate-600">No topics are available.</p>
         ) : (
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedTopicId("all");
-                setCurrentPage(1);
-                setSearchTerm("");
-              }}
-              className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                selectedTopicId === "all"
-                  ? "border-blue-500 bg-blue-50 text-slate-900"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
-              }`}
-            >
-              All Questions
-            </button>
-            {topics.map((topic) => (
+          <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+            <div className="space-y-2">
               <button
-                key={topic.id}
                 type="button"
                 onClick={() => {
-                  setSelectedTopicId(topic.id.toString());
+                  setSelectedTopicId("all");
                   setCurrentPage(1);
                   setSearchTerm("");
                 }}
                 className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${
-                  selectedTopicId === topic.id.toString()
+                  selectedTopicId === "all"
                     ? "border-blue-500 bg-blue-50 text-slate-900"
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
                 }`}
               >
-                {topic.topicName}
+                All Questions
               </button>
-            ))}
+              {topics.map((topic) => (
+                <button
+                  key={topic.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedTopicId(topic.id.toString());
+                    setCurrentPage(1);
+                    setSearchTerm("");
+                  }}
+                  className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${
+                    selectedTopicId === topic.id.toString()
+                      ? "border-blue-500 bg-blue-50 text-slate-900"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+                  }`}
+                >
+                  {topic.topicName}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -13,7 +13,7 @@ import { QuestionsTable } from "@/app/_components/question-bank/questions-table"
 import { TopicFilter } from "@/app/_components/question-bank/topic-filter";
 import { useQuestionBank } from "@/app/_hooks/use-question-bank";
 
-export default function page() {
+export default function QuestionBankPage() {
   const {
     questions,
     topics,

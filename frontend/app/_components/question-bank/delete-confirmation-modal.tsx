@@ -48,14 +48,14 @@ export function DeleteConfirmationModal({
           {itemLabel ? <p className="text-sm text-gray-700 mb-6 line-clamp-2">{itemLabel}</p> : null}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => {  onCancel(); }}
+              onClick={() => { onCancel(); }}
               disabled={loading}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
-              onClick={() => {  onConfirm(); }}
+              onClick={() => { onConfirm(); }}
               disabled={loading}
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:bg-gray-400 flex items-center justify-center gap-2"
             >

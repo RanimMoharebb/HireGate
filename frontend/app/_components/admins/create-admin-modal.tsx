@@ -32,6 +32,8 @@ export function CreateAdminModal({
 }: CreateAdminModalProps) {
   useDisableBodyScroll(isOpen);
 
+  useDisableBodyScroll(isOpen);
+
   if (!isOpen) {
     return null;
   }
