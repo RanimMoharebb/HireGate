@@ -4,7 +4,7 @@ const BASE_URL = "http://localhost:5116";
 // Send email to ONE candidate
 // --------------------
 export async function sendExamEmail(candidateId: number, examId: number) {
-  const token = localStorage.getItem("token"); 
+  const token = localStorage.getItem("token");
 
   const res = await fetch(
     `http://localhost:5116/candidates/${candidateId}/send-exam-email`,
@@ -12,22 +12,25 @@ export async function sendExamEmail(candidateId: number, examId: number) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, 
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ examId }),
     }
   );
 
-  const text = await res.text();
+  const result = await res.json();
 
-  if (!res.ok) throw new Error(text || "Failed"); 
+  if (!res.ok || result.success === false) {
+    throw new Error(result.error || "Failed to send email");
+  }
 
-  return text;
+  return result;
 }
 
 // --------------------
 // Send BULK emails
 // --------------------
+
 export async function sendBulkExamEmail(data: {
   examId: number;
   candidateIds: number[];
@@ -46,14 +49,11 @@ export async function sendBulkExamEmail(data: {
     }
   );
 
-  const text = await res.text();
+  const result = await res.json();
 
-  console.log("STATUS:", res.status);
-  console.log("RESPONSE:", text);
-
-  if (!res.ok) {
-    throw new Error(text || "Bulk email failed");
+  if (!res.ok || result.success === false) {
+    throw new Error(result.error || "Bulk email failed");
   }
 
-  return text;
+  return result;
 }

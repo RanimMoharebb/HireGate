@@ -8,7 +8,10 @@ const ROLE_OPTIONS: UserRole[] = ["CEO", "HRManager"];
 const PAGE_SIZE = 10;
 
 export const useAdmins = () => {
+  //const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -63,10 +66,11 @@ export const useAdmins = () => {
       setLoading(true);
       setError(null);
       const data = await adminService.getAdmins(page, PAGE_SIZE, search);
-      setAdmins(data.data);
+      setAdmins(data.items);
+      setTotalCount(data.totalCount);
       setTotalPages(data.totalPages);
       setRowRoleSelections(
-        data.data.reduce<Record<number, UserRole>>((acc, item) => {
+        data.items.reduce<Record<number, UserRole>>((acc, item) => {
           acc[item.id] = item.role;
           return acc;
         }, {})

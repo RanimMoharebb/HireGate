@@ -20,6 +20,7 @@ export default function ExamPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        
         // Candidate data (from token)
         const candidate = await getExamPageData(token);
         setCandidateData(candidate);
@@ -37,9 +38,9 @@ export default function ExamPage() {
           const exam = await examRes.json();
           setExamData(exam);
         }
-
+        
       } catch (err: any) {
-  const message = err.message?.toLowerCase();
+      const message = err.message?.toLowerCase();
 
   if (
     message.includes("invalid token") ||

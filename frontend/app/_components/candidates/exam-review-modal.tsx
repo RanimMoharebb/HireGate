@@ -79,27 +79,26 @@ export default function ExamReviewModal({ data, loading, onClose }: Props) {
             </div>
           ) : (
             <div className="space-y-6">
-              {data.questions.map((q) => {
-                const selectedChoice = q.choices.find((c) => c.isSelectedByCandidate);
-                const answeredCorrectly = selectedChoice?.isCorrect ?? false;
-                const noAnswer = !selectedChoice;
+              {(data.questions ?? []).map((q) => (
+                <div
+                  key={q.questionId}
+                  className="bg-white border border-slate-200 rounded-xl p-6 space-y-6 shadow-sm"
+                >
 
-                return (
-                  <div
-                    key={q.questionId}
-                    className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 shadow-sm"
-                  >
-                    {/* QUESTION */}
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <div className="min-w-0 flex-1 text-lg font-semibold text-slate-900">
-                        {q.questionText}
-                      </div>
-                      {noAnswer && (
-                        <span className="shrink-0 text-xs font-medium text-amber-700">
-                          No answer
-                        </span>
-                      )}
+                  {/* QUESTION */}
+                  <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <div className="min-w-0 flex-1 text-lg font-semibold text-slate-900">
+                      {q.questionText}
                     </div>
+                    {q.selectedChoiceId == null ? (
+                      <span
+                        className="shrink-0 text-xs font-medium text-amber-700"
+                        title="No choice was selected"
+                      >
+                        No answer
+                      </span>
+                    ) : null}
+                  </div>
 
                     {/* CHOICES */}
                     <div className="space-y-2">

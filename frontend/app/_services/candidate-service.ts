@@ -52,7 +52,7 @@ export type Candidate = {
   submittedAt: string | null;
   finalScore: number | null;
 };
-
+/*
 export type CandidatesPaginatedResponse = {
   data: Candidate[];
   page: number;
@@ -60,33 +60,24 @@ export type CandidatesPaginatedResponse = {
   totalCount: number;
   totalPages: number;
 };
+*/
 
-export type CandidateExamReviewChoice = {
-  choiceId: number;
-  choiceText: string;
-  isCorrect: boolean;
-  isSelectedByCandidate: boolean;
+export type CandidatesPaginatedResponse = {
+  data: {
+    items: Candidate[];
+    totalCount: number;
+  };
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 };
 
-export type CandidateExamReviewQuestion = {
-  questionId: number;
-  questionText: string;
-  choices: CandidateExamReviewChoice[];
-};
-
-export type CandidateExamReview = {
-  candidateId: number;
-  candidateName: string;
-  examTitle: string;
-  finalScore: number | null;
-  questions: CandidateExamReviewQuestion[];
-};
-
-// =============================================================================
-// CANDIDATE CRUD
-// =============================================================================
-
-/** Loads one page of candidates. */
+// -----------------------------------
+// GET (paginated)
+// -----------------------------------
+//Loads one page. Omit `pageSize` to use the API default (10). */
+/*
 export async function getCandidatesPage(
   page: number,
   search?: string,
@@ -118,7 +109,10 @@ export async function getCandidatesPage(
   ) {
     const body = parsed as CandidatesPaginatedResponse;
     return {
-      data: body.data,
+      data: {
+        items: body.data.items,
+        totalCount: body.data.totalCount,
+      },
       page: body.page,
       pageSize: body.pageSize,
       totalCount: body.totalCount,
@@ -129,7 +123,10 @@ export async function getCandidatesPage(
   // Plain array fallback
   if (Array.isArray(parsed)) {
     return {
-      data: parsed as Candidate[],
+      data: {
+        items: parsed as Candidate[],
+        totalCount: parsed.length,
+      },
       page: 1,
       pageSize: pageSize ?? 10,
       totalCount: parsed.length,
@@ -137,18 +134,76 @@ export async function getCandidatesPage(
     };
   }
 
-  return { data: [], page: 1, pageSize: pageSize ?? 10, totalCount: 0, totalPages: 1 };
+  return {
+    data: {
+      items: [],
+      totalCount: 0,
+    },
+    page: 1,
+    pageSize: pageSize ?? 10,
+    totalCount: 0,
+    totalPages: 1,
+  };
+}
+*/
+export async function getCandidatesPage(
+  page: number,
+  search?: string,
+  status?: string,
+  pageSize?: number
+): Promise<CandidatesPaginatedResponse> {
+  const params = new URLSearchParams({
+    page: String(Math.max(1, page)),
+  });
+
+  if (pageSize !== undefined) {
+    params.set("pageSize", String(pageSize));
+  }
+
+  const trimmed = search?.trim();
+  if (trimmed) params.set("search", trimmed);
+
+  const trimmedStatus = status?.trim();
+  if (trimmedStatus && trimmedStatus !== "All") {
+    params.set("status", trimmedStatus);
+  }
+
+  const res = await fetch(`${BASE_URL}?${params}`, {
+    headers: authHeaders(),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data?.error || data?.message || "Failed to fetch candidates");
+  }
+
+  const items = data?.data?.items ?? [];
+  const totalCount = data?.data?.totalCount ?? 0;
+
+  return {
+    data: {
+      items,
+      totalCount,
+    },
+    page: page,
+    pageSize: pageSize ?? 10,
+    totalCount,
+    totalPages: Math.ceil(totalCount / (pageSize ?? 10)),
+  };
 }
 
-/** Loads every candidate across all pages. Used by bulk UIs (e.g. email picker). */
+/** Loads every candidate (one API page at a time, default page size). For bulk UIs e.g. email picker. */
 export async function getAllCandidates(): Promise<Candidate[]> {
   let page = 1;
   const all: Candidate[] = [];
 
   for (;;) {
     const batch = await getCandidatesPage(page);
-    all.push(...batch.data);
-    if (page >= batch.totalPages || batch.data.length === 0) break;
+    all.push(...batch.data.items);
+    if (page >= batch.totalPages || batch.data.items.length === 0) {
+      break;
+    }
     page += 1;
   }
 
@@ -168,17 +223,30 @@ export async function getCandidateById(id: number): Promise<Candidate> {
 }
 
 export async function createCandidate(email: string) {
-  const res = await fetch(CANDIDATES_URL, {
+  const res = await fetch(`${BASE_URL}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ email }),
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ email: email.trim() }),
   });
 
-  const text = await res.text();
-  if (!res.ok) throw new Error(text || "Failed to create candidate");
-  return text ? JSON.parse(text) : { message: "Success" };
+  const data = await res.json();
+
+  console.log("CREATE RESPONSE:", data);
+
+  if (!res.ok) {
+    throw new Error(data.error || data.message || "Failed to create candidate");
+  }
+
+  return data.data;
 }
 
+
+// -----------------------------------
+// DELETE
+// -----------------------------------
 export async function deleteCandidate(id: number) {
   const res = await fetch(`${CANDIDATES_URL}/${id}`, {
     method: "DELETE",

@@ -74,8 +74,28 @@ export default function CandidatesPage() {
 const handleShowExam = async (candidateId: number) => {
   try {
     setReviewLoading(true);
-    const data = await getCandidateExamReview(candidateId);
-    setExamReview(data);
+
+    const token = localStorage.getItem("token"); // IMPORTANT
+
+    const res = await fetch(
+      `http://localhost:5116/candidates/${candidateId}/exam-review`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const text = await res.text();
+    console.log("EXAM REVIEW RESPONSE:", text);
+
+    if (!res.ok) {
+      throw new Error(text || "Failed to load exam review");
+    }
+
+    const data = JSON.parse(text);
+
+    setExamReview(data.data);
   } catch (err: any) {
     alert(err.message);
   } finally {
@@ -151,11 +171,17 @@ const handleShowExam = async (candidateId: number) => {
         onNext={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
       />
 
+      {/*we are NOT controlling whether it should render or not
+      So React always keeps it in the tree with changing props (selected changes every click).*/}
       {/* MODALS */}
+      {selected && ( //stop rendering modals with null props}}
       <CandidateDetailsModal
         candidate={selected}
         onClose={() => setSelected(null)}
       />
+      )}   
+
+      {deleteCandidate && (
 
       <DeleteConfirmationModal
         isOpen={deleteCandidate !== null}
@@ -167,6 +193,7 @@ const handleShowExam = async (candidateId: number) => {
         onCancel={() => setDeleteCandidate(null)}
         onConfirm={confirmDelete}
       />
+      )}
 
       <SendEmailModal
         variant="bulk"
@@ -185,12 +212,14 @@ const handleShowExam = async (candidateId: number) => {
       />
 
       {/* EXAM REVIEW MODAL */}
+      {examReview && (
       <ExamReviewModal
         data={examReview}
         loading={reviewLoading}
         onClose={() => setExamReview(null)}
       />
-
+      
+            )}
     </div>
   );
 }

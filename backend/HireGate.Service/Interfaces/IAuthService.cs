@@ -1,14 +1,15 @@
 
 using HireGate.Service.DTOs;
+using HireGate.ResultWrapper;
 
 namespace HireGate.Service.Interfaces
 {
 
 public interface IAuthService
 {
-    Task<LoginResponseDto> Login(string email, string password);
+    Task<ServiceResult<LoginResponseDto>> Login(string email, string password);
 
-    Task<CompleteRegisterAdminResponseDto> CompleteRegistration(CompleteRegisterAdminDto dto);
+    Task<ServiceResult<bool>> CompleteRegistration(CompleteRegisterAdminDto dto);
 
 }
 }

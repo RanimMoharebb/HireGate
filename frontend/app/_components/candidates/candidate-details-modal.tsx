@@ -1,5 +1,5 @@
 "use client";
-
+// if (!data) return null;
 import {
   Award,
   CalendarClock,

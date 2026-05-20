@@ -7,15 +7,14 @@ export type AdminUser = {
   email: string;
   role: UserRole;
 };
-
 export type AdminPaginationData = {
-  data: AdminUser[];
+  //data: AdminUser[];
+  items: AdminUser[];
+  totalCount: number;
   page: number;
   pageSize: number;
-  totalCount: number;
   totalPages: number;
 };
-
 export type CreateAdminPayload = {
   email: string;
   role: UserRole;

@@ -1,3 +1,4 @@
+/*
 namespace HireGate.Service.DTOs;
 
 public class DeleteCandidateResponseDto
@@ -6,3 +7,4 @@ public class DeleteCandidateResponseDto
     public string Message { get; set; } = "Candidate deleted";
     public bool Success { get; set; }
 }
+*/

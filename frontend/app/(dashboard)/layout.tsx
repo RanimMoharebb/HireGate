@@ -23,13 +23,37 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const user = getUserFromToken();
 
   // You are doing two different auth systems at the same time:
-
+  
+ /*
   useEffect(() => {
     if (!user) {
-      localStorage.removeItem("token");
-      router.replace("/login");
+      router.push("/login");
+    } else {
+      setLoading(false);
     }
-  }, [router, user]);
+  }, []);
+*/
+useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (!token || token === "undefined") {
+    router.replace("/login");
+    return;
+  }
+
+  try {
+    const user = getUserFromToken();
+
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    setLoading(false);
+  } catch {
+    router.replace("/login");
+  }
+}, []);
 
   // useAuthGuard();
 
