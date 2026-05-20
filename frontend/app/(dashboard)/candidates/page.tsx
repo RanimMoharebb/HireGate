@@ -218,8 +218,7 @@ const handleShowExam = async (candidateId: number) => {
         loading={reviewLoading}
         onClose={() => setExamReview(null)}
       />
-      
-            )}
+      )}
     </div>
   );
 }
