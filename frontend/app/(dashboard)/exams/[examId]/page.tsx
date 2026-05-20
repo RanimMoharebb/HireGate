@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Header from "@/app/_components/layout/header";
 import { Card, CardContent } from "@/app/_components/ui/card";
 import ExamQuestionsManager from "@/app/_components/exams/exam-questions-manager";
@@ -9,9 +9,11 @@ import { getExamById } from "@/app/_services/exam-service";
 import { formatExamWindowTime } from "@/app/_lib/utils";
 import ExamDetailsActions from "@/app/_components/exams/exam-details-actions";
 import type { Exam } from "@/app/_lib/exams/exam.types";
+import { ExamApiError } from "@/app/_lib/errorHandling";
 
 export default function ExamDetailsPage() {
   const params = useParams<{ examId: string }>();
+  const router = useRouter();
   const examId = Number(params.examId);
 
   const [exam, setExam] = useState<Exam | null>(null);
@@ -33,6 +35,12 @@ export default function ExamDetailsPage() {
         const result = await getExamById(examId);
         setExam(result);
       } catch (error) {
+        if (error instanceof ExamApiError && error.status === 401) {
+          localStorage.removeItem("token");
+          router.replace("/login");
+          return;
+        }
+
         setErrorMessage(
           error instanceof Error ? error.message : "Unable to load this exam right now.",
         );
@@ -42,7 +50,7 @@ export default function ExamDetailsPage() {
     }
 
     fetchExam();
-  }, [examId]);
+  }, [examId, router]);
 
   if (loading) {
     return (
