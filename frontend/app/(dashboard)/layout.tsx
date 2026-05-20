@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { getUserFromToken } from "@/app/_lib/auth";
 
 import type { ReactNode } from "react";
@@ -19,26 +19,22 @@ type DashboardLayoutProps = {
 
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const user = getUserFromToken();
 
   // You are doing two different auth systems at the same time:
-  
-  useEffect(() => {
-    const user = getUserFromToken();
 
+  useEffect(() => {
     if (!user) {
-      router.push("/login");
-    } else {
-      setLoading(false);
+      localStorage.removeItem("token");
+      router.replace("/login");
     }
-  }, []);
+  }, [router, user]);
 
   // useAuthGuard();
 
 
-  if (loading) {
+  if (!user) {
     return (
       <div className="h-screen flex items-center justify-center">
         Loading...

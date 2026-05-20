@@ -1,7 +1,8 @@
 "use client";
 
-import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
-import { Loader, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Loader, Trash2 } from "lucide-react";
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
@@ -23,18 +24,30 @@ export function DeleteConfirmationModal({
   onCancel,
   onConfirm,
 }: DeleteConfirmationModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
   if (!isOpen) {
     return null;
   }
-  useDisableBodyScroll();
 
-  return (
+  if (!mounted) {
+    return null;
+  }
+
+  return createPortal(
     <div 
-      className="fixed inset-0 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
       onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
     >
       <div 
-        className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl border border-gray-200"
+        className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center">
@@ -63,6 +76,7 @@ export function DeleteConfirmationModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
