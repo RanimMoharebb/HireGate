@@ -52,7 +52,17 @@ export const adminService = {
       throw new Error(await parseErrorMessage(response, "Failed to load admins"));
     }
 
-    return response.json();
+    //return response.json();
+      const result = await response.json();
+    
+      return {
+        items: result.data.items,
+        totalCount: result.data.totalCount,
+        // new by me 
+        page: result.data.page ?? page,
+        pageSize: result.data.pageSize ?? pageSize,
+        totalPages: result.data.totalPages ?? Math.ceil(result.data.totalCount / pageSize),
+  };
   },
 
   async createAdmin(payload: CreateAdminPayload): Promise<void> {

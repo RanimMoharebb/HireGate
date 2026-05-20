@@ -30,7 +30,7 @@ async function safeFetch(url: string, options?: RequestInit) {
 // ---------------------------
 export async function completeCandidateProfile(token: string, body: any) {
   try {
-    console.log("🚀 CALLING API");
+    console.log("CALLING API");
     console.log("URL:", `http://localhost:5116/candidates/complete-profile/${token}`);
     console.log("BODY:", body);
 
@@ -69,6 +69,7 @@ export async function completeCandidateProfile(token: string, body: any) {
 // ---------------------------
 // EXAM PAGE DATA
 // ---------------------------
+
 export async function getExamPageData(token: string) {
   return safeFetch(
     `${BASE_URL}/candidates/exam-page/${token}`,
