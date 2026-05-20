@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { NextIntlClientProvider } from "next-intl";
-import "../globals.css";
+import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
 
 type LocaleLayoutProps = {
   children: ReactNode;
@@ -12,16 +13,13 @@ export default async function LocaleLayout({
   params 
 }: LocaleLayoutProps) {
   const { locale } = await params;
-  
-  let messages: Record<string, any>;
-  try {
-    messages = (await import(`../messages/${locale}.json`)).default;
-  } catch (err) {
-    messages = (await import("../messages/en.json")).default;
+
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
   }
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider>
       {children}
     </NextIntlClientProvider>
   );

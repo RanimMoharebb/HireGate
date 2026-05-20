@@ -14,7 +14,6 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", description: "Candidate results" },
   { href: "/exams", label: "Exams", description: "Manage assessments" },
   { href: "/question-bank", label: "Question Bank", description: "MCQ library" },
   { href: "/candidates", label: "Candidates", description: "Submissions and status" },
