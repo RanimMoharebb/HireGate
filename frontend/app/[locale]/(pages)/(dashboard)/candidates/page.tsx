@@ -74,30 +74,14 @@ export default function CandidatesPage() {
 const handleShowExam = async (candidateId: number) => {
   try {
     setReviewLoading(true);
+    setErrorMessage(null);
 
-    const token = localStorage.getItem("token"); // IMPORTANT
-
-    const res = await fetch(
-      `http://localhost:5116/candidates/${candidateId}/exam-review`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const text = await res.text();
-    console.log("EXAM REVIEW RESPONSE:", text);
-
-    if (!res.ok) {
-      throw new Error(text || "Failed to load exam review");
-    }
-
-    const data = JSON.parse(text);
-
-    setExamReview(data.data);
-  } catch (err: any) {
-    alert(err.message);
+    const review = await getCandidateExamReview(candidateId);
+    setExamReview(review);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to load exam review";
+    setErrorMessage(message);
+    setExamReview(null);
   } finally {
     setReviewLoading(false);
   }
