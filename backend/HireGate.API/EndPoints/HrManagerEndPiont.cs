@@ -11,7 +11,7 @@ public static class AdminEndpoints
 {
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/admins");
+        var group = app.MapGroup("/admins").RequireAuthorization("CEOOnly");
 
         // CREATE ADMIN
         group.MapPost("/", async (
@@ -106,7 +106,6 @@ public static class AdminEndpoints
                 email,
                 roleFromToken = role
             });
-        })
-        .RequireAuthorization();
+        });
     }
 }
