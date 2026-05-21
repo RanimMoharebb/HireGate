@@ -1,5 +1,27 @@
 const API_URL = "http://localhost:5116";
 
+function getApiMessage(result: unknown, fallback: string) {
+  if (!result || typeof result !== "object") {
+    return fallback;
+  }
+
+  const data = result as Record<string, unknown>;
+
+  if (typeof data.message === "string" && data.message.trim()) {
+    return data.message;
+  }
+
+  if (typeof data.error === "string" && data.error.trim()) {
+    return data.error;
+  }
+
+  if (typeof data.data === "string" && data.data.trim()) {
+    return data.data;
+  }
+
+  return fallback;
+}
+
 // LOGIN
 export async function login(email: string, password: string) {
   const res = await fetch(`${API_URL}/auth/login`, {
@@ -52,7 +74,7 @@ export async function forgotPassword(email: string) {
   if (!res.ok || !result.success) {
     throw new Error(result.error || "Failed to send OTP");
   }
-  return result;
+  return getApiMessage(result, "OTP sent successfully.");
 }
 
 // RESET PASSWORD
@@ -74,7 +96,7 @@ export async function resetPassword(data: {
     throw new Error(result.error || "Reset failed");
   }
 
-  return result;
+  return getApiMessage(result, "Password reset successfully.");
 }
 
 // RESEND OTP
@@ -93,6 +115,6 @@ export async function resendOtp(email: string) {
     throw new Error(result.error || "Failed to resend OTP");
   }
 
-  return result;
+  return getApiMessage(result, "OTP resent successfully.");
 }
 
