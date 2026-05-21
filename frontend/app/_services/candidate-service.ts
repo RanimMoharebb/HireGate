@@ -61,11 +61,12 @@ export type CandidateExamReview = {
   questions: Array<{
     questionId: number;
     questionText: string;
+    selectedChoiceId: number | null;
+    isCorrect: boolean;
     choices: Array<{
-      choiceId: number;
-      choiceText: string;
+      id: number;
+      text: string;
       isCorrect: boolean;
-      isSelectedByCandidate: boolean;
     }>;
   }>;
 };
@@ -297,15 +298,17 @@ export async function getCandidateExamReview(id: number): Promise<CandidateExamR
     questions: (raw.questions ?? []).map((question) => ({
       questionId: question.questionId ?? 0,
       questionText: question.questionText ?? "",
+      selectedChoiceId: question.selectedChoiceId ?? null,
+      isCorrect: (question.choices ?? []).some((choice) => {
+        const choiceId = choice.choiceId ?? choice.id ?? 0;
+        return Boolean(choice.isCorrect) && choiceId === (question.selectedChoiceId ?? null);
+      }),
       choices: (question.choices ?? []).map((choice) => {
         const choiceId = choice.choiceId ?? choice.id ?? 0;
         return {
-          choiceId,
-          choiceText: choice.choiceText ?? choice.text ?? "",
+          id: choiceId,
+          text: choice.choiceText ?? choice.text ?? "",
           isCorrect: Boolean(choice.isCorrect),
-          isSelectedByCandidate:
-            choice.isSelectedByCandidate ??
-            choiceId === (question.selectedChoiceId ?? null),
         };
       }),
     })),

@@ -54,6 +54,18 @@ export function useCandidates() {
     };
   }, [successMessage]);
 
+  useEffect(() => {
+    if (!errorMessage) {
+      return;
+    }
+
+    const removeTimer = window.setTimeout(() => setErrorMessage(null), 3000);
+
+    return () => {
+      window.clearTimeout(removeTimer);
+    };
+  }, [errorMessage]);
+
   // FILTER
   const [search, setSearch] = useState("");
 
