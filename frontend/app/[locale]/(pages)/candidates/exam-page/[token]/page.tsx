@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import { getExamPageData } from "@/app/_services/candidate-exam-service";
 
+import { handleExamError } from "@/app/_utils/exam-error-handler";
+
 export default function ExamPage() {
   const router = useRouter();
   const params = useParams();
@@ -15,6 +17,13 @@ export default function ExamPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+useEffect(() => {
+  if (error) {
+    router.replace("/candidates/thank-you");
+  }
+}, [error, router]);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,16 +36,9 @@ export default function ExamPage() {
       } catch (err: any) {
       const message = err.message?.toLowerCase();
 
-  if (
-    message.includes("invalid token") ||
-    message.includes("already submitted") ||
-    message.includes("expired")
-  ) {
-    router.replace("/candidates/thank-you");
-    return;
-  }
+  if (handled) return;
 
-  setError(err.message);
+  setError("Unable to load exam information.");
 
       } finally {
         setLoading(false);
@@ -45,6 +47,7 @@ export default function ExamPage() {
 
     fetchData();
   }, [token]);
+
 
   const handleStartExam = () => {
     router.push(`/candidates/start-exam/${token}`);
@@ -60,14 +63,11 @@ export default function ExamPage() {
   }
 
   // ---------------- ERROR ----------------
-  if (error) {
-    return (
-      <div className="p-10 text-center text-red-500">
-        {error}
-      </div>
-    );
-  }
+  
 
+if (error) {
+  return null;
+}
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
 
@@ -78,7 +78,7 @@ export default function ExamPage() {
   <img
     src="/images/logo.png"
     alt="logo"
-    className="h-10 w-auto"
+    className="h-12 w-auto"
   />
 </div>
 
@@ -160,3 +160,8 @@ export default function ExamPage() {
     </div>
   );
 }
+/*
+function fetchData() {
+  throw new Error("Function not implemented.");
+}
+*/

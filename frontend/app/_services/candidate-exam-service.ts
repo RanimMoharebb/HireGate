@@ -3,6 +3,7 @@ const BASE_URL = "http://localhost:5116";
 // ---------------------------
 // SAFE FETCH WRAPPER
 // ---------------------------
+/*
 async function safeFetch(url: string, options?: RequestInit) {
   const res = await fetch(url, options);
 
@@ -24,15 +25,41 @@ async function safeFetch(url: string, options?: RequestInit) {
 
   return data;
 }
+*/
 
+async function safeFetch(url: string, options?: RequestInit) {
+  const res = await fetch(url, options);
+
+  const text = await res.text();
+
+  let data: any = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  // 🚨 IMPORTANT: always throw structured error
+  if (!res.ok) {
+    const message =
+      data?.error ||
+      data?.message ||
+      data ||
+      "Request failed";
+
+    throw new Error(message);
+  }
+
+  return data;
+}
 // ---------------------------
 // COMPLETE PROFILE
 // ---------------------------
+/*
 export async function completeCandidateProfile(token: string, body: any) {
   try {
     console.log("CALLING API");
-    console.log("URL:", `http://localhost:5116/candidates/complete-profile/${token}`);
-    console.log("BODY:", body);
 
     const res = await fetch(
       `http://localhost:5116/candidates/complete-profile/${token}`,
@@ -45,31 +72,45 @@ export async function completeCandidateProfile(token: string, body: any) {
       }
     );
 
-    const text = await res.text();
+    const data = await res.json();
 
     console.log("📡 STATUS:", res.status);
-    console.log("📡 RAW RESPONSE:", text);
+    console.log("📡 RESPONSE JSON:", data);
     console.log("📡 OK:", res.ok);
 
     return {
       ok: res.ok,
       status: res.status,
-      raw: text,
+      data,
     };
   } catch (err) {
-    console.log("❌ FETCH ERROR (NO RESPONSE FROM BACKEND):", err);
+    console.log("❌ FETCH ERROR:", err);
     return {
       ok: false,
       status: 0,
-      raw: "NETWORK ERROR (backend not reachable or blocked)",
+      data: null,
     };
   }
 }
 
+*/
+
+export async function completeCandidateProfile(token: string, body: any) {
+  return safeFetch(
+    `${BASE_URL}/candidates/complete-profile/${token}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }
+  );
+}
 // ---------------------------
 // EXAM PAGE DATA
 // ---------------------------
-
+/*
 export async function getExamPageData(token: string) {
   return safeFetch(
     `${BASE_URL}/candidates/exam-page/${token}`,
@@ -78,7 +119,20 @@ export async function getExamPageData(token: string) {
     }
   );
 }
+*/
+export async function getExamPageData(token: string) {
+  const res = await safeFetch(
+    `${BASE_URL}/candidates/exam-page/${token}`,
+    { method: "GET" }
+  );
 
+  // 🔥 FORCE FAILURE IF BACKEND RETURNS ERROR
+  if (!res || res.success === false) {
+    throw new Error(res?.error || "Exam not available");
+  }
+
+  return res;
+}
 // ---------------------------
 // START EXAM
 // ---------------------------
@@ -88,9 +142,7 @@ export async function startExam(token: string) {
     { method: "POST" }
   );
 
-  return (res && typeof res === "object" && "data" in res)
-    ? (res as any).data
-    : res;
+  return res;
 }
 
 // ---------------------------

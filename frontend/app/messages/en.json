@@ -1,6 +1,23 @@
 {
-    "add-topic": "Add Topic",
-    "topic-name": "Topic Name",
-    "cancel": "Cancel",
-    "add": "Add"
+    "Add-topics":
+    {
+        "add-topic": "Add Topic",
+        "topic-name": "Topic Name",
+        "cancel": "Cancel",
+        "add": "Add"
+    },
+    
+    "candidates-view": 
+    {
+        "pending": "Pending",
+        "in-progress": "In Progress",
+        "submitted": "Submitted",
+        "phone": "Phone",
+        "final-score": "Final score",
+        "started": "Started",
+        "submitted-at": "Submitted",
+        "close": "Close",
+        "not-available": "—"
+    }
+
 }

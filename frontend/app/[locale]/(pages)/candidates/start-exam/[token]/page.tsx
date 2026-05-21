@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { startExam, submitExam } from "@/app/_services/candidate-exam-service";
+
+import { handleExamError } from "@/app/_utils/exam-error-handler";
+
 export default function StartExamPage() {
   const shuffleArray = <T,>(array: T[]): T[] => {
     return [...array].sort(() => Math.random() - 0.5);
@@ -88,48 +91,18 @@ export default function StartExamPage() {
   };
 
   // ---------------- FETCH EXAM ----------------
-  /*
-  useEffect(() => {
-    const fetchExam = async () => {
-      try {
-        const data = await startExam(token);
-        //const data = res.data;
-
-        const shuffledQuestions = shuffleArray(data.questions).map((q: any) => ({
-          ...q,
-          choices: shuffleArray(q.choices),
-        }));
-
-        setExam({
-          ...data,
-          questions: shuffledQuestions,
-        });
-      } catch (err: any) {
-        const message = err.message?.toLowerCase();
-
-        if (
-          message.includes("invalid token") ||
-          message.includes("already submitted") ||
-          message.includes("not found")
-        ) {
-          router.replace("/candidates/thank-you");
-          return;
-        }
-
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchExam();
-  }, [token]);
-*/
+  
 useEffect(() => {
   const fetchExam = async () => {
     try {
-      const data = await startExam(token);
+const res = await startExam(token);
 
+// handle backend failure shape safely
+if (!res || res.success === false || !res.data) {
+  throw new Error(res?.message || "Exam not available");
+}
+
+const data = res.data;
       if (!data) throw new Error("No exam data received");
 
       const shuffledQuestions = shuffleArray(data.questions || []).map(
@@ -143,9 +116,16 @@ useEffect(() => {
         ...data,
         questions: shuffledQuestions,
       });
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
+    } 
+
+catch (err: any) {
+  const handled = handleExamError(err, router);
+
+  if (handled) return;
+
+  setError("Failed to load exam.");
+}
+    finally {
       setLoading(false);
     }
   };
@@ -153,12 +133,21 @@ useEffect(() => {
   fetchExam();
 }, [token]);
 
+useEffect(() => {
+  if (error) {
+    router.replace("/candidates/thank-you");
+  }
+}, [error, router]);
+
   // ---------------- TIMER + AUTO SUBMIT ----------------
   useEffect(() => {
     if (!exam) return;
 
+    //const startedAt = new Date(exam.startedAt).getTime();
+    //const durationMs = exam.durationMinutes * 60 * 1000;
+    if (!exam?.startedAt || !exam?.durationMinutes) return;
     const startedAt = new Date(exam.startedAt).getTime();
-    const durationMs = exam.durationMinutes * 60 * 1000;
+const durationMs = exam.durationMinutes * 60 * 1000;
     const endTime = startedAt + durationMs;
 
     const interval = setInterval(() => {
@@ -180,10 +169,9 @@ useEffect(() => {
   if (loading)
     return <div className="p-10 text-center">Loading exam...</div>;
 
-  if (error || !exam)
-    return <div className="p-10 text-center text-red-500">{error}</div>;
 
   // ---------------- UI ----------------
+
   return (
     <div className="min-h-screen bg-slate-100 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-2xl p-8 shadow">
@@ -195,6 +183,7 @@ useEffect(() => {
         <div className="flex justify-between items-center mb-4">
           <div>
             {/*<h1 className="text-3xl font-bold">{exam.positionTitle}</h1>*/}
+            {exam &&( <>
             <h1 className="text-3xl font-bold">
               {typeof exam?.positionTitle === "string"
                 ? exam.positionTitle
@@ -204,6 +193,7 @@ useEffect(() => {
               <p>Duration: {exam.durationMinutes} minutes</p>
               <p>{exam.questions?.length || 0} Questions</p>
             </div>
+            </>)}
           </div>
 
           <div className="flex items-center gap-2 text-red-600 font-bold text-lg">
