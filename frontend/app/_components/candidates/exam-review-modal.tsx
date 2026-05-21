@@ -2,7 +2,7 @@
 
 import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 import { Loader } from "lucide-react";
-
+import Image from "next/image";
 type Choice = {
   id: number;
   text: string;
@@ -12,6 +12,7 @@ type Choice = {
 type Question = {
   questionId: number;
   questionText: string;
+  questionImage : string | null;
   selectedChoiceId: number | null;
   isCorrect: boolean;
   choices: Choice[];
@@ -101,7 +102,18 @@ export default function ExamReviewModal({
                     <div className="min-w-0 flex-1 text-lg font-semibold text-slate-900">
                       {q.questionText}
                     </div>
-                    {q.selectedChoiceId == null ? (
+                    {q.questionImage && (
+  <div className="mb-4 flex justify-center">
+    <Image
+      src={q.questionImage}
+      alt="Question illustration"
+      width={600}
+      height={256}
+      className="max-h-64 object-contain rounded shadow"
+    />
+  </div>
+            )}
+                      {q.selectedChoiceId == null ? (
                       <span
                         className="shrink-0 text-xs font-medium text-amber-700"
                         title="No choice was selected"
