@@ -142,7 +142,7 @@ public async Task<ServiceResult<bool>> SendExamEmail(SendExamEmailDto dto)
     await _repo.Update(candidate);
 
     // 4. Build URL AFTER saving
-    var examUrl = $"https://your-frontend.com/exam/{candidate.Token}";
+    var examUrl = $"localhost:3000/candidates/complete-profile/{candidate.Token}";
 
     // 5. Send email
     await _email.SendEmail(
@@ -187,7 +187,7 @@ public async Task<ServiceResult<BulkEmailResultDto>>  SendBulkExamEmail(SendBulk
 
         await _repo.Update(candidate);
 
-        var examUrl = $"https://your-frontend.com/exam/{candidate.Token}";
+        var examUrl = $"localhost:3000/candidates/complete-profile/{candidate.Token}";
 
         try
         {

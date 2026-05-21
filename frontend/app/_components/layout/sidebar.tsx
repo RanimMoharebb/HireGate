@@ -67,8 +67,8 @@ export default function Sidebar() {
         <nav className="flex-1 space-y-2 px-4 py-4">
   {navItems
   .filter((item) => {
-    if (item.href === "/users" && user?.role !== "CEO") {
-      return false; // hide Users
+    if (item.href === "/admins" && user?.role !== "CEO") {
+      return false;
     }
     return true;
   })

@@ -84,7 +84,10 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CEOOnly", policy => policy.RequireRole("CEO"));
+});
 
 // =========================
 // CORS

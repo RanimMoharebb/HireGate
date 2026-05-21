@@ -67,6 +67,27 @@ export default function CandidatesPage() {
   const [examReview, setExamReview] = useState<any>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
 
+  const scrollToTop = () => {
+    window.setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 0);
+  };
+
+  const handleBulkEmailSuccess = (message: string) => {
+    setSuccessMessage(message);
+    scrollToTop();
+  };
+
+  const handleBulkEmailError = (message: string) => {
+    setErrorMessage(message);
+    scrollToTop();
+  };
+
+  const handleSingleEmailSubmit = async (candidateId: number, examId: number) => {
+    await handleSendEmail(candidateId, examId);
+    scrollToTop();
+  };
+
   // =========================
   // FETCH EXAM REVIEW
   // =========================
@@ -183,8 +204,8 @@ const handleShowExam = async (candidateId: number) => {
         variant="bulk"
         open={bulkEmailOpen}
         onClose={() => setBulkEmailOpen(false)}
-        onSuccess={(msg: string) => setSuccessMessage(msg)}
-        onError={(msg: string) => setErrorMessage(msg)}
+        onSuccess={handleBulkEmailSuccess}
+        onError={handleBulkEmailError}
       />
 
       <SendEmailModal
@@ -192,7 +213,7 @@ const handleShowExam = async (candidateId: number) => {
         candidate={sendEmailCandidate}
         loading={emailLoading}
         onClose={() => setSendEmailCandidate(null)}
-        onSubmit={handleSendEmail}
+        onSubmit={handleSingleEmailSubmit}
       />
 
       {/* EXAM REVIEW MODAL */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getUserFromToken } from "@/app/_lib/auth";
 
@@ -19,6 +19,7 @@ type DashboardLayoutProps = {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
 
   // You are doing two different auth systems at the same time:
@@ -50,11 +51,16 @@ useEffect(() => {
       return;
     }
 
+    if ((pathname === "/admins" || pathname.startsWith("/admins/")) && user.role !== "CEO") {
+      router.replace("/candidates");
+      return;
+    }
+
     setLoading(false);
   } catch {
     router.replace("/login");
   }
-}, []);
+}, [pathname, router]);
 
   // useAuthGuard();
 
