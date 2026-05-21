@@ -61,6 +61,7 @@ export type CandidateExamReview = {
   questions: Array<{
     questionId: number;
     questionText: string;
+    questionImage: string | null;
     selectedChoiceId: number | null;
     isCorrect: boolean;
     choices: Array<{
@@ -278,6 +279,7 @@ export async function getCandidateExamReview(id: number): Promise<CandidateExamR
     questions?: Array<{
       questionId?: number;
       questionText?: string;
+      questionImage?: string | null;
       selectedChoiceId?: number | null;
       choices?: Array<{
         id?: number;
@@ -298,6 +300,7 @@ export async function getCandidateExamReview(id: number): Promise<CandidateExamR
     questions: (raw.questions ?? []).map((question) => ({
       questionId: question.questionId ?? 0,
       questionText: question.questionText ?? "",
+      questionImage: question.questionImage ?? null,
       selectedChoiceId: question.selectedChoiceId ?? null,
       isCorrect: (question.choices ?? []).some((choice) => {
         const choiceId = choice.choiceId ?? choice.id ?? 0;

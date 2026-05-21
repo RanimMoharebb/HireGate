@@ -98,6 +98,7 @@ const handleShowExam = async (candidateId: number) => {
     setErrorMessage(null);
 
     const review = await getCandidateExamReview(candidateId);
+    console.log("Fetched exam reviewwwwwwwwwwwww:", review);
     setExamReview(review);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to load exam review";
