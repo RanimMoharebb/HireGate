@@ -49,6 +49,14 @@ export default function ExamQuestionsManager({
                     <p className="text-sm font-medium text-slate-900">
                       #{question.id} {question.questionText}
                     </p>
+                    <br />
+                    {question.questionImage && (
+                    <img
+                      src={question.questionImage}
+                      alt="Question visual"
+                      className="w-60h-40 sm:w-40sm:h-40 oject-cover rounded-lg border border-gray-200 flex-shrink-0"
+                    />
+                  )}
                     <p className="mt-1 text-xs text-slate-500">
                       Topic: {question.topicName || "Uncategorized"}
                     </p>
