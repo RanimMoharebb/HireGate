@@ -243,10 +243,10 @@ var exam = await _examRepo.GetExamByIdAsync(candidate.ExamId.Value);
 
     return ServiceResult<ExamPageDto?>.Ok(new ExamPageDto
     {
-       // FirstName = candidate.FirstName,
-       // LastName = candidate.LastName,
-       // Email = candidate.Email,
-       // PhoneNumber = candidate.PhoneNumber,
+        FirstName = candidate.FirstName,
+        LastName = candidate.LastName,
+        Email = candidate.Email,
+        PhoneNumber = candidate.PhoneNumber,
         //ExamId = candidate.ExamId,
         ExamTitle = exam.PositionTitle,
         DurationMinutes = exam.DurationMinutes,

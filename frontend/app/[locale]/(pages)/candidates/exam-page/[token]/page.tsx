@@ -34,7 +34,7 @@ useEffect(() => {
         setExamData(exam.data);
         
       } catch (err: any) {
-      const message = err.message?.toLowerCase();
+      const handled = handleExamError(err, router);
 
   if (handled) return;
 

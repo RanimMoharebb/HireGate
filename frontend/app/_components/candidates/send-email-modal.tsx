@@ -15,6 +15,66 @@ import { useDisableBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 const BULK_CANDIDATES_PAGE_SIZE = 10;
 const EXAMS_PAGE_SIZE = 10;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+function getStringField(record: Record<string, unknown>, field: string) {
+  const value = record[field];
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function buildSingleEmailMessage(response: unknown) {
+  if (!isRecord(response)) {
+    return "Email sent successfully.";
+  }
+
+  return (
+    getStringField(response, "message") ??
+    getStringField(response, "error") ??
+    getStringField(response, "data") ??
+    "Email sent successfully."
+  );
+}
+
+function buildBulkEmailMessage(response: unknown) {
+  if (!isRecord(response) || !isRecord(response.data)) {
+    return "Bulk emails sent successfully.";
+  }
+
+  const data = response.data;
+  const results = Array.isArray(data.results) ? data.results : [];
+  const notFoundIds = Array.isArray(data.notFoundIds) ? data.notFoundIds : [];
+  const sentCount = results.filter((result) => {
+    if (!isRecord(result)) {
+      return false;
+    }
+
+    return getStringField(result, "status")?.toLowerCase() === "sent";
+  }).length;
+  const failedCount = results.filter((result) => {
+    if (!isRecord(result)) {
+      return false;
+    }
+
+    return getStringField(result, "status")?.toLowerCase() === "failed";
+  }).length;
+  const total =
+    typeof data.total === "number"
+      ? data.total
+      : results.length + notFoundIds.length;
+
+  let message = `Emails sent: ${sentCount} of ${total}`;
+  if (failedCount > 0) {
+    message += `. Failed: ${failedCount}`;
+  }
+  if (notFoundIds.length > 0) {
+    message += `. Not found: ${notFoundIds.join(", ")}`;
+  }
+
+  return message;
+}
+
 type SingleProps = {
   variant: "single";
   candidate: Candidate | null;
@@ -300,7 +360,6 @@ function BulkSendEmailModal({
   const [totalPages, setTotalPages] = useState(1);
   const [listLoading, setListLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [message, setMessage] = useState("");
   const [fetchError, setFetchError] = useState("");
   const lastDebouncedSearch = useRef<string | null>(null);
 
@@ -390,18 +449,15 @@ setCandidates(emptyCandidatesState);
   const handleSend = async () => {
     try {
       setSending(true);
-      setMessage("");
 
       if (selectedExamId === "") {
         const validationMessage = "Please select an exam.";
-        setMessage(validationMessage);
         onError(validationMessage);
         return;
       }
 
       if (selectedCandidates.length === 0) {
         const validationMessage = "Please select at least one candidate.";
-        setMessage(validationMessage);
         onError(validationMessage);
         return;
       }
@@ -410,8 +466,8 @@ setCandidates(emptyCandidatesState);
 
       if (selectedCandidates.length === 1) {
         const res = await sendExamEmail(selectedCandidates[0], examId);
-        setMessage(res);
-        onSuccess(res);
+        onSuccess(buildSingleEmailMessage(res));
+        onClose();
         return;
       }
 
@@ -419,15 +475,16 @@ setCandidates(emptyCandidatesState);
         examId,
         candidateIds: selectedCandidates,
       });
-      setMessage(res);
-      onSuccess(res);
+
+      onSuccess(buildBulkEmailMessage(res));
+      onClose();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Request failed.";
-      setMessage(errorMessage);
       onError(errorMessage);
     } finally {
       setSending(false);
     }
+    
   };
 
   return (
@@ -539,11 +596,7 @@ setCandidates(emptyCandidatesState);
           </div>
 
           <div className="flex-none border-t border-gray-200 p-5">
-            {message && (
-              <p className={`mb-3 text-sm ${message.includes("select") || message.includes("fail") ? "text-red-600" : "text-green-600"}`}>
-                {message}
-              </p>
-            )}
+            {/* No inline message rendering. All feedback handled by AlertMessage in CandidatesPage. */}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={onClose} size="md">
                 Close
