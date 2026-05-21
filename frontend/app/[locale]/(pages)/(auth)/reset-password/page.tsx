@@ -105,6 +105,7 @@ if (password !== confirmPassword) {
       setMessage("");
 
       const res = await resendOtp(email);
+      setMessage(res);
 
     } catch (err: any) {
       setError(err.message);
