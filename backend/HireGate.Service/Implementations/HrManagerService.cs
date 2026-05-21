@@ -87,7 +87,12 @@ public AdminService(IAdminRepository repo, IConfiguration config, IEmailService 
         };
 
         await _repo.Add(admin);
-
+        var completeRegisterUrl = "localhost:3000/complete-register";
+        await _email.SendEmail(
+            admin.Email,
+            "Welcome to HireGate",
+            $"Your admin account has been created, please set your password \nClick here:\n{completeRegisterUrl}"
+        );
         return ServiceResult<CreateAdminResponseDto>.Ok(new CreateAdminResponseDto
         {
             Id = admin.Id,
