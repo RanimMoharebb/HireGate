@@ -5,6 +5,7 @@ import { Loader, Search } from "lucide-react";
 import { questionBankService } from "@/app/_services/question-bank-service";
 import type { Question as BankQuestion, Topic } from "@/app/_lib/question-bank.types";
 import { useTranslations } from "next-intl";
+import { Button } from "@/app/_components/ui/button";
 
 const PAGE_SIZE = 10;
 

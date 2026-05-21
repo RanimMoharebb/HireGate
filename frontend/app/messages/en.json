@@ -24,7 +24,6 @@
         "all-questions": "All Questions",
         "questions-title": "Questions",
         "questions-desc": "Select questions for the exam",
-        "selected-count": "{{count}} selected",
         "search-questions": "Search questions",
         "loading-questions": "Loading questions...",
         "no-questions": "No questions found",
@@ -65,6 +64,22 @@
         "step1-desc": "Fill in the basic information for the exam",
         "step2-desc": "Select questions from the question bank",
         "browser-highlight-info": "Click on the calendar to select a date and time",
-        "selected": "Selected:"
+        "selected": "Selected:",
+        "back": "Back",
+        "selected-count": "selected",
+        "creating": "Creating..."
+        },
+     "candidates-view": 
+        {
+            "pending": "Pending",
+            "in-progress": "In Progress",
+            "submitted": "Submitted",
+            "phone": "Phone",
+            "final-score": "Final score",
+            "started": "Started",
+            "submitted-at": "Submitted",
+            "close": "Close",
+            "not-available": "—"
         }
+
 }   
