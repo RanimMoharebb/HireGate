@@ -79,6 +79,29 @@ async function fetchExamApi<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function parseApiMessage(text: string, fallback: string) {
+  if (!text.trim()) {
+    return fallback;
+  }
+
+  try {
+    const payload = JSON.parse(text) as unknown;
+
+    if (payload && typeof payload === "object") {
+      const record = payload as Record<string, unknown>;
+      const message = record.message ?? record.error;
+
+      if (typeof message === "string" && message.trim()) {
+        return message;
+      }
+    }
+  } catch {
+    return text;
+  }
+
+  return fallback;
+}
+
 
 export async function getExams(): Promise<Exam[]> {
     const result = await fetchExamApi<BackendExamDto[] | { data: BackendExamDto[] }>("/api/exam/");
@@ -186,10 +209,10 @@ export async function sendExamEmail(candidateId: number, examId: number): Promis
   const text = await response.text();
 
   if (!response.ok) {
-    throw new Error(text || "Failed to send exam email");
+    throw new Error(parseApiMessage(text, "Failed to send exam email"));
   }
 
-  return text;
+  return parseApiMessage(text, "Email sent successfully.");
 }
 
 export async function sendBulkExamEmail(data: {
@@ -208,8 +231,8 @@ export async function sendBulkExamEmail(data: {
   const text = await response.text();
 
   if (!response.ok) {
-    throw new Error(text || "Bulk email failed");
+    throw new Error(parseApiMessage(text, "Bulk email failed"));
   }
 
-  return text;
+  return parseApiMessage(text, "Bulk emails sent successfully.");
 }

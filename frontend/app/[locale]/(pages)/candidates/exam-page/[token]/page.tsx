@@ -5,53 +5,40 @@ import { useEffect, useState } from "react";
 
 import { getExamPageData } from "@/app/_services/candidate-exam-service";
 
+import { handleExamError } from "@/app/_utils/exam-error-handler";
+
 export default function ExamPage() {
   const router = useRouter();
   const params = useParams();
 
   const token = params.token as string;
 
-  const [candidateData, setCandidateData] = useState<any>(null);
   const [examData, setExamData] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+useEffect(() => {
+  if (error) {
+    router.replace("/candidates/thank-you");
+  }
+}, [error, router]);
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         
         // Candidate data (from token)
-        const candidate = await getExamPageData(token);
-        setCandidateData(candidate);
-
-        // Exam data (from examId)
-        if (candidate?.examId) {
-          const examRes = await fetch(
-            `http://localhost:5116/api/exam/${candidate.examId}`
-          );
-
-          if (!examRes.ok) {
-            throw new Error("Failed to fetch exam data");
-          }
-
-          const exam = await examRes.json();
-          setExamData(exam);
-        }
+        const exam = await getExamPageData(token);
+        setExamData(exam.data);
         
       } catch (err: any) {
-      const message = err.message?.toLowerCase();
+      const handled = handleExamError(err, router);
 
-  if (
-    message.includes("invalid token") ||
-    message.includes("already submitted") ||
-    message.includes("expired")
-  ) {
-    router.replace("/candidates/thank-you");
-    return;
-  }
+  if (handled) return;
 
-  setError(err.message);
+  setError("Unable to load exam information.");
 
       } finally {
         setLoading(false);
@@ -60,6 +47,7 @@ export default function ExamPage() {
 
     fetchData();
   }, [token]);
+
 
   const handleStartExam = () => {
     router.push(`/candidates/start-exam/${token}`);
@@ -75,14 +63,11 @@ export default function ExamPage() {
   }
 
   // ---------------- ERROR ----------------
-  if (error) {
-    return (
-      <div className="p-10 text-center text-red-500">
-        {error}
-      </div>
-    );
-  }
+  
 
+if (error) {
+  return null;
+}
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100 p-6">
 
@@ -93,7 +78,7 @@ export default function ExamPage() {
   <img
     src="/images/logo.png"
     alt="logo"
-    className="h-10 w-auto"
+    className="h-12 w-auto"
   />
 </div>
 
@@ -105,9 +90,17 @@ export default function ExamPage() {
           <p className="mt-2 text-gray-700">
             We are pleased to invite you to the{" "}
             <span className="font-semibold">
-              {examData?.positionTitle}
-            </span>
+              {examData?.examTitle
+                ? examData.examTitle.charAt(0).toUpperCase() +
+                  examData.examTitle.slice(1)
+                : "—"}
+            </span>{" "}
+            exam.
           </p>
+          <p className="mt-2 text-gray-700">
+              Please review the instructions below before starting the exam.
+          </p>
+         
         </div>
 
         {/* INSTRUCTIONS BOX */}
@@ -129,13 +122,14 @@ export default function ExamPage() {
               {examData?.windowStartTime
                 ? new Date(examData.windowStartTime).toLocaleString()
                 : "Not available"}
-              till {" "}
+                {" "}
+               till {" "}
               {examData?.windowEndTime
                 ? new Date(examData.windowEndTime).toLocaleString()
                 : "Not available"} 
-              
+              <br />
+               • {examData?.questionCount ?? "—"} MCQ Questions
             </div>
-<br />
             {/* Guidelines */}
             <div>
               <span className="font-medium">Exam guidelines:</span>
@@ -166,3 +160,8 @@ export default function ExamPage() {
     </div>
   );
 }
+/*
+function fetchData() {
+  throw new Error("Function not implemented.");
+}
+*/

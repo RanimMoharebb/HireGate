@@ -110,7 +110,6 @@ export default function ExamReviewModal({
                       </span>
                     ) : null}
                   </div>
-
                   {/* CHOICES */}
                   <div className="space-y-2">
                     {q.choices.map((c) => {

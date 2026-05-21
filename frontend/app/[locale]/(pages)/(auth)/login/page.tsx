@@ -20,7 +20,7 @@ export default function LoginPage() {
   
     useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) router.push("/dashboard");
+    if (token) router.push("/candidates");
   }, []);
 
   const handleLogin = async () => {
@@ -53,8 +53,9 @@ export default function LoginPage() {
       }
 
       localStorage.setItem("token", token);
+      
 
-      router.push("/dashboard");
+      router.push("/candidates");
     } catch (err: any) {
       setError(err?.message || "Login failed");
     } finally {

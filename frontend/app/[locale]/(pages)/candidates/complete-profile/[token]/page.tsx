@@ -1,8 +1,9 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { completeCandidateProfile } from "@/app/_services/candidate-exam-service";
+import { useEffect, useState } from "react";
+import { completeCandidateProfile, getExamPageData } from "@/app/_services/candidate-exam-service";
+import { handleExamError } from "@/app/_utils/exam-error-handler";
 
 
 export default function CompleteProfilePage() {
@@ -15,55 +16,64 @@ export default function CompleteProfilePage() {
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
-const handleContinue = async () => {
-  console.log("TOKEN:", token);
-  console.log("FORM:", {
-    firstName,
-    lastName,
-    phoneNumber,
-  });
+  const [loading, setLoading] = useState(true);
 
+
+useEffect(() => {
+  const checkFlow = async () => {
+    try {
+      const res = await getExamPageData(token);
+      const candidate = res.data;
+
+      const isProfileCompleted =
+        candidate?.firstName?.trim() &&
+        candidate?.lastName?.trim() &&
+        candidate?.phoneNumber?.toString().trim();
+
+      if (isProfileCompleted) {
+        router.replace(`/candidates/exam-page/${token}`);
+        return;
+      }
+
+      setLoading(false);
+    } catch (err: any) {
+      const handled = handleExamError(err, router);
+
+      if (handled) return;
+
+      // 🔥 EVERYTHING ELSE GOES HERE
+      router.replace("/candidates/thank-you");
+    }
+  };
+
+  checkFlow();
+}, [token, router]);
+
+  
+
+const handleContinue = async () => {
   try {
-    const res = await completeCandidateProfile(token, {
+    await completeCandidateProfile(token, {
       FirstName: firstName,
       LastName: lastName,
       PhoneNumber: phoneNumber,
     });
 
-    console.log("API RESULT:", res);
-
-    // ✅ extract backend message
-    const message = res.raw?.toLowerCase?.() || "";
-
-    // OR safer (since backend returns string)
-    const backendMessage =
-      typeof res.raw === "string"
-        ? res.raw.toLowerCase()
-        : "";
-
-    if (
-      backendMessage.includes("invalid token") ||
-      backendMessage.includes("already submitted")
-    ) {
-      router.replace("/candidates/thank-you");
-      return;
-    }
-
     router.push(`/candidates/exam-page/${token}`);
-
   } catch (err: any) {
-    console.log("ERROR:", err);
-
-    const message = err.message?.toLowerCase?.() || "";
-
-    if (message.includes("invalid token")) {
+    if (!handleExamError(err, router)) {
       router.replace("/candidates/thank-you");
-      return;
     }
-
-    alert(err.message);
   }
 };
+
+if (loading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-100">
+      Loading...
+    </div>
+  );
+}
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-100">
       <div className="bg-white w-full max-w-md rounded-2xl p-8 shadow">
@@ -74,7 +84,7 @@ const handleContinue = async () => {
   <img
     src="/images/logo.png"
     alt="logo"
-    className="h-10 w-auto"
+    className="h-12 w-auto"
   />
 </div>
         {/* TITLE */}

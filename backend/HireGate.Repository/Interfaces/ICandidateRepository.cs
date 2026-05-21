@@ -14,7 +14,12 @@ public interface ICandidateRepository
     Task Add(Candidate candidate);
     Task Update(Candidate candidate);
     Task<bool> Delete(int id);
-    Task<Candidate?> GetByToken(string token);
+    // Basic: No includes
+    Task<Candidate?> GetByTokenBasic(string token);
+    // With Exam only
+    Task<Candidate?> GetByTokenWithExam(string token);
+    // With Exam, ExamQuestions, Question, Choices, Answers
+    Task<Candidate?> GetByTokenWithExamAndQuestions(string token);
     Task AssignExam(int candidateId, int examId);
     Task<Candidate?> GetCandidateWithExam(int candidateId);
 }

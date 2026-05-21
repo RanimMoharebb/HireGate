@@ -5,6 +5,7 @@ public class ExamReviewQuestionDto
     public int QuestionId { get; set; }
 
     public string QuestionText { get; set; } = string.Empty;
+    public string? QuestionImage { get; set; }
 
     public int? SelectedChoiceId { get; set; }
 
