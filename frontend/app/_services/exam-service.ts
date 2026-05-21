@@ -130,7 +130,7 @@ export async function getExamsPage(
 
 export async function getExamById(examId: number): Promise<Exam> {
   const exam = await fetchExamApi<BackendExamDto>(`/api/exam/${examId}`);
-  return mapBackendExamToExam(exam);
+  return mapBackendExamToExam(exam);  
 }
 
 export async function createExam(payload: CreateExamPayload): Promise<Exam> {

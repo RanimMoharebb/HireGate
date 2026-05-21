@@ -5,7 +5,22 @@ import {
   Topic,
 } from "@/app/_lib/question-bank.types";
 
-const API_BASE_URL = "http://localhost:5116/api/admin";
+const BACKEND_BASE_URL = "http://localhost:5116";
+const API_BASE_URL = `${BACKEND_BASE_URL}/api/admin`;
+
+const resolveQuestionImageUrl = (imageUrl?: string | null): string | undefined => {
+  if (!imageUrl) {
+    return undefined;
+  }
+
+  if (/^https?:\/\//i.test(imageUrl)) {
+    return imageUrl;
+  }
+
+  return imageUrl.startsWith("/")
+    ? `${BACKEND_BASE_URL}${imageUrl}`
+    : `${BACKEND_BASE_URL}/${imageUrl}`;
+};
 
 const getAuthHeaders = (includeJson = false): HeadersInit => ({
   ...(includeJson ? { "Content-Type": "application/json" } : {}),
@@ -48,7 +63,15 @@ export const questionBankService = {
     if (!response.ok) {
       throw new Error("Failed to fetch questions");
     }
-    return response.json();
+    const data: PaginationData = await response.json();
+
+    return {
+      ...data,
+      data: data.data.map((question) => ({
+        ...question,
+        questionImage: resolveQuestionImageUrl(question.questionImage),
+      })),
+    };
   },
 
   async saveQuestion(
@@ -125,6 +148,32 @@ export const questionBankService = {
     return response.json();
   },
 
+  async uploadQuestionImage(file: File): Promise<{ imageUrl: string }> {
+    const body = new FormData();
+    body.append("file", file);
+
+    const response = await fetch(`${API_BASE_URL}/questions/upload-image`, {
+      method: "POST",
+      headers: getAuthHeaders(), // no Content-Type — browser sets multipart boundary automatically
+      body,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message =
+        typeof errorData === "object" && errorData && "message" in errorData
+          ? String((errorData as { message?: string }).message)
+          : undefined;
+      throw new Error(message || "Failed to upload image");
+    }
+
+    const data: { imageUrl: string } = await response.json();
+
+    return {
+      imageUrl: resolveQuestionImageUrl(data.imageUrl) ?? data.imageUrl,
+    };
+  },
+
   async deleteTopic(topicId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/topics/${topicId}`, {
       method: "DELETE",
@@ -141,3 +190,5 @@ export const questionBankService = {
     }
   },
 };
+
+export { resolveQuestionImageUrl };

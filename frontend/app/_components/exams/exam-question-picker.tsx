@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Loader, Search } from "lucide-react";
-import { Button } from "@/app/_components/ui/button";
 import { questionBankService } from "@/app/_services/question-bank-service";
 import type { Question as BankQuestion, Topic } from "@/app/_lib/question-bank.types";
+import { useTranslations } from "next-intl";
 
 const PAGE_SIZE = 10;
 
@@ -17,6 +17,7 @@ export default function ExamQuestionPicker({
   selectedQuestionIds,
   onChange,
 }: ExamQuestionPickerProps) {
+  const t = useTranslations("Exams");
   const [topics, setTopics] = useState<Topic[]>([]);
   const [topicsError, setTopicsError] = useState<string | null>(null);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
@@ -37,7 +38,7 @@ export default function ExamQuestionPicker({
         const data = await questionBankService.getTopics();
         setTopics(data ?? []);
       } catch (error) {
-        setTopicsError(error instanceof Error ? error.message : "Unable to load topics.");
+        setTopicsError(error instanceof Error ? error.message : t("failed-load-topics"));
       } finally {
         setIsLoadingTopics(false);
       }
@@ -62,7 +63,7 @@ export default function ExamQuestionPicker({
         setTotalPages(response.totalPages ?? 1);
       } catch (error) {
         setQuestionsError(
-          error instanceof Error ? error.message : "Unable to load questions for this topic.",
+          error instanceof Error ? error.message : t("failed-load-questions"),
         );
         setQuestions([]);
         setTotalPages(1);
@@ -86,18 +87,18 @@ export default function ExamQuestionPicker({
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
       <div className="flex max-h-[68vh] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-4">
         <div className="flex-shrink-0">
-          <p className="text-sm font-semibold text-slate-900">Topics</p>
-          <p className="text-xs text-slate-500">Select a topic to show available questions.</p>
+          <p className="text-sm font-semibold text-slate-900">{t("topics-title")}</p>
+          <p className="text-xs text-slate-500">{t("topics-desc")}</p>
         </div>
 
         {isLoadingTopics ? (
           <div className="mt-4 flex items-center gap-2 text-slate-500">
-            <Loader className="animate-spin" size={16} /> Loading topics...
+            <Loader className="animate-spin" size={16} /> {t("loading-topics")}
           </div>
         ) : topicsError ? (
           <p className="mt-4 text-sm text-red-600">{topicsError}</p>
         ) : topics.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-600">No topics are available.</p>
+          <p className="mt-4 text-sm text-slate-600">{t("no-topics")}</p>
         ) : (
           <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
             <div className="space-y-2">
@@ -114,7 +115,7 @@ export default function ExamQuestionPicker({
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100"
                 }`}
               >
-                All Questions
+                {t("all-questions")}
               </button>
               {topics.map((topic) => (
                 <button
@@ -142,13 +143,13 @@ export default function ExamQuestionPicker({
       <div className="flex max-h-[68vh] flex-col space-y-4 overflow-hidden rounded-3xl border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-slate-900">Questions</p>
+            <p className="text-sm font-semibold text-slate-900">{t("questions-title")}</p>
             <p className="text-xs text-slate-500">
-              Select a topic or use all questions, then search and paginate through results.
+              {t("questions-desc")}
             </p>
           </div>
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {selectedQuestionIds.length} selected
+            {selectedQuestionIds.length} {t("selected-count")}
           </span>
         </div>
 
@@ -164,7 +165,7 @@ export default function ExamQuestionPicker({
               setSearchTerm(event.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search questions..."
+            placeholder={t("search-questions")}
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
@@ -173,7 +174,7 @@ export default function ExamQuestionPicker({
           {isLoadingQuestions ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
               <div className="inline-flex items-center gap-2">
-                <Loader className="animate-spin" size={16} /> Loading questions...
+                <Loader className="animate-spin" size={16} /> {t("loading-questions")}
               </div>
             </div>
           ) : questionsError ? (
@@ -182,7 +183,7 @@ export default function ExamQuestionPicker({
             </div>
           ) : questions.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-              No questions found for this topic.
+              {t("no-questions")}
             </div>
           ) : (
             <>
@@ -203,7 +204,7 @@ export default function ExamQuestionPicker({
                         #{question.id} {question.questionText}
                       </p>
                       {question.topicName ? (
-                        <p className="mt-1 text-xs text-slate-500">Topic: {question.topicName}</p>
+                        <p className="mt-1 text-xs text-slate-500">{t("topic")}: {question.topicName}</p>
                       ) : null}
                     </div>
                   </label>
@@ -213,7 +214,7 @@ export default function ExamQuestionPicker({
               {totalPages > 1 ? (
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-sm text-slate-500">
-                    Page {currentPage} of {totalPages}
+                    {t("page")} {currentPage} {t("of")} {totalPages}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -222,7 +223,7 @@ export default function ExamQuestionPicker({
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1 || isLoadingQuestions}
                     >
-                      Previous
+                      {t("previous")}
                     </Button>
                     <Button
                       type="button"
@@ -230,7 +231,7 @@ export default function ExamQuestionPicker({
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages || isLoadingQuestions}
                     >
-                      Next
+                      {t("next")}
                     </Button>
                   </div>
                 </div>
