@@ -8,6 +8,8 @@ import {
   X,
 } from "lucide-react";
 
+import { useTranslations } from "next-intl";
+
 import { Candidate } from "@/app/_services/candidate-service";
 import { useDisableBodyScroll, restoreBodyScroll } from "@/app/_hooks/useDisableBodyScroll";
 
@@ -15,18 +17,27 @@ type Props = {
   candidate: Candidate | null;
   onClose: () => void;
 };
-
+/*
 function getStatusLabel(candidate: Candidate): "Pending" | "In Progress" | "Submitted" {
   if (candidate.submittedAt) return "Submitted";
   if (candidate.startedAt) return "In Progress";
   return "Pending";
 }
+  */
 
-function statusBadgeClass(status: ReturnType<typeof getStatusLabel>) {
-  if (status === "Submitted") {
+type StatusKey = "pending" | "in-progress" | "submitted";
+
+function getStatusKey(candidate: Candidate): StatusKey {
+  if (candidate.submittedAt) return "submitted";
+  if (candidate.startedAt) return "in-progress";
+  return "pending";
+}
+
+function statusBadgeClass(status: StatusKey) {
+  if (status === "submitted") {
     return "bg-emerald-50 text-emerald-800 ring-emerald-200";
   }
-  if (status === "In Progress") {
+  if (status === "in-progress") {
     return "bg-amber-50 text-amber-900 ring-amber-200";
   }
   return "bg-slate-100 text-slate-700 ring-slate-200";
@@ -45,16 +56,22 @@ function formatDateTime(iso: string | null) {
 }
 
 export function CandidateDetailsModal({ candidate, onClose }: Props) {
+  const t = useTranslations("candidates-view");
+
   useDisableBodyScroll(candidate !== null);
 
   if (!candidate) {
     return null;
   }
 
+  //const displayName = [candidate.firstName, candidate.lastName].filter(Boolean).join(" ").trim() || "—";
   const displayName =
-    [candidate.firstName, candidate.lastName].filter(Boolean).join(" ").trim() || "—";
-  const status = getStatusLabel(candidate);
-  const hasName = displayName !== "—";
+    [candidate.firstName, candidate.lastName].filter(Boolean).join(" ").trim() ||
+    t("not-available");
+const statusKey = getStatusKey(candidate);
+const statusLabel = t(statusKey);
+
+const hasName = displayName !== t("not-available");
   const titleText = hasName ? displayName : candidate.email;
   const subtitleEmail = hasName ? candidate.email : null;
 
@@ -73,10 +90,10 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
               <span
                 className={[
                   "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset",
-                  statusBadgeClass(status),
+                  statusBadgeClass(statusKey),
                 ].join(" ")}
               >
-                {status}
+                {statusLabel}
               </span>
             </div>
             <h2
@@ -106,9 +123,11 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
                 <Phone size={18} strokeWidth={2} aria-hidden />
               </div>
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Phone</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t("phone")}
+                </dt>
                 <dd className="mt-0.5 text-sm font-medium text-gray-900">
-                  {candidate.phoneNumber || "—"}
+                  {candidate.phoneNumber || t("not-available")}
                 </dd>
               </div>
             </div>
@@ -118,9 +137,11 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
                 <Award size={18} strokeWidth={2} aria-hidden />
               </div>
               <div className="min-w-0 flex-1">
-                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Final score</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  {t("final-score")}
+                </dt>
                 <dd className="mt-0.5 text-sm font-medium text-gray-900">
-                  {candidate.finalScore != null ? String(candidate.finalScore) : "—"}
+                  {candidate.finalScore != null ? String(candidate.finalScore) : t("not-available")}
                 </dd>
               </div>
             </div>
@@ -131,9 +152,11 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
                   <CalendarClock size={18} strokeWidth={2} aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Started</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {t("started")}
+                  </dt>
                   <dd className="mt-0.5 text-sm font-medium text-gray-900">
-                    {formatDateTime(candidate.startedAt)}
+                    {candidate.startedAt ? formatDateTime(candidate.startedAt) : t("not-available")}
                   </dd>
                 </div>
               </div>
@@ -143,9 +166,11 @@ export function CandidateDetailsModal({ candidate, onClose }: Props) {
                   <CalendarCheck size={18} strokeWidth={2} aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Submitted</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {t("submitted-at")}
+                  </dt>
                   <dd className="mt-0.5 text-sm font-medium text-gray-900">
-                    {formatDateTime(candidate.submittedAt)}
+                    {candidate.submittedAt ? formatDateTime(candidate.submittedAt) : t("not-available")}
                   </dd>
                 </div>
               </div>
