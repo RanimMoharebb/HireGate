@@ -11,7 +11,6 @@ export default function ExamPage() {
 
   const token = params.token as string;
 
-  const [candidateData, setCandidateData] = useState<any>(null);
   const [examData, setExamData] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
@@ -22,22 +21,8 @@ export default function ExamPage() {
       try {
         
         // Candidate data (from token)
-        const candidate = await getExamPageData(token);
-        setCandidateData(candidate);
-
-        // Exam data (from examId)
-        if (candidate?.examId) {
-          const examRes = await fetch(
-            `http://localhost:5116/api/exam/${candidate.examId}`
-          );
-
-          if (!examRes.ok) {
-            throw new Error("Failed to fetch exam data");
-          }
-
-          const exam = await examRes.json();
-          setExamData(exam);
-        }
+        const exam = await getExamPageData(token);
+        setExamData(exam.data);
         
       } catch (err: any) {
       const message = err.message?.toLowerCase();
@@ -105,9 +90,17 @@ export default function ExamPage() {
           <p className="mt-2 text-gray-700">
             We are pleased to invite you to the{" "}
             <span className="font-semibold">
-              {examData?.positionTitle}
-            </span>
+              {examData?.examTitle
+                ? examData.examTitle.charAt(0).toUpperCase() +
+                  examData.examTitle.slice(1)
+                : "—"}
+            </span>{" "}
+            exam.
           </p>
+          <p className="mt-2 text-gray-700">
+              Please review the instructions below before starting the exam.
+          </p>
+         
         </div>
 
         {/* INSTRUCTIONS BOX */}
@@ -129,13 +122,14 @@ export default function ExamPage() {
               {examData?.windowStartTime
                 ? new Date(examData.windowStartTime).toLocaleString()
                 : "Not available"}
-              till {" "}
+                {" "}
+               till {" "}
               {examData?.windowEndTime
                 ? new Date(examData.windowEndTime).toLocaleString()
                 : "Not available"} 
-              
+              <br />
+               • {examData?.questionCount ?? "—"} MCQ Questions
             </div>
-<br />
             {/* Guidelines */}
             <div>
               <span className="font-medium">Exam guidelines:</span>

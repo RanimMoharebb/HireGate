@@ -222,7 +222,7 @@ public async Task<ServiceResult<BulkEmailResultDto>>  SendBulkExamEmail(SendBulk
 
 public async Task<ServiceResult<ExamPageDto?>> GetExamPage(string token)
 {
-    var candidate = await _repo.GetByToken(token);
+    var candidate = await _repo.GetByTokenBasic(token);
 
     if (candidate == null)
         return ServiceResult<ExamPageDto?>.Fail("Candidate not found");
@@ -230,7 +230,6 @@ if (candidate.ExamId is null)
     return ServiceResult<ExamPageDto?>.Fail("Exam not found");
 
 var exam = await _examRepo.GetExamByIdAsync(candidate.ExamId.Value);
-
     if (exam == null)
         return ServiceResult<ExamPageDto?>.Fail("Exam not found");
 
@@ -244,18 +243,23 @@ var exam = await _examRepo.GetExamByIdAsync(candidate.ExamId.Value);
 
     return ServiceResult<ExamPageDto?>.Ok(new ExamPageDto
     {
-        FirstName = candidate.FirstName,
-        LastName = candidate.LastName,
-        Email = candidate.Email,
-        PhoneNumber = candidate.PhoneNumber,
-        ExamId = candidate.ExamId
+       // FirstName = candidate.FirstName,
+       // LastName = candidate.LastName,
+       // Email = candidate.Email,
+       // PhoneNumber = candidate.PhoneNumber,
+        //ExamId = candidate.ExamId,
+        ExamTitle = exam.PositionTitle,
+        DurationMinutes = exam.DurationMinutes,
+        QuestionCount = exam.QuestionCount,
+        WindowStartTime = exam.WindowStartTime,
+        WindowEndTime = exam.WindowEndTime
     });
 }
 
 
 public async Task<ServiceResult<CompleteCandidateProfileResponseDto?>> CompleteProfile(string token, CompleteCandidateProfileDto dto)
 {
-    var candidate = await _repo.GetByToken(token);
+    var candidate = await _repo.GetByTokenBasic(token);
 
     Console.WriteLine(candidate == null 
         ? "CANDIDATE NOT FOUND" 
@@ -285,7 +289,7 @@ if (candidate.StartedAt != null)
 
 public async Task<ServiceResult<StartExamResponseDto>> StartExam(string token)
 {
-    var candidate = await _repo.GetByToken(token);
+    var candidate = await _repo.GetByTokenWithExamAndQuestions(token);
 
     if (candidate == null || candidate.Exam == null)
         return ServiceResult<StartExamResponseDto>.Fail("Invalid token");
@@ -363,7 +367,7 @@ public async Task<ServiceResult<ExamReviewDto?>> GetExamReview(int candidateId)
         {
             QuestionId = question.Id,
             QuestionText = question.QuestionText,
-
+            QuestionImage = question.QuestionImage,
             SelectedChoiceId = selectedChoiceId,
 
             IsCorrect = isCorrect,

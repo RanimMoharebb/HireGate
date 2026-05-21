@@ -19,6 +19,7 @@ public class AuthService : IAuthService
     private readonly IConfiguration _config;
     private readonly IEmailService _email; // extra
     private readonly IDateTimeProvider _dateTimeProvider;
+    private const int TokenExpiryHours = 2;
 
 public AuthService(IAdminRepository repo, IConfiguration config, IEmailService email, IDateTimeProvider dateTimeProvider)
 {
@@ -70,7 +71,7 @@ private string GenerateJwt(Admin admin)
 
     var token = new JwtSecurityToken(
         claims: claims,
-        expires: _dateTimeProvider.Now.AddHours(2),
+        expires: _dateTimeProvider.Now.AddHours(TokenExpiryHours),
         signingCredentials: creds
     );
 

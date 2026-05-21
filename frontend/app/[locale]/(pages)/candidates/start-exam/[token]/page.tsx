@@ -240,7 +240,15 @@ useEffect(() => {
             <h2 className="text-lg font-semibold mb-4">
               Q{index + 1}. {typeof q.questionText === "string" ? q.questionText : ""}
             </h2>
-
+            {q.questionImage && (
+              <div className="mb-4 flex justify-center">
+                <img
+                  src={q.questionImage}
+                  alt={`Question ${index + 1} image`}
+                  className="max-h-64 object-contain rounded shadow"
+                />
+              </div>
+            )}
             <div className="space-y-3">
               {Array.isArray(q.choices) &&
               q.choices.map((c: any) => (

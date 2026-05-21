@@ -96,7 +96,22 @@ public class CandidateRepository : ICandidateRepository
         return true;
     }
 
-    public async Task<Candidate?> GetByToken(string token)
+    // Basic: No includes
+    public async Task<Candidate?> GetByTokenBasic(string token)
+    {
+        return await _context.Candidates.FirstOrDefaultAsync(c => c.Token == token);
+    }
+
+    // With Exam only
+    public async Task<Candidate?> GetByTokenWithExam(string token)
+    {
+        return await _context.Candidates
+            .Include(c => c.Exam)
+            .FirstOrDefaultAsync(c => c.Token == token);
+    }
+
+    // With Exam, ExamQuestions, Question, Choices, Answers
+    public async Task<Candidate?> GetByTokenWithExamAndQuestions(string token)
     {
         return await _context.Candidates
             .Include(c => c.Exam)
