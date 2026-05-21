@@ -25,8 +25,14 @@ async function parseErrorMessage(response: Response, fallback: string): Promise<
     return data.join(", ");
   }
 
-  if (typeof data === "object" && "message" in data && typeof data.message === "string") {
-    return data.message;
+  if (typeof data === "object") {
+    if ("error" in data && typeof data.error === "string" && data.error.trim()) {
+      return data.error;
+    }
+
+    if ("message" in data && typeof data.message === "string" && data.message.trim()) {
+      return data.message;
+    }
   }
 
   return fallback;
