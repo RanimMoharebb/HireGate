@@ -130,6 +130,9 @@ public async Task<ServiceResult<bool>> SendExamEmail(SendExamEmailDto dto)
         return ServiceResult<bool>.Fail("Candidate not found");
 
     // 1. Assign exam
+    candidate.StartedAt = null; // reset startedAt when re-assigning exam
+    candidate.SubmittedAt = null; // reset submittedAt when re-assigning exam
+    candidate.FinalScore = null; // reset finalScore when re-assigning exam
     candidate.ExamId = dto.ExamId;
 
     // 2. GUARANTEE token exists
@@ -177,8 +180,11 @@ public async Task<ServiceResult<BulkEmailResultDto>>  SendBulkExamEmail(SendBulk
             result.NotFoundIds.Add(id);
             continue;
         }
-
+        candidate.StartedAt = null; // reset startedAt when re-assigning exam
+        candidate.SubmittedAt = null; // reset submittedAt when re-assigning exam
+        candidate.FinalScore = null; // reset finalScore when re-assigning exam
         candidate.ExamId = dto.ExamId;
+        
 
         if (string.IsNullOrEmpty(candidate.Token))
         {
